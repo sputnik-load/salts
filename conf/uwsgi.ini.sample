@@ -1,0 +1,27 @@
+[uwsgi]
+plugins = python
+protocol = uwsgi
+
+# Настройки, связанные с Django
+# Корневая папка проекта (полный путь)
+chdir            = #PROJECT_ROOT#
+pythonpath       = .
+# Django wsgi файл
+wsgi-file        = #PROJECT_NAME#/wsgi.py
+# полный путь к виртуальному окружению
+#home            = /path/to/virtualenv
+
+# общие настройки
+# master
+master          = true
+# максимальное количество процессов
+processes       = 2
+# полный путь к файлу сокета
+socket          = /var/run/uwsgi/#HOSTNAME#.sock
+# права доступа к файлу сокета
+chmod-socket    = 664
+# очищать окружение от служебных файлов uwsgi по завершению
+vacuum          = true
+
+py-autoreload = 2
+stats = 127.0.0.1:9191

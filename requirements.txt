@@ -1,0 +1,11 @@
+#Fabric
+#ecdsa
+django
+django-debug-toolbar
+django-audit-log
+jsonfield
+django-auth-ldap
+djangorestframework
+pyyaml
+markdown
+django-filter

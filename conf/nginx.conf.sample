@@ -1,0 +1,42 @@
+upstream salt-dev-django {
+        server unix:///var/run/uwsgi/#HOSTNAME#.sock;
+}
+
+server {
+	server_name salt-dev, salt-dev.dev.ix.km;
+	charset     utf-8;
+
+	client_max_body_size 75M;
+
+	location /media  {
+		alias #PROJECT_ROOT#/media;
+	}
+
+	location /static  {
+		# for grafana dashboard
+	        add_header Access-Control-Allow-Origin "*";
+	        add_header Access-Control-Allow-Methods "GET, OPTIONS";
+	        add_header Access-Control-Allow-Headers "origin, authorization, accept";
+
+		alias #PROJECT_ROOT#/static;
+	}
+
+	location / {
+		uwsgi_pass salt-dev-django;
+		include uwsgi_params;
+	}
+
+ 	location /status {
+		stub_status on;
+ 		access_log   off;
+  		allow 217.174.98.237;
+		allow 217.174.97.87;
+		allow 172.16.0.0/16;
+		allow 127.0.0.1;
+  		deny all;
+  	}
+
+	location /ammo {
+		alias /data/qa/ammo;
+	}
+}
