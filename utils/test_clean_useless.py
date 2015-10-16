@@ -9,6 +9,9 @@ import shutil
 import random
 
 test_root_path = "test_data/useless"
+if not os.path.exists(test_root_path):
+    os.makedirs("test_data")
+    os.makedirs("test_data/useless")
 logger = Logger()
 
 class TestUselessTR(unittest.TestCase):
