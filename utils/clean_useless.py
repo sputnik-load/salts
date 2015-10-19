@@ -124,7 +124,7 @@ class UselessTR():
                     modified_jmx, console_log, report_txt, jm_log_2 
                     from salts_testresult """
         cursor.execute(query)
-        return self._get_db_ref(cursor.fetchall)
+        return self._get_db_ref(cursor.fetchall())
         
     def useless_files(self, log_files, db_ref):
         return ["%s/%s" % (self._media_res_path, lf) for lf in log_files if not lf in db_ref]
@@ -150,6 +150,8 @@ class UselessTR():
             self._logger.info(msg)
  
     def remove_useless_files(self, ul_files):
+        if not ul_files:
+            self._logger.info("Useless files were not found.")
         for ulf in ul_files:
             if self._options.dry_run:
                 msg = "Useless %s file should be removed." % ulf
@@ -162,6 +164,8 @@ class UselessTR():
         return [rf for rf in db_ref if not rf in log_files]
 
     def log_dead_references(self, dead_ref):
+        if not dead_ref:
+            self._logger.info("Dead references were not found.")
         for drf in dead_ref:
             self._logger.info("Dead reference %s was found." % drf)
          
@@ -176,6 +180,7 @@ def main():
         u_tr.remove_useless_files(ul_files)
         u_tr.remove_empty_folders(u_tr.get_media_res_path())
         dead_ref = u_tr.dead_db_file_references(log_files, db_ref)        
+        u_tr.log_dead_references(dead_ref)
     except Exception, e:
         print "Exception: %s" % e
 
