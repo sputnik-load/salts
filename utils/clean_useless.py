@@ -165,6 +165,7 @@ class UselessTR():
         if not self._db_records:
             self.db_file_references()
         cursor = self._conn.cursor()
+        clear_executed = False
         for rec in self._db_records:
             m = zip(self._log_files_fields, rec)
             for item in m:
@@ -174,8 +175,10 @@ class UselessTR():
                                 field, value)
                     cursor.execute(query)                            
                     self._logger.info("Dead reference %s will be cleared." % value)
-        self._conn.commit()
-        self._logger.info("All dead references have been cleared successfully.")
+                    clear_executed = True
+        if clear_executed:
+            self._conn.commit()
+            self._logger.info("All dead references have been cleared successfully.")
         
     def useless_files(self, log_files, db_ref):
         return ["%s/%s" % (self._media_res_path, lf) for lf in log_files if not lf in db_ref]
