@@ -6,6 +6,7 @@ import subprocess
 import os
 import logging
 from optparse import OptionParser
+import ConfigParser
 
 def check_output(*popenargs, **kwargs):
     process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
@@ -22,6 +23,9 @@ def check_output(*popenargs, **kwargs):
     
 def parse_options():
     parser = OptionParser()
+    parser.add_option("-c", "--db-config", 
+                        dest = "db_config",  
+                        help = "Config with db settings.")
     parser.add_option("-p", "--tr-path", 
                         dest = "tr_path", 
                         help = "The path to the folder useless files should be removed from.")
@@ -47,9 +51,13 @@ def parse_options():
     (options, args) = parser.parse_args()
     opts = dict()
     if not options.tr_path:
-        raise Exception("Required <tr-path> option value is absent. Run with --help.")
+        raise Exception("Required 'tr-path' option value is absent. Run with --help.")
     if not options.tr_subfolder:
-        raise Exception("Required <tr-subfolder> option value is absent. Run with --help.")
+        raise Exception("Required 'tr-subfolder' option value is absent. Run with --help.")
+    if not options.db_config:
+        raise Exception("Required 'db-config' option value is absent. Run with --help.")
+    if not os.path.exists(options.db_config):
+        raise Exception("Config file with db settings isn't exists.")
     return options
 
 class Logger():
@@ -102,7 +110,33 @@ class UselessTR():
                             self._options.quiet)
         self._media_res_path = self._options.tr_path
         self._subfolder = self._options.tr_subfolder
-            
+        self._log_files_fields = ['metrics', 'jm_jtl', 'phout', 'yt_log', 'jm_log', 
+                                    'ph_conf', 'yt_conf', 'modified_jmx', 'console_log', 
+                                    'report_txt', 'jm_log_2' ]
+        self._db_records = None
+        self._conn = None
+        self._connect_db()
+
+    def _connect_db(self):
+        config = ConfigParser.RawConfigParser()
+        config.read(self._options.db_config)
+        db_section_name = "DB"
+        if not config.has_section(db_section_name):
+            raise Exception("Config %s file hasn't '%s' section." % (
+                    self._options.db_config, db_section_name)) 
+
+        db_settings = {"host_name": "", "db_name": "", "user_name": "", "password": ""}
+        for setting in db_settings:
+            if not config.has_option(db_section_name, setting):
+                raise Exception("Config %s file hasn't '%s' option in '%s' section." % (
+                        self._options.db_config, db_section_name, setting))
+            db_settings[setting] = config.get(db_section_name, setting)
+
+        conn_string = "host='%s' dbname='%s' user='%s' password='%s'" % (
+                        db_settings["host_name"], db_settings["db_name"],
+                        db_settings["user_name"], db_settings["password"])
+        self._conn = psycopg2.connect(conn_string)
+ 
     def _get_db_ref(self, db_records): 
         db_ref = []
         for rec in db_records:
@@ -117,14 +151,31 @@ class UselessTR():
         return output.replace("%s/" % self._media_res_path, "").split("\n")[:-1]
 
     def db_file_references(self):
-        conn_string = "host='salt-dev.dev.ix.km' dbname='salts' user='salts' password='salts'"
-        conn = psycopg2.connect(conn_string)
-        cursor = conn.cursor()
-        query = """ select metrics, jm_jtl, phout, yt_log, jm_log, ph_conf, yt_conf,
-                    modified_jmx, console_log, report_txt, jm_log_2 
-                    from salts_testresult """
+        cursor = self._conn.cursor()
+        query = """ select %s, %s, %s, %s, %s, 
+                            %s, %s, %s, %s, %s, %s from salts_testresult """ % tuple(self._log_files_fields)
         cursor.execute(query)
-        return self._get_db_ref(cursor.fetchall())
+        self._db_records = cursor.fetchall()
+        return self._get_db_ref(self._db_records)
+
+    def clear_dead_references(self, dead_ref):
+        if self._options.dry_run:
+            self._logger.info("Dead references weren't be cleared. Dry-run mode enabled.")
+            return
+        if not self._db_records:
+            self.db_file_references()
+        cursor = self._conn.cursor()
+        for rec in self._db_records:
+            m = zip(self._log_files_fields, rec)
+            for item in m:
+                (field, value) = item
+                if value in dead_ref:
+                    query = "update salts_testresult set %s='' where %s='%s'" % (field, 
+                                field, value)
+                    cursor.execute(query)                            
+                    self._logger.info("Dead reference %s will be cleared." % value)
+        self._conn.commit()
+        self._logger.info("All dead references have been cleared successfully.")
         
     def useless_files(self, log_files, db_ref):
         return ["%s/%s" % (self._media_res_path, lf) for lf in log_files if not lf in db_ref]
@@ -179,8 +230,9 @@ def main():
         ul_files = u_tr.useless_files(log_files, db_ref)
         u_tr.remove_useless_files(ul_files)
         u_tr.remove_empty_folders(u_tr.get_media_res_path())
-        dead_ref = u_tr.dead_db_file_references(log_files, db_ref)        
+        dead_ref = u_tr.dead_db_file_references(log_files, db_ref)
         u_tr.log_dead_references(dead_ref)
+        u_tr.clear_dead_references(dead_ref) 
     except Exception, e:
         print "Exception: %s" % e
 
