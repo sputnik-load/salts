@@ -2,6 +2,7 @@ import unittest
 import os
 import re
 import psycopg2
+import shutil
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from datetime import datetime
 from datetime import timedelta
@@ -19,7 +20,6 @@ DB_SETTINGS_INI = "test_db_settings.ini"
 TEST_FOLDER = "test_files"
 TEST_DB_NAME = "test_db"
 TEST_TABLE_NAME = "salts_testresult"
-TEST_RESULTS_DIR = "test_results"
 TEST_LOG = "test.log"
 CSV_NAME = "data.csv"
 ROOT_PATH = "."
@@ -32,6 +32,10 @@ def create_test_folder(base_name, root = ROOT_PATH):
             os.mkdir(folder_path)
             return folder_path
         i += 1
+
+def remove_test_folder(test_folder):
+    if os.path.exists(test_folder):
+        shutil.rmtree(test_folder)
 
 def generate_test_file(base_name, folder = TEST_FOLDER):
     i = 0
@@ -57,16 +61,6 @@ def create_test_database():
         cur.execute("CREATE DATABASE %s" % TEST_DB_NAME)
     cur.close()
     conn.close()
-
-def log_name_exists(conn, log_type, log_name):
-    cur = conn.cursor()
-    query = "SELECT id FROM %s WHERE %s = '%s'" % (TEST_TABLE_NAME, log_type, log_name)
-    cur.execute(query)
-    result = True
-    if not cur.fetchall():
-        resut = False
-    cur.close()
-    return result
 
 class TestProcessExpired(unittest.TestCase):
 
@@ -102,7 +96,12 @@ class TestProcessExpired(unittest.TestCase):
         self._conn.commit()
         cur.close()
 
-        
+    def _clear_test_table(self):
+        cur = self._conn.cursor()
+        cur.execute("DELETE FROM %s;" % TEST_TABLE_NAME)
+        self._conn.commit()
+        cur.close()
+
     def _drop_test_table(self):
         cur = self._conn.cursor()
         cur.execute("DROP TABLE %s;" % TEST_TABLE_NAME)
@@ -117,76 +116,98 @@ class TestProcessExpired(unittest.TestCase):
         with open(self._csv_path, "w") as csv_file:
             i = 1
             k = 10
+            rec_id = 1 
             for col in columns:        
-                for case in test_data[col]:
+                for case in test_data[col]: 
                     period = case[0]
                     file_name = "%s.%s" % (col, period)
                     file_path = generate_test_file(file_name, log_path)
-                    tr_file_path = re.sub("^%s/" % ROOT_PATH, "", file_path)
+                    tr_file_path = re.sub("^%s/" % self._tr_path, "", file_path)
                     dt = cur_dt - timedelta(days = period)
-                    csv_file.write("%s%s%s%s\n" % (dt.strftime("%Y-%m-%d %H:%M:%S"), 
-                                                    ";" * i, tr_file_path, ";" * k))
+                    csv_file.write("%d;%s%s%s%s\n" % (rec_id, 
+                                    dt.strftime("%Y-%m-%d %H:%M:%S"), 
+                                    ";" * i, tr_file_path, ";" * k))
                     case.append(tr_file_path)
+                    case.append(rec_id)
+                    rec_id += 1
                 i += 1
                 k -= 1
 
     def _load_csv(self):        
         cur = self._conn.cursor()
-        query = """COPY %s (dt_finish, metrics, jm_jtl, phout, yt_log, jm_log,
-                            ph_conf, yt_conf, modified_jmx, console_log,
-                            report_txt, jm_log_2) 
+        query = """COPY %s (id, dt_finish, metrics, jm_jtl, phout, yt_log, 
+                            jm_log, ph_conf, yt_conf, modified_jmx, 
+                            console_log, report_txt, jm_log_2) 
                     FROM '%s' DELIMITER ';' CSV;
                 """ % (TEST_TABLE_NAME, self._csv_path) 
         cur.execute(query)
         self._conn.commit()
         cur.close()
 
+    def _log_path_by_id(self, rec_id, log_type):
+        cur = self._conn.cursor()
+        query = "SELECT %s FROM %s WHERE id = '%s'"
+        cur.execute(query % (log_type, TEST_TABLE_NAME, rec_id))
+        result = cur.fetchall()
+        cur.close()
+        if not result:
+            return None
+        return result[0][0]
+
     def _check_archive(self, test_data): 
         for log_type in test_data:
             for case in test_data[log_type]: 
                 archive = case[1]
                 file_path = case[2]
+                rec_id = case[3]
+                abs_file_path = "%s/%s" % (self._tr_path, file_path)
                 if archive:
                     arch_path = "%s.gz" % file_path
-                    self.assertTrue(os.path.exists(arch_path),
-                        "File %s is absent." % arch_path)
-                    self.assertTrue(
-                        log_name_exists(self._conn, log_type, arch_path),
-                        "Record with %s isn't exist." % arch_path)
+                    abs_arch_path = "%s.gz" % abs_file_path
+                    self.assertTrue(os.path.exists(abs_arch_path),
+                        "File %s is absent (log_type=%s)." % (abs_arch_path, log_type))
+                    log_path = self._log_path_by_id(rec_id, log_type)
+                    self.assertEqual(log_path, arch_path,
+                        "Record with %s isn't exist (log_type=%s)." % (arch_path, log_type))
                 else:
-                    self.assertTrue(os.path.exists(file_path),
-                        "File %s is absent." % file_path)
-                    self.assertTrue(
-                        log_name_exists(self._conn, log_type, file_path),
-                        "Record with %s isn't exist." % file_path)
+                    self.assertTrue(os.path.exists(abs_file_path),
+                        "File %s is absent (log_type=%s)." % (abs_file_path, log_type))
+                    log_path = self._log_path_by_id(rec_id, log_type)
+                    self.assertEqual(log_path, file_path,
+                        "Record with %s isn't exist (log_type=%s)." % (file_path, log_type))
 
-    def _check_remove(self, test_data): 
+    def _check_remove(self, test_data):
         for log_type in test_data:
             for case in test_data[log_type]: 
                 remove = case[1]
                 file_path = case[2]
+                rec_id = case[3]
+                abs_file_path = "%s/%s" % (self._tr_path, file_path)
                 if remove:
-                    self.assertTrue(not os.path.exists(file_path),
-                        "File %s is exist (should be removed)." % file_path)
-                    self.assertTrue(
-                        log_name_exists(self._conn, log_type, file_path),
-                        "Record with %s is exist (should be empty)." % file_path)
+                    self.assertTrue(not os.path.exists(abs_file_path),
+                        "File %s is exist - should be removed. (log_type=%s)." % (
+                        abs_file_path, log_type))
+                    log_path = self._log_path_by_id(rec_id, log_type)
+                    self.assertEqual(log_path, "",
+                        "Record with %s is exist - '%s' field should be empty." % (
+                        file_path, log_type))
                 else:
-                    self.assertTrue(os.path.exists(file_path),
-                        "File %s isn't exist." % file_path)
-                    self.assertTrue(
-                        log_name_exists(self._conn, log_type, file_path),
-                        "Record with %s isn't exist." % file_path)
+                    self.assertTrue(os.path.exists(abs_file_path),
+                        "File %s isn't exist (log_type=%s)." % (abs_file_path, log_type))
+                    log_path = self._log_path_by_id(rec_id, log_type)
+                    self.assertEqual(log_path, file_path,
+                        "Record with %s isn't exist (log_type=%s)." % (file_path, log_type))
                     
     def setUp(self):
-        self._tr_path = TEST_RESULTS_DIR
         self._db_name = TEST_DB_NAME
         self._test_log = TEST_LOG
+        self._tr_path = os.path.abspath(create_test_folder(TEST_FOLDER))
         self._csv_path = "%s/%s" % (os.getcwd(), CSV_NAME)
 
     def tearDown(self):
         if os.path.exists(self._csv_path):
             os.remove(self._csv_path)
+        remove_test_folder(self._tr_path)
 
     def test_time_config_absent(self):
         self._create_test_options()
@@ -211,13 +232,17 @@ class TestProcessExpired(unittest.TestCase):
         self._create_test_options()
         config = ConfigParser.RawConfigParser()
         config.read(TIME_CONFIG_INI)
+        arch_value = config.get("metrics", "archive")
+        remove_value = config.get("metrics", "remove")
         config.remove_section("metrics")
-        with open(TIME_CONFIG_INI, 'wb') as configfile:
+        with open(TIME_CONFIG_INI, "wb") as configfile:
             config.write(configfile)
         self.assertRaises(TimeConfigError, ExpiredHandler,
                             self._options, logger,
                             TIME_CONFIG_INI, DB_SETTINGS_INI)
         config.add_section("metrics")
+        config.set("metrics", "archive", arch_value)
+        config.set("metrics", "remove", remove_value)
         with open(TIME_CONFIG_INI, 'wb') as configfile:
             config.write(configfile)
 
@@ -262,7 +287,7 @@ class TestProcessExpired(unittest.TestCase):
                             TIME_CONFIG_INI, DB_SETTINGS_INI)
         self._conn = eh.connect_db()
         self._create_test_table()
-        test_folder = create_test_folder(TEST_FOLDER)
+        self._clear_test_table()
         test_data = {"metrics": [[0, False], [180, False], [181, True]],
                     "jm_jtl": [[0, False], [30, False], [31, True]],
                     "phout": [[0, False], [30, False], [31, True]],
@@ -275,7 +300,7 @@ class TestProcessExpired(unittest.TestCase):
                     "report_txt": [[0, False], [366, False]],
                     "jm_log_2": [[0, False], [30, False], [31, True]]
                 }
-        self._data2csv(test_data, test_folder)
+        self._data2csv(test_data, self._tr_path)
         self._load_csv()
         eh.archive()
         self._check_archive(test_data)
@@ -289,20 +314,20 @@ class TestProcessExpired(unittest.TestCase):
                             TIME_CONFIG_INI, DB_SETTINGS_INI)
         self._conn = eh.connect_db()
         self._create_test_table()
-        test_folder = create_test_folder(TEST_FOLDER)
+        self._clear_test_table()
         test_data = {"metrics": [[0, False], [366, False]],
                     "jm_jtl": [[0, False], [366, False]],
                     "phout": [[0, False], [366, False]],
-                    "yt_log": [[0, False], [30, False], [31, True]],
-                    "jm_log": [[0, False], [30, False], [31, True]],
-                    "yt_conf": [[0, False], [365, False], [366, True]],
-                    "ph_conf": [[0, False], [365, False], [366, True]],
-                    "modified_jmx": [[0, False], [180, False], [181, True]],
-                    "console_log": [[0, False], [30, False], [31, True]],
+                    "yt_log": [[0, False], [180, False], [181, True]],
+                    "jm_log": [[0, False], [180, False], [181, True]],
+                    "yt_conf": [[0, False], [366, False]],
+                    "ph_conf": [[0, False], [1001, False]],
+                    "modified_jmx": [[0, False], [181, False]],
+                    "console_log": [[0, False], [180, False], [181, True]],
                     "report_txt": [[0, False], [366, False]],
-                    "jm_log_2": [[0, False], [30, False], [31, True]]
+                    "jm_log_2": [[0, False], [399, False]]
                 }
-        self._data2csv(test_data, test_folder)
+        self._data2csv(test_data, self._tr_path)
         self._load_csv()
         eh.remove()
         self._check_remove(test_data)
