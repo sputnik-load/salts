@@ -1,25 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-import datetime
 import logging
 import ConfigParser
-import subprocess
 import psycopg2
+import gzip
 from optparse import OptionParser
 from process_expired_const import *
-
-def check_output(*popenargs, **kwargs):
-    process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
-    output, unused_err = process.communicate()
-    retcode = process.poll()
-    if retcode:
-        cmd = kwargs.get("args")
-        if cmd is None:
-            cmd = popenargs[0]
-        error = subprocess.CalledProcessError(retcode, cmd)
-        raise error
-    return output
 
 def parse_options():
     parser = OptionParser(description = SCRIPT_DESC)
@@ -100,6 +87,7 @@ class ExpiredHandler(object):
                     db_settings_path = DB_SETTINGS_INI):
         self._conn = None
         self._options = options
+        self._options.tr_path = os.path.abspath(self._options.tr_path)
         self._logger = logger.get_logger(
                         LOGGER_NAME,
                         self._options.log_filename, self._options.verbose,
@@ -163,54 +151,99 @@ class ExpiredHandler(object):
         if self._conn:
             self._conn.close()
 
-    def _get_log_files(self):
-        output = check_output(["find", "%s" % self._options.tr_path, "-type", "f"])
-        return output.replace("%s/" % self._options.tr_path, "").split("\n")[:-1]
-
     def _get_affected_files(self, action): 
         cursor = self._conn.cursor()
         query = ""
         has_union = True
         for log_type in self._time_periods:
-            if not has_union: 
-                query += "\nUNION\n"
-                has_union = True
             if not self._time_periods[log_type][action] == "-1":
-                query += """SELECT id, dt_finish, %s as log_type 
+                if not has_union: 
+                    query += "\nUNION\n"
+                    has_union = True
+                query += """SELECT id, '%s', %s as log_type 
                             FROM salts_testresult 
                             WHERE date_trunc('day', dt_finish) < current_date - %s and %s <> ''
-                        """ % (log_type, self._time_periods[log_type][action], log_type)
+                        """ % (log_type, log_type, self._time_periods[log_type][action], log_type)
                 has_union = False
         cursor.execute(query)
         result = cursor.fetchall()
         cursor.close()
         return result
 
+    def _archive_file(self, rec_id, log_type, log_path):
+        msg = "%s log file should be archived (id=%s; log_type=%s)."
+        self._logger.info(msg % (log_path, rec_id, log_type))
+        if self._options.dry_run:
+            return
+        with open("%s/%s" % (self._options.tr_path, log_path), "rb") as log_file:
+            arch_file = gzip.open("%s/%s.gz" % (self._options.tr_path, log_path), 
+                                    "wb")
+            arch_file.writelines(log_file.readlines())
+            arch_file.close()
+        msg = "%s log file was archived (id=%s; log_type=%s). " 
+        msg += "Archive path is %s.gz." 
+        self._logger.info(msg % (log_path, rec_id, log_type, log_path))
+
+    def _update_record(self, rec_id, log_type, log_path, action = "clear"):
+        new_log_path = ""
+        if action == "archive":
+            new_log_path = "%s.gz" % log_path
+        msg = "Log path %s should be replaced with %s (id=%s; log_type=%s)."
+        self._logger.info(msg % (log_path, new_log_path, rec_id, log_type))
+        if self._options.dry_run:
+            return
+        cursor = self._conn.cursor()
+        query = "UPDATE salts_testresult SET %s = '%s' WHERE id = %s" 
+        cursor.execute(query % (log_type, new_log_path, rec_id))
+        self._conn.commit()
+        cursor.close()
+        msg = "Log path %s was replaced with %s (id=%s; log_type=%s)."
+        self._logger.info(msg % (log_path, new_log_path, rec_id, log_type))
+
+    def _remove_log_file(self, log_path): 
+        self._logger.info("Log file %s should be removed." % log_path)
+        if self._options.dry_run:
+            return
+        os.remove("%s/%s" % (self._options.tr_path, log_path))
+        self._logger.info("Log file %s was removed." % log_path)
+
     def archive(self):
         db_affected_recs = self._get_affected_files("archive")
         for record in db_affected_recs:
-            pass
+            (rec_id, log_type, log_path) = record
+            if not os.path.exists("%s/%s" % (self._options.tr_path, log_path)):
+                msg = "There is log path %s in DB (id=%s; log_type=%s), "
+                msg += "but log file %s isn't exist."
+                self._logger.warning(msg % (log_path, rec_id, log_type, 
+                                            log_path))            
+            else:
+                self._archive_file(rec_id, log_type, log_path)
+                self._update_record(rec_id, log_type, log_path, "archive")
+                self._remove_log_file(log_path)
 
     def remove(self): 
-        log_files = self._get_affected_files("remove") 
-
+        db_affected_recs = self._get_affected_files("remove")
+        for record in db_affected_recs:
+            (rec_id, log_type, log_path) = record
+            if not os.path.exists("%s/%s" % (self._options.tr_path, log_path)):
+                msg = "There is log path %s in DB (id=%s; log_type=%s), "
+                msg += "but log file %s isn't exist."
+                self._logger.warning(msg % (log_path, rec_id, log_type, 
+                                            log_path))            
+            else:
+                self._update_record(rec_id, log_type, log_path)
+                self._remove_log_file(log_path)
 
 def main():
     try:
         options = parse_options()
         logger = Logger()
         eh = ExpiredHandler(options, logger)
-        eh.archive()
         eh.remove()
+        eh.archive()
     except Exception, e:
         print "Exception: %s" % e
 
 if __name__ == "__main__":
 	main()
-#if not args.path:
-#    print 
-
-# gzip -c tank.log > tank.log.gzip - archive
-# gzip -d tank.log - decompress
-
 
