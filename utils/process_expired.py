@@ -20,7 +20,7 @@ def parse_options():
                         dest = "log_filename",
                         default = LOG_FILENAME_DEFAULT,
                         help = LOG_FILENAME_HELP)
-    parser.add_option("-d", "--dry-run",
+    parser.add_option("-r", "--dry-run",
                         dest = "dry_run",
                         action = "store_true", default = False,
                         help = DRY_RUN_HELP)
@@ -145,13 +145,18 @@ class ExpiredHandler(object):
                         self._db_settings["user"],
                         self._db_settings["password"])
         self._conn = psycopg2.connect(conn_string)
+        msg = "Connection with '%s' DB was created." % self._options.db_name
+        self._logger.info(msg)
         return self._conn
 
     def disconnect_db(self):
         if self._conn:
             self._conn.close()
+            self._conn = None
+            msg = "Connection with '%s' DB was closed." % self._options.db_name
+            self._logger.info(msg)
 
-    def _get_affected_files(self, action): 
+    def _get_affected_files(self, action):
         cursor = self._conn.cursor()
         query = ""
         has_union = True
@@ -239,8 +244,10 @@ def main():
         options = parse_options()
         logger = Logger()
         eh = ExpiredHandler(options, logger)
+        eh.connect_db()
         eh.remove()
         eh.archive()
+        eh.disconnect_db()
     except Exception, e:
         print "Exception: %s" % e
 
