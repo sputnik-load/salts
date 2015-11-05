@@ -104,8 +104,9 @@ class ExpiredHandler(object):
                                          self._options.log_filename,
                                          self._options.verbose,
                                          self._options.quiet)
-        self._time_config_name = time_config_path
-        self._db_settings_path = db_settings_path
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        self._time_config_name = "%s/%s" % (script_dir, time_config_path)
+        self._db_settings_path = "%s/%s" % (script_dir, db_settings_path)
         self._read_time_config()
         self._read_db_config()
         self._logger.info("Expired handler init...")

@@ -54,6 +54,11 @@ def generate_test_file(base_name, folder=TEST_FOLDER):
         i += 1
 
 
+def get_full_path(file_name):
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    return "%s/%s" % (script_dir, file_name)
+
+
 def create_test_database():
     conn_string_templ = "host='%s' dbname='%s' user='%s' password='%s'"
     settings = ("localhost", "postgres", "test", "test")
@@ -72,6 +77,8 @@ class TestProcessExpired(unittest.TestCase):
         unittest.TestCase.__init__(self, methodName)
         self._options = None
         self._conn = None
+        self._time_config_path = get_full_path(TIME_CONFIG_INI)
+        self._db_settings_path = get_full_path(DB_SETTINGS_INI)
 
     def _create_test_options(self, temp_folder_path=""):
         parser = OptionParser()
@@ -227,30 +234,30 @@ should be empty." % (file_path, log_type)
 
     def test_time_config_absent(self):
         self._create_test_options()
-        tmp_name = "%s.copy" % TIME_CONFIG_INI
-        os.rename(TIME_CONFIG_INI, tmp_name)
+        tmp_name = "%s.copy" % self._time_config_path
+        os.rename(self._time_config_path, tmp_name)
         self.assertRaises(TimeConfigError, ExpiredHandler,
                           self._options, logger,
                           TIME_CONFIG_INI, DB_SETTINGS_INI)
-        os.rename(tmp_name, TIME_CONFIG_INI)
+        os.rename(tmp_name, self._time_config_path)
 
     def test_db_settings_absent(self):
         self._create_test_options()
-        tmp_name = "%s.copy" % DB_SETTINGS_INI
-        os.rename(DB_SETTINGS_INI, tmp_name)
+        tmp_name = "%s.copy" % self._db_settings_path
+        os.rename(self._db_settings_path, tmp_name)
         self.assertRaises(DBConfigError, ExpiredHandler,
                           self._options, logger,
                           TIME_CONFIG_INI, DB_SETTINGS_INI)
-        os.rename(tmp_name, DB_SETTINGS_INI)
+        os.rename(tmp_name, self._db_settings_path)
 
     def test_time_config_section_absent(self):
         self._create_test_options()
         config = ConfigParser.RawConfigParser()
-        config.read(TIME_CONFIG_INI)
+        config.read(self._time_config_path)
         arch_value = config.get("metrics", "archive")
         remove_value = config.get("metrics", "remove")
         config.remove_section("metrics")
-        with open(TIME_CONFIG_INI, "wb") as configfile:
+        with open(self._time_config_path, "wb") as configfile:
             config.write(configfile)
         self.assertRaises(TimeConfigError, ExpiredHandler,
                           self._options, logger,
@@ -258,21 +265,21 @@ should be empty." % (file_path, log_type)
         config.add_section("metrics")
         config.set("metrics", "archive", arch_value)
         config.set("metrics", "remove", remove_value)
-        with open(TIME_CONFIG_INI, 'wb') as configfile:
+        with open(self._time_config_path, "wb") as configfile:
             config.write(configfile)
 
     def test_time_config_option_absent(self):
         self._create_test_options()
         config = ConfigParser.RawConfigParser()
-        config.read(TIME_CONFIG_INI)
+        config.read(self._time_config_path)
         config.remove_option("DEFAULT", "archive")
-        with open(TIME_CONFIG_INI, "wb") as configfile:
+        with open(self._time_config_path, "wb") as configfile:
             config.write(configfile)
         self.assertRaises(TimeConfigError, ExpiredHandler,
                           self._options, logger,
                           TIME_CONFIG_INI, DB_SETTINGS_INI)
         config.set("DEFAULT", "archive", TC_NO_TOUCH)
-        with open(TIME_CONFIG_INI, 'wb') as configfile:
+        with open(self._time_config_path, 'wb') as configfile:
             config.write(configfile)
 
     def test_db_config_section_absent(self):
@@ -285,15 +292,15 @@ should be empty." % (file_path, log_type)
     def test_db_config_option_absent(self):
         self._create_test_options()
         config = ConfigParser.RawConfigParser()
-        config.read(DB_SETTINGS_INI)
+        config.read(self._db_settings_path)
         config.remove_option(self._options.db_name, "host")
-        with open(DB_SETTINGS_INI, 'wb') as configfile:
+        with open(self._db_settings_path, "wb") as configfile:
             config.write(configfile)
         self.assertRaises(DBConfigError, ExpiredHandler,
                           self._options, logger,
                           TIME_CONFIG_INI, DB_SETTINGS_INI)
         config.set(self._options.db_name, "host", "localhost")
-        with open(DB_SETTINGS_INI, "wb") as configfile:
+        with open(self._db_settings_path, "wb") as configfile:
             config.write(configfile)
 
     def test_archive(self):
