@@ -12,7 +12,7 @@ from process_expired import ExpiredHandler
 from process_expired import Logger
 from process_expired import TimeConfigError
 from process_expired import DBConfigError
-from process_expired_const import *
+from process_expired_const import TC_NO_TOUCH
 
 logger = Logger()
 TIME_CONFIG_INI = "test_process_expired.ini"
@@ -24,7 +24,8 @@ TEST_LOG = "test.log"
 CSV_NAME = "data.csv"
 ROOT_PATH = "."
 
-def create_test_folder(base_name, root = ROOT_PATH):
+
+def create_test_folder(base_name, root=ROOT_PATH):
     i = 0
     while True:
         folder_path = "%s/%s-%d" % (root, base_name, i)
@@ -33,11 +34,13 @@ def create_test_folder(base_name, root = ROOT_PATH):
             return folder_path
         i += 1
 
+
 def remove_test_folder(test_folder):
     if os.path.exists(test_folder):
         shutil.rmtree(test_folder)
 
-def generate_test_file(base_name, folder = TEST_FOLDER):
+
+def generate_test_file(base_name, folder=TEST_FOLDER):
     i = 0
     base_file_path = "%s/%s" % (folder, base_name)
     file_path = base_file_path
@@ -50,10 +53,11 @@ def generate_test_file(base_name, folder = TEST_FOLDER):
         file_path = "%s.%d" % (base_file_path, i)
         i += 1
 
+
 def create_test_database():
-    conn_string = "host='%s' dbname='%s' user='%s' password='%s'" % (
-                    "localhost", "postgres", "test", "test")
-    conn = psycopg2.connect(conn_string)
+    conn_string_templ = "host='%s' dbname='%s' user='%s' password='%s'"
+    settings = ("localhost", "postgres", "test", "test")
+    conn = psycopg2.connect(conn_string_templ % settings)
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
     cur.execute("SELECT 1 FROM pg_database WHERE datname = '%s'" % TEST_DB_NAME)
@@ -62,17 +66,22 @@ def create_test_database():
     cur.close()
     conn.close()
 
-class TestProcessExpired(unittest.TestCase):
 
-    def _create_test_options(self, temp_folder_path = ""):
+class TestProcessExpired(unittest.TestCase):
+    def __init__(self, methodName):
+        unittest.TestCase.__init__(self, methodName)
+        self._options = None
+        self._conn = None
+
+    def _create_test_options(self, temp_folder_path=""):
         parser = OptionParser()
-        parser.add_option("--tr-path", default = self._tr_path)
-        parser.add_option("--db-name", default = self._db_name)
-        parser.add_option("--log-filename", default = self._test_log)
-        parser.add_option("--dry-run", default = False)
-        parser.add_option("--verbose", default = False)
-        parser.add_option("--quiet", default = True)
-        (self._options, args) = parser.parse_args()
+        parser.add_option("--tr-path", default=self._tr_path)
+        parser.add_option("--db-name", default=self._db_name)
+        parser.add_option("--log-filename", default=self._test_log)
+        parser.add_option("--dry-run", default=False)
+        parser.add_option("--verbose", default=False)
+        parser.add_option("--quiet", default=True)
+        self._options = parser.parse_args()[0]
 
     def _create_test_table(self):
         cur = self._conn.cursor()
@@ -109,37 +118,38 @@ class TestProcessExpired(unittest.TestCase):
         cur.close()
 
     def _data2csv(self, test_data, log_path):
-        columns = ["metrics", "jm_jtl", "phout", "yt_log", "jm_log",
-                    "ph_conf", "yt_conf", "modified_jmx", "console_log", 
-                    "report_txt", "jm_log_2"]
+        columns = ["metrics", "jm_jtl", "phout", "yt_log", "jm_log", "ph_conf",
+                   "yt_conf", "modified_jmx", "console_log", "report_txt",
+                   "jm_log_2"]
         cur_dt = datetime.now()
         with open(self._csv_path, "w") as csv_file:
             i = 1
             k = 10
-            rec_id = 1 
-            for col in columns:        
-                for case in test_data[col]: 
+            rec_id = 1
+            for col in columns:
+                for case in test_data[col]:
                     period = case[0]
-                    file_name = "%s.%s" % (col, period)
-                    file_path = generate_test_file(file_name, log_path)
-                    tr_file_path = re.sub("^%s/" % self._tr_path, "", file_path)
-                    dt = cur_dt - timedelta(days = period)
-                    csv_file.write("%d;%s%s%s%s\n" % (rec_id, 
-                                    dt.strftime("%Y-%m-%d %H:%M:%S"), 
-                                    ";" * i, tr_file_path, ";" * k))
+                    tr_file_path = re.sub("^%s/" % self._tr_path, "",
+                                          generate_test_file("%s.\
+%s" % (col, period), log_path))
+                    dt = cur_dt - timedelta(days=period)
+                    params = (rec_id,
+                              dt.strftime("%Y-%m-%d %H:%M:%S"),
+                              ";" * i, tr_file_path, ";" * k)
+                    csv_file.write("%d;%s%s%s%s\n" % params)
                     case.append(tr_file_path)
                     case.append(rec_id)
                     rec_id += 1
                 i += 1
                 k -= 1
 
-    def _load_csv(self):        
+    def _load_csv(self):
         cur = self._conn.cursor()
-        query = """COPY %s (id, dt_finish, metrics, jm_jtl, phout, yt_log, 
-                            jm_log, ph_conf, yt_conf, modified_jmx, 
-                            console_log, report_txt, jm_log_2) 
+        query = """COPY %s (id, dt_finish, metrics, jm_jtl, phout, yt_log,
+                            jm_log, ph_conf, yt_conf, modified_jmx,
+                            console_log, report_txt, jm_log_2)
                     FROM '%s' DELIMITER ';' CSV;
-                """ % (TEST_TABLE_NAME, self._csv_path) 
+                """ % (TEST_TABLE_NAME, self._csv_path)
         cur.execute(query)
         self._conn.commit()
         cur.close()
@@ -154,9 +164,9 @@ class TestProcessExpired(unittest.TestCase):
             return None
         return result[0][0]
 
-    def _check_archive(self, test_data): 
+    def _check_archive(self, test_data):
         for log_type in test_data:
-            for case in test_data[log_type]: 
+            for case in test_data[log_type]:
                 archive = case[1]
                 file_path = case[2]
                 rec_id = case[3]
@@ -164,40 +174,46 @@ class TestProcessExpired(unittest.TestCase):
                 if archive:
                     arch_path = "%s.gz" % file_path
                     abs_arch_path = "%s.gz" % abs_file_path
-                    self.assertTrue(os.path.exists(abs_arch_path),
-                        "File %s is absent (log_type=%s)." % (abs_arch_path, log_type))
+                    msg = "File %s is absent \
+(log_type=%s)." % (abs_arch_path, log_type)
+                    self.assertTrue(os.path.exists(abs_arch_path), msg)
                     log_path = self._log_path_by_id(rec_id, log_type)
-                    self.assertEqual(log_path, arch_path,
-                        "Record with %s isn't exist (log_type=%s)." % (arch_path, log_type))
+                    msg = "Record with %s isn't exist \
+(log_type=%s)." % (arch_path, log_type)
+                    self.assertEqual(log_path, arch_path, msg)
                 else:
-                    self.assertTrue(os.path.exists(abs_file_path),
-                        "File %s is absent (log_type=%s)." % (abs_file_path, log_type))
+                    msg = "File %s is absent \
+(log_type=%s)." % (abs_file_path, log_type)
+                    self.assertTrue(os.path.exists(abs_file_path), msg)
                     log_path = self._log_path_by_id(rec_id, log_type)
-                    self.assertEqual(log_path, file_path,
-                        "Record with %s isn't exist (log_type=%s)." % (file_path, log_type))
+                    msg = "Record with %s isn't exist \
+(log_type=%s)." % (file_path, log_type)
+                    self.assertEqual(log_path, file_path, msg)
 
     def _check_remove(self, test_data):
         for log_type in test_data:
-            for case in test_data[log_type]: 
+            for case in test_data[log_type]:
                 remove = case[1]
                 file_path = case[2]
                 rec_id = case[3]
                 abs_file_path = "%s/%s" % (self._tr_path, file_path)
                 if remove:
-                    self.assertTrue(not os.path.exists(abs_file_path),
-                        "File %s is exist - should be removed. (log_type=%s)." % (
-                        abs_file_path, log_type))
+                    msg = "File %s is exist \
+- should be removed. (log_type=%s)." % (abs_file_path, log_type)
+                    self.assertTrue(not os.path.exists(abs_file_path), msg)
                     log_path = self._log_path_by_id(rec_id, log_type)
-                    self.assertEqual(log_path, "",
-                        "Record with %s is exist - '%s' field should be empty." % (
-                        file_path, log_type))
+                    msg = "Record with %s is exist - '%s' field \
+should be empty." % (file_path, log_type)
+                    self.assertEqual(log_path, "", msg)
                 else:
-                    self.assertTrue(os.path.exists(abs_file_path),
-                        "File %s isn't exist (log_type=%s)." % (abs_file_path, log_type))
+                    msg = "File %s isn't exist \
+(log_type=%s)." % (abs_file_path, log_type)
+                    self.assertTrue(os.path.exists(abs_file_path), msg)
                     log_path = self._log_path_by_id(rec_id, log_type)
-                    self.assertEqual(log_path, file_path,
-                        "Record with %s isn't exist (log_type=%s)." % (file_path, log_type))
-                    
+                    msg = "Record with %s isn't exist \
+(log_type=%s)." % (file_path, log_type)
+                    self.assertEqual(log_path, file_path, msg)
+
     def setUp(self):
         self._db_name = TEST_DB_NAME
         self._test_log = TEST_LOG
@@ -214,18 +230,17 @@ class TestProcessExpired(unittest.TestCase):
         tmp_name = "%s.copy" % TIME_CONFIG_INI
         os.rename(TIME_CONFIG_INI, tmp_name)
         self.assertRaises(TimeConfigError, ExpiredHandler,
-                            self._options, logger,
-                            TIME_CONFIG_INI, DB_SETTINGS_INI)
+                          self._options, logger,
+                          TIME_CONFIG_INI, DB_SETTINGS_INI)
         os.rename(tmp_name, TIME_CONFIG_INI)
-
 
     def test_db_settings_absent(self):
         self._create_test_options()
         tmp_name = "%s.copy" % DB_SETTINGS_INI
         os.rename(DB_SETTINGS_INI, tmp_name)
         self.assertRaises(DBConfigError, ExpiredHandler,
-                            self._options, logger,
-                            TIME_CONFIG_INI, DB_SETTINGS_INI)
+                          self._options, logger,
+                          TIME_CONFIG_INI, DB_SETTINGS_INI)
         os.rename(tmp_name, DB_SETTINGS_INI)
 
     def test_time_config_section_absent(self):
@@ -238,8 +253,8 @@ class TestProcessExpired(unittest.TestCase):
         with open(TIME_CONFIG_INI, "wb") as configfile:
             config.write(configfile)
         self.assertRaises(TimeConfigError, ExpiredHandler,
-                            self._options, logger,
-                            TIME_CONFIG_INI, DB_SETTINGS_INI)
+                          self._options, logger,
+                          TIME_CONFIG_INI, DB_SETTINGS_INI)
         config.add_section("metrics")
         config.set("metrics", "archive", arch_value)
         config.set("metrics", "remove", remove_value)
@@ -254,8 +269,8 @@ class TestProcessExpired(unittest.TestCase):
         with open(TIME_CONFIG_INI, "wb") as configfile:
             config.write(configfile)
         self.assertRaises(TimeConfigError, ExpiredHandler,
-                            self._options, logger,
-                            TIME_CONFIG_INI, DB_SETTINGS_INI)
+                          self._options, logger,
+                          TIME_CONFIG_INI, DB_SETTINGS_INI)
         config.set("DEFAULT", "archive", TC_NO_TOUCH)
         with open(TIME_CONFIG_INI, 'wb') as configfile:
             config.write(configfile)
@@ -264,8 +279,8 @@ class TestProcessExpired(unittest.TestCase):
         self._db_name = "fake_db_name"
         self._create_test_options()
         self.assertRaises(DBConfigError, ExpiredHandler,
-                            self._options, logger,
-                            TIME_CONFIG_INI, DB_SETTINGS_INI)
+                          self._options, logger,
+                          TIME_CONFIG_INI, DB_SETTINGS_INI)
 
     def test_db_config_option_absent(self):
         self._create_test_options()
@@ -275,8 +290,8 @@ class TestProcessExpired(unittest.TestCase):
         with open(DB_SETTINGS_INI, 'wb') as configfile:
             config.write(configfile)
         self.assertRaises(DBConfigError, ExpiredHandler,
-                            self._options, logger,
-                            TIME_CONFIG_INI, DB_SETTINGS_INI)
+                          self._options, logger,
+                          TIME_CONFIG_INI, DB_SETTINGS_INI)
         config.set(self._options.db_name, "host", "localhost")
         with open(DB_SETTINGS_INI, "wb") as configfile:
             config.write(configfile)
@@ -289,17 +304,16 @@ class TestProcessExpired(unittest.TestCase):
         self._create_test_table()
         self._clear_test_table()
         test_data = {"metrics": [[0, False], [180, False], [181, True]],
-                    "jm_jtl": [[0, False], [30, False], [31, True]],
-                    "phout": [[0, False], [30, False], [31, True]],
-                    "yt_log": [[0, False], [30, False], [31, True]],
-                    "jm_log": [[0, False], [30, False], [31, True]],
-                    "yt_conf": [[0, False], [365, False], [366, True]],
-                    "ph_conf": [[0, False], [365, False], [366, True]],
-                    "modified_jmx": [[0, False], [180, False], [181, True]],
-                    "console_log": [[0, False], [30, False], [31, True]],
-                    "report_txt": [[0, False], [366, False]],
-                    "jm_log_2": [[0, False], [30, False], [31, True]]
-                }
+                     "jm_jtl": [[0, False], [30, False], [31, True]],
+                     "phout": [[0, False], [30, False], [31, True]],
+                     "yt_log": [[0, False], [30, False], [31, True]],
+                     "jm_log": [[0, False], [30, False], [31, True]],
+                     "yt_conf": [[0, False], [365, False], [366, True]],
+                     "ph_conf": [[0, False], [365, False], [366, True]],
+                     "modified_jmx": [[0, False], [180, False], [181, True]],
+                     "console_log": [[0, False], [30, False], [31, True]],
+                     "report_txt": [[0, False], [366, False]],
+                     "jm_log_2": [[0, False], [30, False], [31, True]]}
         self._data2csv(test_data, self._tr_path)
         self._load_csv()
         eh.archive()
@@ -307,8 +321,7 @@ class TestProcessExpired(unittest.TestCase):
         self._drop_test_table()
         eh.disconnect_db()
 
-
-    def test_remove(self): 
+    def test_remove(self):
         self._create_test_options()
         eh = ExpiredHandler(self._options, logger,
                             TIME_CONFIG_INI, DB_SETTINGS_INI)
@@ -316,17 +329,16 @@ class TestProcessExpired(unittest.TestCase):
         self._create_test_table()
         self._clear_test_table()
         test_data = {"metrics": [[0, False], [366, False]],
-                    "jm_jtl": [[0, False], [366, False]],
-                    "phout": [[0, False], [366, False]],
-                    "yt_log": [[0, False], [180, False], [181, True]],
-                    "jm_log": [[0, False], [180, False], [181, True]],
-                    "yt_conf": [[0, False], [366, False]],
-                    "ph_conf": [[0, False], [1001, False]],
-                    "modified_jmx": [[0, False], [181, False]],
-                    "console_log": [[0, False], [180, False], [181, True]],
-                    "report_txt": [[0, False], [366, False]],
-                    "jm_log_2": [[0, False], [399, False]]
-                }
+                     "jm_jtl": [[0, False], [366, False]],
+                     "phout": [[0, False], [366, False]],
+                     "yt_log": [[0, False], [180, False], [181, True]],
+                     "jm_log": [[0, False], [180, False], [181, True]],
+                     "yt_conf": [[0, False], [366, False]],
+                     "ph_conf": [[0, False], [1001, False]],
+                     "modified_jmx": [[0, False], [181, False]],
+                     "console_log": [[0, False], [180, False], [181, True]],
+                     "report_txt": [[0, False], [366, False]],
+                     "jm_log_2": [[0, False], [399, False]]}
         self._data2csv(test_data, self._tr_path)
         self._load_csv()
         eh.remove()
@@ -337,4 +349,3 @@ class TestProcessExpired(unittest.TestCase):
 if __name__ == "__main__":
     create_test_database()
     unittest.main()
-
