@@ -175,16 +175,16 @@ class ExpiredHandler(object):
         cursor = self._conn.cursor()
         query = ""
         has_union = True
-        for log_type in self._time_periods:
-            if not self._time_periods[log_type][action] == TC_NO_TOUCH:
+        for artifact in self._time_periods:
+            if not self._time_periods[artifact][action] == TC_NO_TOUCH:
                 if not has_union:
                     query += "\nUNION\n"
                     has_union = True
-                query_part = "SELECT id, '%s', %s as log_type \
+                query_part = "SELECT id, '%s', %s as artifact \
 FROM salts_testresult \
 WHERE date_trunc('day', dt_finish) < current_date - %s and %s <> ''"
-                params = (log_type, log_type,
-                          self._time_periods[log_type][action], log_type)
+                params = (artifact, artifact,
+                          self._time_periods[artifact][action], artifact)
                 query += query_part % params
                 has_union = False
         cursor.execute(query)
@@ -192,9 +192,9 @@ WHERE date_trunc('day', dt_finish) < current_date - %s and %s <> ''"
         cursor.close()
         return result
 
-    def _archive_file(self, rec_id, log_type, log_path):
-        msg = "%s log file should be archived (id=%s; log_type=%s)."
-        self._logger.info(msg % (log_path, rec_id, log_type))
+    def _archive_file(self, rec_id, artifact, log_path):
+        msg = "%s log file should be archived (id=%s; artifact=%s)."
+        self._logger.info(msg % (log_path, rec_id, artifact))
         if self._options.dry_run:
             return
         with open("%s/%s" % (self._options.tr_path, log_path), "rb") as lf:
@@ -203,25 +203,25 @@ WHERE date_trunc('day', dt_finish) < current_date - %s and %s <> ''"
                                   "wb")
             arch_file.writelines(lf.readlines())
             arch_file.close()
-        msg = "%s log file was archived (id=%s; log_type=%s). "
+        msg = "%s log file was archived (id=%s; artifact=%s). "
         msg += "Archive path is %s.gz."
-        self._logger.info(msg % (log_path, rec_id, log_type, log_path))
+        self._logger.info(msg % (log_path, rec_id, artifact, log_path))
 
-    def _update_record(self, rec_id, log_type, log_path, action="clear"):
+    def _update_record(self, rec_id, artifact, log_path, action="clear"):
         new_log_path = ""
         if action == "archive":
             new_log_path = "%s.gz" % log_path
-        msg = "Log path %s should be replaced with %s (id=%s; log_type=%s)."
-        self._logger.info(msg % (log_path, new_log_path, rec_id, log_type))
+        msg = "Log path %s should be replaced with %s (id=%s; artifact=%s)."
+        self._logger.info(msg % (log_path, new_log_path, rec_id, artifact))
         if self._options.dry_run:
             return
         cursor = self._conn.cursor()
         query = "UPDATE salts_testresult SET %s = '%s' WHERE id = %s"
-        cursor.execute(query % (log_type, new_log_path, rec_id))
+        cursor.execute(query % (artifact, new_log_path, rec_id))
         self._conn.commit()
         cursor.close()
-        msg = "Log path %s was replaced with %s (id=%s; log_type=%s)."
-        self._logger.info(msg % (log_path, new_log_path, rec_id, log_type))
+        msg = "Log path %s was replaced with %s (id=%s; artifact=%s)."
+        self._logger.info(msg % (log_path, new_log_path, rec_id, artifact))
 
     def _remove_log_file(self, log_path):
         self._logger.info("Log file %s should be removed." % log_path)
@@ -233,28 +233,28 @@ WHERE date_trunc('day', dt_finish) < current_date - %s and %s <> ''"
     def archive(self):
         db_affected_recs = self._get_affected_files("archive")
         for record in db_affected_recs:
-            (rec_id, log_type, log_path) = record
+            (rec_id, artifact, log_path) = record
             if not os.path.exists("%s/%s" % (self._options.tr_path, log_path)):
-                msg = "There is log path %s in DB (id=%s; log_type=%s), "
+                msg = "There is log path %s in DB (id=%s; artifact=%s), "
                 msg += "but log file %s isn't exist."
-                self._logger.warning(msg % (log_path, rec_id, log_type,
+                self._logger.warning(msg % (log_path, rec_id, artifact,
                                             log_path))
             else:
-                self._archive_file(rec_id, log_type, log_path)
-                self._update_record(rec_id, log_type, log_path, "archive")
+                self._archive_file(rec_id, artifact, log_path)
+                self._update_record(rec_id, artifact, log_path, "archive")
                 self._remove_log_file(log_path)
 
     def remove(self):
         db_affected_recs = self._get_affected_files("remove")
         for record in db_affected_recs:
-            (rec_id, log_type, log_path) = record
+            (rec_id, artifact, log_path) = record
             if not os.path.exists("%s/%s" % (self._options.tr_path, log_path)):
-                msg = "There is log path %s in DB (id=%s; log_type=%s), "
+                msg = "There is log path %s in DB (id=%s; artifact=%s), "
                 msg += "but log file %s isn't exist."
-                self._logger.warning(msg % (log_path, rec_id, log_type,
+                self._logger.warning(msg % (log_path, rec_id, artifact,
                                             log_path))
             else:
-                self._update_record(rec_id, log_type, log_path)
+                self._update_record(rec_id, artifact, log_path)
                 self._remove_log_file(log_path)
 
 
