@@ -230,7 +230,7 @@ should be empty." % (file_path, log_type)
     def tearDown(self):
         if os.path.exists(self._csv_path):
             os.remove(self._csv_path)
-        remove_test_folder(self._tr_path)
+        # remove_test_folder(self._tr_path)
 
     def test_time_config_absent(self):
         self._create_test_options()
@@ -323,6 +323,8 @@ should be empty." % (file_path, log_type)
                      "jm_log_2": [[0, False], [30, False], [31, True]]}
         self._data2csv(test_data, self._tr_path)
         self._load_csv()
+        eh.archive()
+        self._check_archive(test_data)
         eh.archive()
         self._check_archive(test_data)
         self._drop_test_table()

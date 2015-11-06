@@ -183,9 +183,11 @@ class ExpiredHandler(object):
                     has_union = True
                 query_part = "SELECT id, '%s', %s as artifact \
 FROM salts_testresult \
-WHERE date_trunc('day', dt_finish) < current_date - %s and %s <> ''"
+WHERE date_trunc('day', dt_finish) < current_date - %s and %s <> '' \
+and (not %s like '%%.gz')"
                 params = (artifact, artifact,
-                          self._time_periods[artifact][action], artifact)
+                          self._time_periods[artifact][action], artifact,
+                          artifact)
                 query += query_part % params
                 has_union = False
         cursor.execute(query)
