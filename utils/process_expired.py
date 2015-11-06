@@ -194,19 +194,26 @@ WHERE date_trunc('day', dt_finish) < current_date - %s and %s <> ''"
         return result
 
     def _archive_file(self, rec_id, artifact, log_path):
+        arch_path = "%s/%s.gz" % (self._options.tr_path, log_path)
         msg = "%s log file should be archived (id=%s; artifact=%s)."
-        self._logger.info(msg % (log_path, rec_id, artifact))
+        msg += " Archive path should be %s."
+        self._logger.info(msg % (log_path, rec_id, artifact, arch_path))
         if self._options.dry_run:
             return
-        with open("%s/%s" % (self._options.tr_path, log_path), "rb") as lf:
-            arch_file = gzip.open("%s/%s.gz" %
-                                  (self._options.tr_path, log_path),
-                                  "wb")
-            arch_file.writelines(lf.readlines())
-            arch_file.close()
+        cur_work_dir = os.getcwd()
+        full_log_path = "%s/%s" % (self._options.tr_path, log_path)
+        log_dir = os.path.dirname(full_log_path)
+        log_file_name = os.path.basename(full_log_path)
+        os.chdir(log_dir)
+        with open(log_file_name, "rb") as lf:
+            arch_file_name = "%s.gz" % (log_file_name)
+            af = gzip.open(arch_file_name, "wb")
+            af.writelines(lf.readlines())
+            af.close()
         msg = "%s log file was archived (id=%s; artifact=%s). "
-        msg += "Archive path is %s.gz."
-        self._logger.info(msg % (log_path, rec_id, artifact, log_path))
+        msg += "Archive path is %s."
+        self._logger.info(msg % (log_path, rec_id, artifact, arch_path))
+        os.chdir(cur_work_dir)
 
     def _update_record(self, rec_id, artifact, log_path, action="clear"):
         new_log_path = ""
