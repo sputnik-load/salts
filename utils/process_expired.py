@@ -111,12 +111,6 @@ class ExpiredHandler(object):
         self._read_db_config()
         self._logger.info("Expired handler init...")
 
-    def __enter__(self):
-        self.connect_db()
-
-    def __exit__(self, a, b, c):
-        self.disconnect_db()
-
     def _read_time_config(self):
         if not os.path.exists(self._time_config_name):
             raise TimeConfigError(CONFIG_ABSENT_EXC % self._time_config_name)
