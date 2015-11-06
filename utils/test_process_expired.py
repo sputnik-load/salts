@@ -230,7 +230,7 @@ should be empty." % (file_path, log_type)
     def tearDown(self):
         if os.path.exists(self._csv_path):
             os.remove(self._csv_path)
-        # remove_test_folder(self._tr_path)
+        remove_test_folder(self._tr_path)
 
     def test_time_config_absent(self):
         self._create_test_options()
