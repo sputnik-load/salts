@@ -100,44 +100,43 @@ class GZFixer(object):
                     arch.append(full_path)
         return arch
 
-    def extract(self, archives):
-        extracted_files = []
-        for file_path in archives:
-            while True:
-                file_name, file_ext = os.path.splitext(file_path)
-                if not file_ext == ".gz":
-                    extracted_files.append(file_path)
-                    break
-                af = gzip.open(file_path, "rb")
-                df = open(file_name, "wb")
-                df.write(af.read())
-                af.close()
-                df.close()
-                self._logger.info("%s extracted into %s" % (file_path,
-                                                            file_name))
-                os.remove(file_path)
-                self._logger.info("%s archive file was removed." % file_path)
-                file_path = file_name
-        return extracted_files
 
-    def archive_files(self, file_pathes):
-        for file_path in file_pathes:
-            arch_path = "%s.gz" % file_path
-            cur_work_dir = os.getcwd()
-            file_dir = os.path.dirname(file_path)
-            file_name = os.path.basename(file_path)
-            os.chdir(file_dir)
-            with open(file_name, "rb") as lf:
-                arch_file_name = "%s.gz" % (file_name)
-                af = gzip.open(arch_file_name, "wb")
-                af.writelines(lf.readlines())
-                af.close()
-            msg = "%s file was archived . "
-            msg += "Archive path is %s."
-            self._logger.info(msg % (file_path, arch_path))
+    def extract_file(self, file_path):
+        while True:
+            file_name, file_ext = os.path.splitext(file_path)
+            if not file_ext == ".gz":
+                break
+            af = gzip.open(file_path, "rb")
+            df = open(file_name, "wb")
+            df.write(af.read())
+            af.close()
+            df.close()
+            self._logger.info("%s extracted into %s" % (file_path,
+                                                        file_name))
             os.remove(file_path)
-            self._logger.info("%s file was removed." % file_path)
-            os.chdir(cur_work_dir)
+            self._logger.info("%s archive file was removed." % file_path)
+            file_path = file_name
+        return file_path
+
+
+    def archive_file(self, file_path):
+        arch_path = "%s.gz" % file_path
+        cur_work_dir = os.getcwd()
+        file_dir = os.path.dirname(file_path)
+        file_name = os.path.basename(file_path)
+        os.chdir(file_dir)
+        with open(file_name, "rb") as lf:
+            arch_file_name = "%s.gz" % (file_name)
+            af = gzip.open(arch_file_name, "wb")
+            af.writelines(lf.readlines())
+            af.close()
+        msg = "%s file was archived. "
+        msg += "Archive path is %s."
+        self._logger.info(msg % (file_path, arch_path))
+        os.remove(file_path)
+        self._logger.info("%s file was removed." % file_path)
+        os.chdir(cur_work_dir)
+
 
     def connect_db(self):
         conn_string_templ = "host='%s' dbname='%s' user='%s' password='%s'"
@@ -215,6 +214,7 @@ WHERE {artif} = '{file_path}'".format(artif=a, file_path=fp)
 WHERE {artif} like '%.gz'".format(artif=a)
         query = "\nUNION\n".join([sel_query(a)
                                   for a in self._artifacts])
+        self._logger.info("Query: %s" % query)
         cursor.execute(query)
         arch_files = []
         result = cursor.fetchall()
@@ -246,8 +246,9 @@ def main():
     gz = GZFixer(options, logger)
     gz.connect_db()
     archives = gz.archives()
-    extracted_files = gz.extract(archives)
-    gz.archive_files(extracted_files)
+    for arch in archives:
+        extr_path = gz.extract_file(arch)
+        gz.archive_file(extr_path)
     gz.fix_db()
     archives = gz.archives()
     gz.match_archive_records(archives)
