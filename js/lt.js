@@ -25,6 +25,10 @@ $(function() {
   $(buts).each(function() {
     $(this).bind("click", function(event) {
       console.log("Button: " + this.id);
+      a = "td#" + this.id;
+      console.log("a: " + a);
+      config_cell = $(a)[0];
+      console.log("Path Number: " + config_cell.html());
       if ($(this).attr("run_test") == "On") {
         $(this).attr("run_test", "Off");
         $(this).attr("value", "Запустить");
@@ -32,12 +36,7 @@ $(function() {
         $(this).attr("run_test", "On");
         $(this).attr("value", "Остановить");
       }
-
-
       var csrftoken = getCookie('csrftoken');
-      console.log("csrftoken.1: " + csrftoken)
-
-      console.log("csrftoken.2: " + csrftoken)
       $.ajaxSetup({
         beforeSend: function(xhr, settings) {
           if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
@@ -46,13 +45,12 @@ $(function() {
         }
       });
 
-
       $.ajax({
         url: "/tests/",
         type: "POST",
         dataType: "json",
-        data: {
-          client_response: "test"
+        data: {          
+          ini_path: "test"
           // csrfmiddlewaretoken: "{{ csrf_token }}"
         },
         success: function(json) {
