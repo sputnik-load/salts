@@ -2,15 +2,15 @@
   <head><title>Тесты НТ</title></head>
   {% load staticfiles %}
   <script type="text/javascript" src="{% static "js/jquery-1.11.3.js" %}"></script>
-  <script type="text/javascript" src="{% static "js/1.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/lt.js" %}"></script>
   <body> 
       <form method="post" name="tests_lt">{% csrf_token %}
         <h3>Ниже перечислены конфигурационные файлы тестов НТ: </h3><br>
-        <p id="result"></p>
+        <p id="ult"></p>
         <table border="1">
             {% for item in configs %}
-              <tr>
-                  <td>{{ item.name }}</td>
+              <tr name="config_test">
+                <td name="test_name" id="name_{{ item.id }}">{{ item.name }}</td>
                   <td>
                     <input type="button" id="{{ item.id }}" run_test="Off" value="Запустить"></>
                   </td>
