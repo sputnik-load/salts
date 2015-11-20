@@ -3,7 +3,7 @@ from django.conf.urls import patterns, include, url
 from django.http import HttpResponseRedirect
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.contrib import admin
-from salts_prj.views import tests_list
+from salts_prj.views import tests_list, run_test_api, stop_test_api, status_test_api
 admin.autodiscover()
 
 import settings
@@ -16,6 +16,9 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^favicon.ico/$', lambda x: HttpResponseRedirect(settings.STATIC_URL+'favicon.ico')), #google chrome favicon fix
     url(r'^tests/$', tests_list),
+    url(r'^run_test/$', run_test_api),
+    url(r'^stop_test/$', stop_test_api),
+    url(r'^status_test/$', status_test_api)
 )
 
 if settings.DEBUG:

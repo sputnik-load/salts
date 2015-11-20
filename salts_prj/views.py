@@ -1,21 +1,24 @@
 # -*- coding: utf-8 -*-
 
 import os
-import simplejson
+import simplejson as json
 import logging
 import time
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
-from salts_prj.tankapi_client import tankapi_client
+# from salts_prj.tankapi_client import tankapi_client
+from salts_prj.api_client import TankClient
 
 
 LT_PATH = "/home/krylov/prj/test-repo"
-SERVER_HOST_DEFAULT = "localhost"
+SERVER_HOST_DEFAULT = "salt-dev"
 SERVER_PORT_DEFAULT = "8888"
 
 
 logger = logging.getLogger("salts")
+clients = {}
+transitions = {"prepare": "finished", "finished": ""}
 
 def ini_files():
     ini = []
@@ -27,32 +30,99 @@ def ini_files():
                 ini.append(full_path)
     return ini
 
+def is_valid_request(request, keys):
+    for k in keys:
+        if not request.POST.has_key(k):
+            logger.warning("Request hasn't '%s' key." % k)
+            return False
+    return True
 
-def run_test_api(ini_path):
-    client1 = tankapi_client.tankapi_client(SERVER_HOST_DEFAULT,
-                                            SERVER_PORT_DEFAULT,
-                                            logger)
-    logger.info("Preparing ...")
-    shoot1 = client1.run_new(config_contents=ini_path,
-                             stage="start")
-    logger.info(shoot1)
-    while not client1.destination_reached(shoot1["session"], "prepare"):
-        logger.info("Test not prepared yet.")
-        time.sleep(5)
-    logger.info("Prepared OK")
-    logger.info("Shooting ...")
-    client1.run_given(shoot1["session"])
-    while not client1.destination_reached(shoot1["session"], "finished"):
-        logger.info("Test not finished yet.")
-        time.sleep(5)
+def run_test_api(request):
+    if not is_valid_request(request, ["ini_path"]):
+        return HttpResponse("Request isn't valid.")
+
+    path = request.POST["ini_path"]
+    if path in clients:
+        msg = "Client for %s config exist already." % path
+        logger.warning(msg)
+        return HttpResponse(msg)
+
+    clients[path] = {}
+    clients[path]["client"] = TankClient(SERVER_HOST_DEFAULT,
+                                         SERVER_PORT_DEFAULT,
+                                         logger)
+    client = clients[path]["client"]
+    resp = ""
+    with open(path, "r") as ini_file:
+        resp = client.run(ini_file.read(), "start")
+    if not resp:
+        clients.pop(path, None)
+        msg = "No server response when test tried to start."
+        logger.warning(msg)
+        return HttpResponse(msg)
+
+    logger.info("Response: %s" % resp)
+    clients[path]["session"] = resp["session"]
+
+    response_dict = {}
+    response_dict.update({"ini_path": path})
+    response_dict.update({"wait_status": "prepare"})
+    response_dict.update({"session": resp["session"]})
+    logger.info("JSON: %s" % json.dumps(response_dict))
+
+    return HttpResponse(json.dumps(response_dict),
+                        mimetype="application/javascript")
+
+def stop_test_api(request):
+    if not is_valid_request(request, ["ini_path"]):
+        return HttpResponse("Request isn't valid.")
+
+    path = request.POST["ini_path"]
+    if path not in clients:
+        msg = "Client for %s config isn't created." % path
+        logger.warning(msg)
+        return HttpResponse(msg)
+
+    client = clients[path]["client"]
+    client.stop(clients[path]["session"])
+    clients.pop(path, None)
+    response_dict = {}
+    return HttpResponse(json.dumps(response_dict),
+                        mimetype="application/javascript")
+
+def status_test_api(request):
+    if not is_valid_request(request, ["ini_path", "session", "wait_status"]):
+        return HttpResponse("Request isn't valid.")
+
+    path = request.POST["ini_path"]
+    if path not in clients:
+        msg = "Client for %s config isn't created." % path
+        logger.warning(msg)
+        return HttpResponse(msg)
+
+    wait_status = request.POST["wait_status"]
+    client = clients[path]["client"]
+    session = request.POST["session"]
+    logger.info("Wait status is %s" % wait_status);
+    status = client.status(session)
+    logger.info("Status Result is %s" % status)
+    resp = None
+    if session in status and status[session]["current_stage"] == wait_status:
+        if status[session]["stage_completed"]:
+            resp = client.resume(session)
+            logger.info("Status_test_api: response: %s" % resp)
+            wait_status = transitions[wait_status]
+            if not wait_status:
+                clients.pop(path, None)
+    response_dict = {}
+    response_dict.update({"ini_path": path})
+    response_dict.update({"wait_status": wait_status})
+    response_dict.update({"session": session})
+    return HttpResponse(json.dumps(response_dict),
+                        mimetype="application/javascript")
 
 def tests_list(request):
-    if request.POST.has_key("client_response"):
-        x = request.POST["ini_path"]
-        response_dict = {}
-        response_dict.update({"server_response": x})
-        return HttpResponse(simplejson.dumps(response_dict),
-                            mimetype="application/javascript")
+    clients = {}
     context = {}
     context["configs"] = []
     i = 1
