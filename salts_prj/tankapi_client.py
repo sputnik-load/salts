@@ -37,6 +37,14 @@ class tankapi_client(object):
         json_response = response.read()
         self.logger.info("API returned %s" % (json_response))
         r = json.loads(json_response)
+        self.session_id = r["session"]
+        return r
+
+    def stop_test(self):
+        url = 'http://%s:%s/stop?session=%s' % (self.api_server,
+                                                self.api_port,
+                                                self.session_id)
+        r = self.get_as_json(url)
         return r
 
     def run_given(self, session, stage='finished'):
