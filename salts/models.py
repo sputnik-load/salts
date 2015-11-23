@@ -61,8 +61,8 @@ class TestResult(models.Model):
 #    dt_start2 = models.DateTimeField(help_text='Дата и время начала теста (зачетный период)', null=True, blank=True)
 #    dt_finish2 = models.DateTimeField(help_text='Дата и время завершения теста (зачетный период)', null=True,
 #                                      blank=True)
-    
-    
+
+
 #     status = models.CharField('Статус выполнения', max_length=4, choices=STATUS_CHOICES, default=STATUS_UNKNOWN,
 #                               help_text='Статус выполнения теста: Uploading -> Uploaded -> [Prepare]* -> Running -> ' +
 #                                         'Archiving -> Storing -> Done</br>\n' +
@@ -90,6 +90,63 @@ class TestResult(models.Model):
 
     def __unicode__(self):  # Python 3: def __str__(self):
         return self.group + '.' + self.test_name + ' ' + self.version + ' ' + self.test_id
-    
+
     def get_name(self):  # Python 3: def __str__(self):
         return self.group + '.' + self.test_name #+ ' ' + self.version + ' ' + self.test_id
+
+
+class Generator(models.Model):
+    host = models.CharField('Хост', max_length=128,
+                            help_text='Сервер нагрузки',
+                            null=False, blank=True)
+    port = models.IntegerField('Порт', max_length=128,
+                               help_text='Порт',
+                               null=False, blank=True)
+    tool = models.CharField('Генератор', max_length=128,
+                            help_text='Инструмент генерации',
+                            null=False, blank=True)
+
+    def __unicode__(self):
+        return "%s:%s (%s)" % (self.host, self.port, self.tool)
+
+
+class Target(models.Model):
+    host = models.CharField('Хост', max_length=128,
+                            help_text='Хост',
+                            null=True, blank=False)
+    port = models.IntegerField('Порт',
+                               help_text='Порт',
+                               null=False, blank=False)
+
+    def __unicode__(self):
+        return "%s:%s" % (self.host, self.port)
+
+class TestSettings(models.Model):
+    test_name = models.CharField('Тест', max_length=128,
+                                 help_text='Название теста',
+                                 null=False, blank=False)
+    generator = models.ForeignKey(Generator)
+    target = models.ForeignKey(Target)
+    ticket = models.CharField('Тикет', max_length=128,
+                              help_text='Номер тикета',
+                              null=False, blank=False)
+    version = models.CharField('Версия', max_length=128,
+                               help_text='Номер версии',
+                               null=False, blank=False)
+
+    def __unicode__(self):
+        return "%s (%s)" % (self.test_name, self.ticket)
+
+
+class RPS(models.Model):
+    test_settings = models.ForeignKey(TestSettings)
+    rps_name = models.CharField('Имя схемы', max_length=32,
+                                help_text='Имя схемы',
+                                default='0',
+                                null=False, blank=False)
+    schedule = models.CharField('Схема нагрузки', max_length=256,
+                                   help_text='Схема нагрузки',
+                                   null=False, blank=False)
+
+    def __unicode__(self):
+        return "%s: %s" % (self.rps_name, self.schedule)

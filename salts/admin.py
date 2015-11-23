@@ -15,4 +15,25 @@ class TestResultAdmin(admin.ModelAdmin):
     def show_test_len(self, instance):
         return str('%s' % (instance.dt_finish - instance.dt_start))
 
+
+class GeneratorAdmin(admin.ModelAdmin):
+    pass
+
+
+class TargetAdmin(admin.ModelAdmin):
+    pass
+
+
+class TestSettingsAdmin(admin.ModelAdmin):
+    pass
+
+
+class RPSAdmin(admin.ModelAdmin):
+    pass
+
+
 admin.site.register(TestResult, TestResultAdmin)
+admin.site.register(Generator, GeneratorAdmin)
+admin.site.register(Target, TargetAdmin)
+admin.site.register(TestSettings, TestSettingsAdmin)
+admin.site.register(RPS, RPSAdmin)
