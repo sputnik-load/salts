@@ -98,13 +98,13 @@ class TestResult(models.Model):
 class Generator(models.Model):
     host = models.CharField('Хост', max_length=128,
                             help_text='Сервер нагрузки',
-                            null=False, blank=True)
+                            null=True, blank=True)
     port = models.IntegerField('Порт', max_length=128,
                                help_text='Порт',
-                               null=False, blank=True)
+                               null=True, blank=True)
     tool = models.CharField('Генератор', max_length=128,
                             help_text='Инструмент генерации',
-                            null=False, blank=True)
+                            null=True, blank=True)
 
     def __unicode__(self):
         return "%s:%s (%s)" % (self.host, self.port, self.tool)
@@ -113,26 +113,28 @@ class Generator(models.Model):
 class Target(models.Model):
     host = models.CharField('Хост', max_length=128,
                             help_text='Хост',
-                            null=True, blank=False)
+                            null=True, blank=True)
     port = models.IntegerField('Порт',
                                help_text='Порт',
-                               null=False, blank=False)
+                               null=True, blank=True)
 
     def __unicode__(self):
         return "%s:%s" % (self.host, self.port)
 
 class TestSettings(models.Model):
+    file_path = models.CharField('Путь к файлу', max_length=128,
+                                 help_text='Путь к файлу',
+                                 null=True, blank=True)
     test_name = models.CharField('Тест', max_length=128,
                                  help_text='Название теста',
-                                 null=False, blank=False)
+                                 null=True, blank=True)
     generator = models.ForeignKey(Generator)
-    target = models.ForeignKey(Target)
     ticket = models.CharField('Тикет', max_length=128,
                               help_text='Номер тикета',
-                              null=False, blank=False)
+                              null=True, blank=True)
     version = models.CharField('Версия', max_length=128,
                                help_text='Номер версии',
-                               null=False, blank=False)
+                               null=True, blank=True)
 
     def __unicode__(self):
         return "%s (%s)" % (self.test_name, self.ticket)
@@ -143,10 +145,10 @@ class RPS(models.Model):
     rps_name = models.CharField('Имя схемы', max_length=32,
                                 help_text='Имя схемы',
                                 default='0',
-                                null=False, blank=False)
+                                null=True, blank=True)
     schedule = models.CharField('Схема нагрузки', max_length=256,
                                    help_text='Схема нагрузки',
-                                   null=False, blank=False)
-
+                                   null=True, blank=True)
+    target = models.ForeignKey(Target)
     def __unicode__(self):
         return "%s: %s" % (self.rps_name, self.schedule)
