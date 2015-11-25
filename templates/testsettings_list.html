@@ -1,0 +1,25 @@
+<html>
+  <head><title>Тесты НТ</title></head>
+  {% load staticfiles %}
+  <script type="text/javascript" src="{% static "js/jquery-1.11.3.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/lt.js" %}"></script>
+  <body> 
+      <form method="post" name="tests_lt">{% csrf_token %}
+        <h3>Ниже перечислены конфигурационные файлы тестов НТ: </h3><br>
+        <p id="status"></p>
+        <table border="1">
+            {% for settings in object_list %}
+              <tr name="config_test">
+                <td name="test_name" id="name_{{ settings.id }}">{{ settings.file_path }}</td>
+                <td name="test_href"><a href="/tests/{{ settings.id }}/">{{ settings.test_name }}</a></td>
+                <td>
+                  <input type="button" id="{{ settings.id }}" run_test="Off" value="Запустить"></>
+                </td>
+                <td name="status" id="status_{{ settings.id }}"></td>
+              </tr>
+            {% endfor %}
+        </table>
+      </form>
+  </body>
+</html>
+
