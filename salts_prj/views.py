@@ -111,7 +111,7 @@ def stop_test_api(request):
     if not is_valid_request(request, ["ini_path"]):
         return HttpResponse("Request isn't valid.")
 
-    path = request.POST["ini_path"]
+    path = os.path.join(LT_PATH, request.POST["ini_path"])
     if path not in clients:
         msg = "Client for %s config isn't created." % path
         logger.warning(msg)
