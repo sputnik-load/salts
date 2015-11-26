@@ -305,12 +305,12 @@ def sync_config(file_path, *args, **kwargs):
             config.set(rps_record.rps_name, "rps_schedule", rps_record.schedule)
             is_changed = True
         elif jmp.match(rps_record.rps_name):
-            (rampup, testlen, rampdown, rps) = re.findall("\d+", rps_record.schedule)
+            (rps, rampup, testlen, rampdown) = re.findall("\d+", rps_record.schedule)
+            config.set(rps_record.rps_name, "rps1", rps)
+            config.set(rps_record.rps_name, "rps2", rps)
             config.set(rps_record.rps_name, "rampup", rampup)
             config.set(rps_record.rps_name, "testlen", testlen)
             config.set(rps_record.rps_name, "rampdown", rampdown)
-            config.set(rps_record.rps_name, "rps1", rps)
-            config.set(rps_record.rps_name, "rps2", rps)
             is_changed = True
     if is_changed:
         config.write(codecs.open(file_path, "wb", "utf-8"))
