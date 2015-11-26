@@ -32,11 +32,10 @@ function status_message(json) {
 }
 
 
-function initStatusTest(row_id) {
-  console.log("Defining of statuses.");
+function statusTest(row_id) {
   var path = $("td#name_" + row_id).html();
   $.ajax({
-    url: "/init_status_test/",
+    url: "/status_test/",
     type: "POST",
     dataType: "json",
     data: {          
@@ -46,9 +45,6 @@ function initStatusTest(row_id) {
       $("p#status").html("Status: " + json.status) 
     },
     success: function(json) {
-      console.log("Console: " + JSON.stringify(json));
-      console.log("Function initStatusTest: success handler");
-      console.log("Status Test: " + json["run_status"]);
       $("td#status_" + row_id).html(status_message(json)); 
       var wr_but = $("input[type=button]#" + row_id).get(0);
       if (json["run_status"] == "0") {
@@ -74,45 +70,6 @@ function initStatusTest(row_id) {
 }
 
 
-
-function statusTest(row_id, json_obj) {
-  console.log("statusTest: row_id: " + row_id);
-  // console.log("statusTest: json_obj: " + JSON.stringify(json_obj));
-  $.ajax({
-    url: "/status_test/",
-    type: "POST",
-    dataType: "json",
-    data: {          
-      ini_path: json_obj["ini_path"],
-      wait_status: json_obj["wait_status"],
-      session: json_obj["session"]
-    },
-    error: function(json) {
-      console.log("Error Handler")
-      $("p#status").html("Status: " + json.status) 
-    },
-    success: function(json) {
-      console.log("Function statusTest: success handler");
-      $("td#status_" + row_id).html(status_message(json)); 
-      if (json["wait_status"] == "") {
-        if (status_timeout_id) {
-          clearTimeout(status_timeout_id);
-        }
-        $(wr_item).attr("run_test", "Off");
-        $(wr_item).attr("value", "Запустить");
-      }
-      else {
-        status_timeout_id = 
-          setTimeout(function() {
-            console.log("setTimeout handler: status_test");
-            statusTest(row_id, json);
-        }, 3000);
-      }
-    }
-  });
-}
-
-
 $(function() {  
   var csrftoken = getCookie('csrftoken');
   $.ajaxSetup({
@@ -125,7 +82,7 @@ $(function() {
   var buts = $("input[type=button]");
   console.log("Size: " + buts.size());
   $(buts).each(function() {
-    initStatusTest(this.id);
+    statusTest(this.id);
     $(this).bind("click", function(event) {
       /* 
       var csrftoken = getCookie('csrftoken');
@@ -177,16 +134,7 @@ $(function() {
             $("p#status").html("Status: " + JSON.stringify(json));
           },
           success: function(json) {
-            console.log("Function bind_click: success handler");
-            var msg = "Тест с id=" + json["session"] + " готовится к запуску.";
-            $("td#status_" + tr_id).html(msg);
-            status_timeout_id = 
-              setTimeout(function() {
-                console.log("setTimeout handler: run_test");
-                statusTest(wr_item.id, json);
-              }, 3000);
-            $(wr_item).attr("run_test", "On");
-            $(wr_item).attr("value", "Остановить");
+            statusTest(wr_item.id, json);
           }
         });
       }

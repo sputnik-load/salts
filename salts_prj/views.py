@@ -133,38 +133,6 @@ def stop_test_api(request):
 
 
 def status_test_api(request):
-    if not is_valid_request(request, ["ini_path", "session", "wait_status"]):
-        return HttpResponse("Request isn't valid.")
-
-    path = os.path.join(LT_PATH, request.POST["ini_path"])
-    if path not in clients:
-        msg = "Client for %s config isn't created." % path
-        logger.warning(msg)
-        return HttpResponse(msg)
-
-    client = clients[path]["client"]
-    session = clients[path]["session"]
-    status = client.status(session)
-    logger.info("Status Result is %s" % status)
-    resp = None
-    wait_status = clients[path]["wait_status"]
-    if session in status and status[session]["current_stage"] == wait_status:
-        if status[session]["stage_completed"]:
-            resp = client.resume(session)
-            logger.info("Status_test_api: response: %s" % resp)
-            wait_status = transitions[wait_status]
-            clients[path]["wait_status"] = wait_status
-            if not wait_status:
-                clients.pop(path, None)
-    response_dict = {}
-    response_dict.update({"ini_path": path})
-    response_dict.update({"wait_status": wait_status})
-    response_dict.update({"session": session})
-    return HttpResponse(json.dumps(response_dict),
-                        mimetype="application/javascript")
-
-
-def init_status_test_api(request):
     if not is_valid_request(request, ["ini_path"]):
         return HttpResponse("Request isn't valid.")
 
@@ -178,14 +146,12 @@ def init_status_test_api(request):
         return HttpResponse(json.dumps(response_dict),
                             mimetype="application/javascript")
 
-
     client = clients[path]["client"]
     session = clients[path]["session"]
     status = client.status(session)
     logger.info("Status Result is %s" % status)
     resp = None
     wait_status = clients[path]["wait_status"]
-    run_status = 1
     if session in status and status[session]["current_stage"] == wait_status:
         if status[session]["stage_completed"]:
             resp = client.resume(session)
@@ -194,12 +160,10 @@ def init_status_test_api(request):
             clients[path]["wait_status"] = wait_status
             if not wait_status:
                 clients.pop(path, None)
-                run_status = 0
     response_dict = {}
     response_dict.update({"ini_path": path})
     response_dict.update({"wait_status": wait_status})
     response_dict.update({"session": session})
-    response_dict.update({"run_status": run_status})
     return HttpResponse(json.dumps(response_dict),
                         mimetype="application/javascript")
 
