@@ -24,7 +24,10 @@ SERVER_PORT_DEFAULT = "8888"
 
 
 class TestSettingsList(ListView):
-    model = TestSettings
+    template_name = "testsettings_list.html"
+    queryset = TestSettings.objects.raw("SELECT ts.id, ts.test_name, \
+ts.file_path, g.host, g.port, g.tool FROM salts_testsettings ts \
+JOIN salts_generator g ON ts.generator_id = g.id;")
 
 
 class UnicodeConfigParser(ConfigParser.RawConfigParser):
@@ -310,7 +313,16 @@ def show_test_settings(request):
     if request.method == "GET":
         for file_path in ini_files():
             check_changes(file_path)
-        return TestSettingsList.as_view(template_name="testsettings_list.html")(request)
+        return TestSettingsList.as_view()(request)
+    elif request.method == "GET2":
+        for file_path in ini_files():
+            check_changes(file_path)
+
+        context = {}
+        context.update(csrf(request))
+        context.update({"settings_form": TestSettingsList()})
+        return render_to_response("testsettings_list.2.html", context)
+
     if request.method == "POST":
         if "cancel-button" in request.POST:
             return HttpResponseRedirect("/tests/")

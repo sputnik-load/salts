@@ -84,16 +84,6 @@ $(function() {
   $(buts).each(function() {
     statusTest(this.id);
     $(this).bind("click", function(event) {
-      /* 
-      var csrftoken = getCookie('csrftoken');
-      $.ajaxSetup({
-        beforeSend: function(xhr, settings) {
-          if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-            xhr.setRequestHeader("X-CSRFToken", csrftoken);
-          }
-        }
-      });
-      */
       var running_ini_path = $("td#name_" + this.id).html();
       var tr_id = this.id;
       var cur_action = $(this).attr("run_test");
