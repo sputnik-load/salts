@@ -80,20 +80,27 @@ def is_valid_request(request, keys):
 
 
 def run_test_api(request):
-    if not is_valid_request(request, ["ini_path"]):
+    if not is_valid_request(request, ["tsid"]):
         return HttpResponse("Request isn't valid.")
 
-    path = os.path.join(LT_PATH, request.POST["ini_path"])
-    if path in clients:
-        msg = "Client for %s config exist already." % path
+    tsid = request.POST["tsid"]
+    if tsid in clients:
+        msg = "Client with id=%s exist already." % tsid
         logger.warning(msg)
         return HttpResponse(msg)
 
-    clients[path] = {}
-    clients[path]["client"] = TankClient(SERVER_HOST_DEFAULT,
-                                         SERVER_PORT_DEFAULT,
-                                         logger)
-    client = clients[path]["client"]
+    ts_record = TestSettings.objects.get(id=tsid)
+    path = os.path.join(LT_PATH, ts_record.file_path)
+    qs = TestSettings.objects.raw("SELECT g.id, g.host, g.port \
+FROM salts_generator g \
+JOIN salts_testsettings ts ON g.id = ts.generator_id WHERE ts.id = %s" % tsid)
+
+    logger.debug("Path: %s" % path)
+    logger.debug("Generator: %s" % qs)
+
+    clients[tsid] = {}
+    clients[tsid]["client"] = TankClient(qs[0].host, qs[0].port, logger)
+    client = clients[tsid]["client"]
     resp = ""
     with open(path, "r") as ini_file:
         resp = client.run(ini_file.read(), "start")
@@ -104,8 +111,8 @@ def run_test_api(request):
         return HttpResponse(msg)
 
     logger.info("Response: %s" % resp)
-    clients[path]["session"] = resp["session"]
-    clients[path]["wait_status"] = "prepare"
+    clients[tsid]["session"] = resp["session"]
+    clients[tsid]["wait_status"] = "prepare"
 
     response_dict = {}
     response_dict.update({"ini_path": path})
@@ -118,53 +125,53 @@ def run_test_api(request):
 
 
 def stop_test_api(request):
-    if not is_valid_request(request, ["ini_path"]):
+    if not is_valid_request(request, ["tsid"]):
         return HttpResponse("Request isn't valid.")
 
-    path = os.path.join(LT_PATH, request.POST["ini_path"])
-    if path not in clients:
-        msg = "Client for %s config isn't created." % path
+    tsid = request.POST["tsid"]
+    if tsid not in clients:
+        msg = "Client with id=%s exist already." % tsid
         logger.warning(msg)
         return HttpResponse(msg)
 
-    client = clients[path]["client"]
-    client.stop(clients[path]["session"])
-    clients.pop(path, None)
+    client = clients[tsid]["client"]
+    client.stop(clients[tsid]["session"])
+    clients.pop(tsid, None)
     response_dict = {}
     return HttpResponse(json.dumps(response_dict),
                         mimetype="application/javascript")
 
 
 def status_test_api(request):
-    if not is_valid_request(request, ["ini_path"]):
+    if not is_valid_request(request, ["tsid"]):
         return HttpResponse("Request isn't valid.")
 
-    path = os.path.join(LT_PATH, request.POST["ini_path"])
-    if path not in clients:
-        msg = "Client for %s config isn't created. Test isn't run." % path
+    tsid = request.POST["tsid"]
+    if tsid not in clients:
+        msg = "Client with id=%s exist already." % tsid
         logger.info(msg)
         response_dict = {}
-        response_dict.update({"ini_path": path})
+        response_dict.update({"tsid": tsid})
         response_dict.update({"run_status": 0})
         return HttpResponse(json.dumps(response_dict),
                             mimetype="application/javascript")
 
-    client = clients[path]["client"]
-    session = clients[path]["session"]
+    client = clients[tsid]["client"]
+    session = clients[tsid]["session"]
     status = client.status(session)
     logger.info("Status Result is %s" % status)
     resp = None
-    wait_status = clients[path]["wait_status"]
+    wait_status = clients[tsid]["wait_status"]
     if session in status and status[session]["current_stage"] == wait_status:
         if status[session]["stage_completed"]:
             resp = client.resume(session)
             logger.info("Status_test_api: response: %s" % resp)
             wait_status = transitions[wait_status]
-            clients[path]["wait_status"] = wait_status
+            clients[tsid]["wait_status"] = wait_status
             if not wait_status:
-                clients.pop(path, None)
+                clients.pop(tsid, None)
     response_dict = {}
-    response_dict.update({"ini_path": path})
+    response_dict.update({"tsid": tsid})
     response_dict.update({"wait_status": wait_status})
     response_dict.update({"session": session})
     return HttpResponse(json.dumps(response_dict),
@@ -314,15 +321,6 @@ def show_test_settings(request):
         for file_path in ini_files():
             check_changes(file_path)
         return TestSettingsList.as_view()(request)
-    elif request.method == "GET2":
-        for file_path in ini_files():
-            check_changes(file_path)
-
-        context = {}
-        context.update(csrf(request))
-        context.update({"settings_form": TestSettingsList()})
-        return render_to_response("testsettings_list.2.html", context)
-
     if request.method == "POST":
         if "cancel-button" in request.POST:
             return HttpResponseRedirect("/tests/")

@@ -39,7 +39,7 @@ function statusTest(row_id) {
     type: "POST",
     dataType: "json",
     data: {          
-      ini_path: path
+      tsid: row_id
     },
     error: function(json) {
       $("p#status").html("Status: " + json.status) 
@@ -84,11 +84,9 @@ $(function() {
   $(buts).each(function() {
     statusTest(this.id);
     $(this).bind("click", function(event) {
-      var running_ini_path = $("td#name_" + this.id).html();
       var tr_id = this.id;
       var cur_action = $(this).attr("run_test");
       var wr_item = this;
-      console.log("PATH: " + running_ini_path);
       if (cur_action == "On") {
         if (status_timeout_id) {
           clearTimeout(status_timeout_id);
@@ -98,7 +96,7 @@ $(function() {
           type: "POST",
           dataType: "json",
           data: {          
-            ini_path: running_ini_path
+            tsid: wr_item.id
           },
           error: function(json) {
             console.log("Error Handler");
@@ -117,7 +115,7 @@ $(function() {
           type: "POST",
           dataType: "json",
           data: {          
-            ini_path: running_ini_path
+            tsid: wr_item.id 
           },
           error: function(json) {
             console.log("Error Handler");
