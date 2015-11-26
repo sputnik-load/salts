@@ -31,9 +31,53 @@ function status_message(json) {
   return "";
 }
 
-function statusTest(wr_item, json_obj) {
-  console.log("statusTest: row_id: " + wr_item.id);
-  console.log("statusTest: json_obj: " + JSON.stringify(json_obj));
+
+function initStatusTest(row_id) {
+  console.log("Defining of statuses.");
+  var path = $("td#name_" + row_id).html();
+  $.ajax({
+    url: "/init_status_test/",
+    type: "POST",
+    dataType: "json",
+    data: {          
+      ini_path: path
+    },
+    error: function(json) {
+      $("p#status").html("Status: " + json.status) 
+    },
+    success: function(json) {
+      console.log("Console: " + JSON.stringify(json));
+      console.log("Function initStatusTest: success handler");
+      console.log("Status Test: " + json["run_status"]);
+      $("td#status_" + row_id).html(status_message(json)); 
+      var wr_but = $("input[type=button]#" + row_id).get(0);
+      if (json["run_status"] == "0") {
+        if (status_timeout_id) {
+          clearTimeout(status_timeout_id);
+        }
+        var wr_but = $("input[type=button]#" + row_id).get(0);
+        console.log("Button: " + wr_but);
+        $(wr_but).attr("run_test", "Off");
+        $(wr_but).attr("value", "Запустить");
+      }
+      else {
+        status_timeout_id = 
+          setTimeout(function() {
+            console.log("setTimeout handler: status_test");
+            statusTest(row_id, json);
+        }, 3000);
+        $(wr_but).attr("run_test", "On");
+        $(wr_but).attr("value", "Остановить");
+      }
+    }
+  });
+}
+
+
+
+function statusTest(row_id, json_obj) {
+  console.log("statusTest: row_id: " + row_id);
+  // console.log("statusTest: json_obj: " + JSON.stringify(json_obj));
   $.ajax({
     url: "/status_test/",
     type: "POST",
@@ -49,7 +93,7 @@ function statusTest(wr_item, json_obj) {
     },
     success: function(json) {
       console.log("Function statusTest: success handler");
-      $("td#status_" + wr_item.id).html(status_message(json)); 
+      $("td#status_" + row_id).html(status_message(json)); 
       if (json["wait_status"] == "") {
         if (status_timeout_id) {
           clearTimeout(status_timeout_id);
@@ -61,7 +105,7 @@ function statusTest(wr_item, json_obj) {
         status_timeout_id = 
           setTimeout(function() {
             console.log("setTimeout handler: status_test");
-            statusTest(wr_item, json);
+            statusTest(row_id, json);
         }, 3000);
       }
     }
@@ -69,11 +113,21 @@ function statusTest(wr_item, json_obj) {
 }
 
 
-$(function() {
+$(function() {  
+  var csrftoken = getCookie('csrftoken');
+  $.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+      if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+      }
+    }
+  });
   var buts = $("input[type=button]");
   console.log("Size: " + buts.size());
   $(buts).each(function() {
+    initStatusTest(this.id);
     $(this).bind("click", function(event) {
+      /* 
       var csrftoken = getCookie('csrftoken');
       $.ajaxSetup({
         beforeSend: function(xhr, settings) {
@@ -82,7 +136,7 @@ $(function() {
           }
         }
       });
-
+      */
       var running_ini_path = $("td#name_" + this.id).html();
       var tr_id = this.id;
       var cur_action = $(this).attr("run_test");
@@ -129,7 +183,7 @@ $(function() {
             status_timeout_id = 
               setTimeout(function() {
                 console.log("setTimeout handler: run_test");
-                statusTest(wr_item, json);
+                statusTest(wr_item.id, json);
               }, 3000);
             $(wr_item).attr("run_test", "On");
             $(wr_item).attr("value", "Остановить");

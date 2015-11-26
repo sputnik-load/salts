@@ -22,8 +22,10 @@ LT_PATH = "/home/krylov/prj/test-repo"
 SERVER_HOST_DEFAULT = "localhost"
 SERVER_PORT_DEFAULT = "8888"
 
+
 class TestSettingsList(ListView):
     model = TestSettings
+
 
 class UnicodeConfigParser(ConfigParser.RawConfigParser):
     def __init__(self, *args, **kwargs):
@@ -54,6 +56,7 @@ logger = logging.getLogger("salts")
 clients = {}
 transitions = {"prepare": "finished", "finished": ""}
 
+
 def ini_files():
     ini = []
     for root, dirs, files in os.walk(LT_PATH, topdown=False):
@@ -64,12 +67,14 @@ def ini_files():
                 ini.append(full_path)
     return ini
 
+
 def is_valid_request(request, keys):
     for k in keys:
         if not request.POST.has_key(k):
             logger.warning("Request hasn't '%s' key." % k)
             return False
     return True
+
 
 def run_test_api(request):
     if not is_valid_request(request, ["ini_path"]):
@@ -97,6 +102,7 @@ def run_test_api(request):
 
     logger.info("Response: %s" % resp)
     clients[path]["session"] = resp["session"]
+    clients[path]["wait_status"] = "prepare"
 
     response_dict = {}
     response_dict.update({"ini_path": path})
@@ -106,6 +112,7 @@ def run_test_api(request):
 
     return HttpResponse(json.dumps(response_dict),
                         mimetype="application/javascript")
+
 
 def stop_test_api(request):
     if not is_valid_request(request, ["ini_path"]):
@@ -124,28 +131,29 @@ def stop_test_api(request):
     return HttpResponse(json.dumps(response_dict),
                         mimetype="application/javascript")
 
+
 def status_test_api(request):
     if not is_valid_request(request, ["ini_path", "session", "wait_status"]):
         return HttpResponse("Request isn't valid.")
 
-    path = request.POST["ini_path"]
+    path = os.path.join(LT_PATH, request.POST["ini_path"])
     if path not in clients:
         msg = "Client for %s config isn't created." % path
         logger.warning(msg)
         return HttpResponse(msg)
 
-    wait_status = request.POST["wait_status"]
     client = clients[path]["client"]
-    session = request.POST["session"]
-    logger.info("Wait status is %s" % wait_status);
+    session = clients[path]["session"]
     status = client.status(session)
     logger.info("Status Result is %s" % status)
     resp = None
+    wait_status = clients[path]["wait_status"]
     if session in status and status[session]["current_stage"] == wait_status:
         if status[session]["stage_completed"]:
             resp = client.resume(session)
             logger.info("Status_test_api: response: %s" % resp)
             wait_status = transitions[wait_status]
+            clients[path]["wait_status"] = wait_status
             if not wait_status:
                 clients.pop(path, None)
     response_dict = {}
@@ -154,6 +162,47 @@ def status_test_api(request):
     response_dict.update({"session": session})
     return HttpResponse(json.dumps(response_dict),
                         mimetype="application/javascript")
+
+
+def init_status_test_api(request):
+    if not is_valid_request(request, ["ini_path"]):
+        return HttpResponse("Request isn't valid.")
+
+    path = os.path.join(LT_PATH, request.POST["ini_path"])
+    if path not in clients:
+        msg = "Client for %s config isn't created. Test isn't run." % path
+        logger.info(msg)
+        response_dict = {}
+        response_dict.update({"ini_path": path})
+        response_dict.update({"run_status": 0})
+        return HttpResponse(json.dumps(response_dict),
+                            mimetype="application/javascript")
+
+
+    client = clients[path]["client"]
+    session = clients[path]["session"]
+    status = client.status(session)
+    logger.info("Status Result is %s" % status)
+    resp = None
+    wait_status = clients[path]["wait_status"]
+    run_status = 1
+    if session in status and status[session]["current_stage"] == wait_status:
+        if status[session]["stage_completed"]:
+            resp = client.resume(session)
+            logger.info("Status_test_api: response: %s" % resp)
+            wait_status = transitions[wait_status]
+            clients[path]["wait_status"] = wait_status
+            if not wait_status:
+                clients.pop(path, None)
+                run_status = 0
+    response_dict = {}
+    response_dict.update({"ini_path": path})
+    response_dict.update({"wait_status": wait_status})
+    response_dict.update({"session": session})
+    response_dict.update({"run_status": run_status})
+    return HttpResponse(json.dumps(response_dict),
+                        mimetype="application/javascript")
+
 
 def tests_list(request):
     clients = {}
@@ -206,6 +255,7 @@ def get_config_values(config, sec, is_phantom):
         target = config.get(sec, "hostname")
         port = config.get(sec, "port")
         return (rps_value, target, port)
+
 
 def check_changes(file_path):
     logger.info("File Path: %s" % file_path)

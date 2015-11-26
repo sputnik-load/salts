@@ -5,6 +5,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.contrib import admin
 from salts_prj.views import tests_list, run_test_api, stop_test_api, status_test_api
 from salts_prj.views import show_test_settings, edit_test_parameters
+from salts_prj.views import init_status_test_api
 admin.autodiscover()
 
 import settings
@@ -20,7 +21,8 @@ urlpatterns = patterns('',
     url(r'^tests/(\d+)/$', edit_test_parameters),
     url(r'^run_test/$', run_test_api),
     url(r'^stop_test/$', stop_test_api),
-    url(r'^status_test/$', status_test_api)
+    url(r'^status_test/$', status_test_api),
+    url(r'^init_status_test/$', init_status_test_api)
 )
 
 if settings.DEBUG:
