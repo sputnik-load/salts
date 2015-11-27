@@ -50,17 +50,11 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'audit_log.middleware.UserLoggingMiddleware',
 )
-
-# TEMPLATE_CONTEXT_PROCESSORS = (
-#    'django.core.context_processors.csrf',
-#    'django.contrib.auth.context_processors.auth',
-#    'django.core.context_processors.debug',
-# )
 
 ROOT_URLCONF = 'salts_prj.urls'
 
@@ -73,14 +67,14 @@ WSGI_APPLICATION = 'salts_prj.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'test_salts_db',
+        'NAME': 'salts',
         'USER': 'salts',
         'PASSWORD': 'salts',
-        'HOST': 'localhost',                      # Empty for localhost through domain sockets or           '127.0.0.1' for localhost through TCP.
+        'HOST': 'salt-dev.dev.ix.km',    # Empty for localhost through domain sockets or           '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
     }
 }
-LT_PATH = "/home/krylov/prj/loadtest"
+LT_PATH = "/data/qa/loadtest"
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
@@ -106,8 +100,7 @@ STATICFILES_DIRS = (
     BASE_DIR,
 )
 
-# MEDIA_ROOT = os.path.join(BASE_DIR, "utils/test_results/")
-MEDIA_ROOT = "/home/krylov/temp/small_base/test_results/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 MEDIA_URL = '/media/'
 
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
