@@ -125,7 +125,7 @@ class TestSettings(models.Model):
     file_path = models.CharField('Путь к файлу', max_length=128,
                                  help_text='Путь к файлу',
                                  null=True, blank=True)
-    test_name = models.CharField('Тест', max_length=128,
+    test_name = models.CharField('Тест', max_length=512,
                                  help_text='Название теста',
                                  null=True, blank=True)
     generator = models.ForeignKey(Generator)
