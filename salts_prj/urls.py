@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import patterns, include, url
 from django.http import HttpResponseRedirect
-
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.contrib import admin
+from salts_prj.views import tests_list, run_test_api, stop_test_api, status_test_api
+from salts_prj.views import show_test_settings, edit_test_parameters
+
+
 admin.autodiscover()
 
 import settings
@@ -14,6 +18,11 @@ urlpatterns = patterns('',
 
     url(r'^admin/', include(admin.site.urls)),
     url(r'^favicon.ico/$', lambda x: HttpResponseRedirect(settings.STATIC_URL+'favicon.ico')), #google chrome favicon fix
+    url(r'^tests/$', show_test_settings),
+    url(r'^tests/(\d+)/$', edit_test_parameters),
+    url(r'^run_test/$', run_test_api),
+    url(r'^stop_test/$', stop_test_api),
+    url(r'^status_test/$', status_test_api)
 )
 
 if settings.DEBUG:
@@ -22,7 +31,8 @@ if settings.DEBUG:
             'django.views.static.serve',
             {'document_root': settings.MEDIA_ROOT, }),
     )
-    
+    urlpatterns += staticfiles_urlpatterns()
+
 
 from tastypie.api import Api
 from salts.api import TestResultResource
