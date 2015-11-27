@@ -5,7 +5,7 @@
   <script type="text/javascript" src="{% static "js/lt.js" %}"></script>
   <body> 
       <form method="post" name="tests_lt">{% csrf_token %}
-        <h3>Ниже перечислены конфигурационные файлы тестов НТ: </h3><br>
+        <h3>Тесты НТ: </h3><br>
         <p id="status"></p>
         <table border="1">
             {% for settings in object_list %}
