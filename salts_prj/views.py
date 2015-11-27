@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import simplejson as json
 import logging
@@ -16,11 +18,7 @@ from django.forms.formsets import formset_factory
 from django.views.generic.list import ListView
 from salts.models import TestSettings, RPS, Target, Generator
 from salts.forms import SettingsEditForm, RPSEditForm
-
-
-LT_PATH = "/home/krylov/prj/test-repo"
-SERVER_HOST_DEFAULT = "localhost"
-SERVER_PORT_DEFAULT = "8888"
+from settings import LT_PATH
 
 
 class TestSettingsList(ListView):
@@ -54,6 +52,9 @@ class UnicodeConfigParser(ConfigParser.RawConfigParser):
     def optionxform(self, strOut):
         return strOut
 
+
+class TankConfigError(Exception):
+    pass
 
 logger = logging.getLogger("salts")
 clients = {}
@@ -219,6 +220,8 @@ def get_config_values(config, sec, lt_tool):
     if lt_tool == "phantom":
         rps_value = config.get(sec, "rps_schedule")
         full_addr = config.get(sec, "address").split(":")
+        if len(full_addr) < 2:
+            raise TankConfigError("Не указан порт у target.")
         return (rps_value, full_addr[0], full_addr[1])
     else:
         rampup = config.get(sec, "rampup")
@@ -242,61 +245,78 @@ def localhost_generator_id(lt_tool):
 
 
 def check_changes(full_path):
-    config = ConfigParser.RawConfigParser()
-    config.read(full_path)
-    jmp = re.compile("jmeter")
-    ph = re.compile("phantom")
-    tool_sections = []
-    lt_tool = None
-    for sec in config.sections():
-        if ph.match(sec):
-            lt_tool = "phantom"
-            tool_sections.append(sec)
-        elif jmp.match(sec):
-            lt_tool = "jmeter"
-            tool_sections.append(sec)
-    file_name = full_path.replace("%s/" % LT_PATH, "")
     try:
-        ts_record = TestSettings.objects.get(file_path=file_name)
-    except TestSettings.DoesNotExist:
-        logger.debug("DB: record about %s file is absent." % file_name)
-        ts_record = TestSettings(file_path=file_name, test_name = "",
-                                 generator_id=localhost_generator_id(lt_tool),
-                                 ticket="", version="")
-        ts_record.save()
-    for sec in tool_sections:
-        (rps_value,
-            target_host,
-            target_port) = get_config_values(config, sec, lt_tool)
+        config = ConfigParser.RawConfigParser()
+        config.read(full_path)
+        jmp = re.compile("jmeter")
+        ph = re.compile("phantom")
+        tool_sections = []
+        lt_tool = None
+        for sec in config.sections():
+            if ph.match(sec):
+                lt_tool = "phantom"
+                tool_sections.append(sec)
+            elif jmp.match(sec):
+                lt_tool = "jmeter"
+                tool_sections.append(sec)
+        if not lt_tool:
+            logger.info("%s ini-file isn't config for tank test." % full_path)
+            return
+        file_name = full_path.replace("%s/" % LT_PATH, "")
         try:
-            target = Target.objects.get(host=target_host, port=target_port)
-        except Target.DoesNotExist:
-            target = Target(host=target_host, port=target_port)
-            target.save()
-            logger.debug("New target was added: %s" % target)
+            ts_record = TestSettings.objects.get(file_path=file_name)
+        except TestSettings.DoesNotExist:
+            logger.debug("DB: record about %s file is absent." % file_name)
+            ts_record = TestSettings(file_path=file_name, test_name = "",
+                                    generator_id=localhost_generator_id(lt_tool),
+                                    ticket="", version="")
+            ts_record.save()
 
-        try:
-            rps = RPS.objects.get(test_settings_id=ts_record.id,
-                                    rps_name=sec)
-        except RPS.DoesNotExist:
-            rps = RPS(test_settings_id=ts_record.id,
-                        rps_name=sec, schedule=rps_value,
-                        target_id=target.id)
-            rps.save()
-            logger.debug("New rps was added: %s" % rps)
-        else:
-            if not rps.target_id:
-                rps.target_id = target.id
-            if not rps.schedule == rps_value:
-                rps.schedule = rps_value
-            rps.save()
-            logger.debug("rps was updated: %s" % rps)
-    sec = "sputnikreport"
-    ts_record.test_name = config.get(sec, "test_name")
-    ts_record.ticket = config.get(sec, "ticket_url")
-    ts_record.version = config.get(sec, "version")
-    ts_record.save()
-    qs = RPS.objects.filter(test_settings_id=ts_record.id).exclude(rps_name__in=tool_sections).delete()
+        for sec in tool_sections:
+            (rps_value,
+                target_host,
+                target_port) = get_config_values(config, sec, lt_tool)
+            try:
+                target = Target.objects.get(host=target_host, port=target_port)
+            except Target.DoesNotExist:
+                target = Target(host=target_host, port=target_port)
+                target.save()
+                logger.debug("New target was added: %s" % target)
+
+            try:
+                rps = RPS.objects.get(test_settings_id=ts_record.id,
+                                        rps_name=sec)
+            except RPS.DoesNotExist:
+                rps = RPS(test_settings_id=ts_record.id,
+                            rps_name=sec, schedule=rps_value,
+                            target_id=target.id)
+                rps.save()
+                logger.debug("New rps was added: %s" % rps)
+            else:
+                if not rps.target_id:
+                    rps.target_id = target.id
+                if not rps.schedule == rps_value:
+                    rps.schedule = rps_value
+                rps.save()
+                logger.debug("rps was updated: %s" % rps)
+        sec = "sputnikreport"
+        ts_record.test_name = config.get(sec, "test_name")
+        ts_record.ticket = config.get(sec, "ticket_url")
+        ts_record.version = config.get(sec, "version")
+        ts_record.save()
+        qs = RPS.objects.filter(test_settings_id=ts_record.id).exclude(rps_name__in=tool_sections).delete()
+    except ConfigParser.NoOptionError as e:
+        logger.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
+                                                                   full_path))
+    except ConfigParser.NoSectionError as e:
+        logger.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
+                                                                   full_path))
+    except ConfigParser.MissingSectionHeaderError as e:
+        logger.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
+                                                                   full_path))
+    except TankConfigError as e:
+        logger.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
+                                                                   full_path))
 
 
 def sync_config(file_path, *args, **kwargs):

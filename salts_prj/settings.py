@@ -80,6 +80,7 @@ DATABASES = {
         'PORT': '',                      # Set to empty string for default.
     }
 }
+LT_PATH = "/home/krylov/prj/loadtest"
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
