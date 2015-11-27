@@ -99,7 +99,7 @@ class Generator(models.Model):
     host = models.CharField('Хост', max_length=128,
                             help_text='Сервер нагрузки',
                             null=True, blank=True)
-    port = models.IntegerField('Порт', max_length=128,
+    port = models.IntegerField('Порт',
                                help_text='Порт',
                                null=True, blank=True)
     tool = models.CharField('Генератор', max_length=128,
