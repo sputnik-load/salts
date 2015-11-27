@@ -20,7 +20,7 @@ class TestUselessTR(unittest.TestCase):
         return bool(cursor.fetchall())
 
     def _insert_dead_references(self, ref_values):
-        ref_values["test_id"] = "2015-10-16_17-18-12.8KdyK9"
+        ref_values["test_id"] = "2015-10-16_17-18-12.8KdyK8"
         ref_values["group"] = "Afisha.Deti"
         ref_values["test_name"] = "Test.Name"
         ref_values["target"] = "f2-afisha-101.ix.km:8080"
@@ -158,13 +158,13 @@ class TestUselessTR(unittest.TestCase):
         self._tr = UselessTR(self._options, logger)
 
         db_records = [
-            ("1.txt", "3.abc", "dl1"), 
-            ("", "dl2", "5.txt"),
-            ("dl3", "", "")]
-        db_records = [tuple(self._add_path_prefix(self._subfolder, rec)) 
-                        for rec in db_records]
-        db_expected = ["1.txt", "3.abc", "dl1", "dl2", "5.txt", "dl3"]
-        db_expected = self._add_path_prefix(self._subfolder, db_expected)
+            (1, "1.txt", "3.abc", "dl1"), 
+            (2, "", "dl2", "5.txt"),
+            (3, "dl3", "", "")]
+        db_records = [tuple([rec[0]] + self._add_path_prefix(self._subfolder, list(rec)[1:]))                           for rec in db_records]
+        db_expected = [(1, "1.txt"), (1, "3.abc"), (1, "dl1"), 
+                        (2, "dl2"), (2, "5.txt"), (3, "dl3")]
+        db_expected = [(item[0], "%s/%s" % (self._subfolder, item[1])) for item in db_expected if item[1]]
         expected_ul_files = ["ul1.txt", "ul2.abc", "ul3.def"]
         existed_log_filenames = ["1.txt", "3.abc", "5.txt"] + expected_ul_files
         random.shuffle(existed_log_filenames)

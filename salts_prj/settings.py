@@ -70,10 +70,11 @@ DATABASES = {
         'NAME': 'salts',
         'USER': 'salts',
         'PASSWORD': 'salts',
-        'HOST': 'salt-dev.dev.ix.km',                      # Empty for localhost through domain sockets or           '127.0.0.1' for localhost through TCP.
+        'HOST': 'salt-dev.dev.ix.km',    # Empty for localhost through domain sockets or           '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
     }
 }
+LT_PATH = "/data/qa/loadtest"
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
@@ -94,7 +95,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+# STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+STATICFILES_DIRS = (
+    BASE_DIR,
+)
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 MEDIA_URL = '/media/'

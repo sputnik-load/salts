@@ -140,7 +140,7 @@ class UselessTR():
     def _get_db_ref(self, db_records): 
         db_ref = []
         for rec in db_records:
-            db_ref += [item for item in rec if item]
+            db_ref += [(rec[0], item) for item in rec[1:] if item]
         return db_ref
  
     def get_media_res_path(self):
@@ -152,7 +152,7 @@ class UselessTR():
 
     def db_file_references(self):
         cursor = self._conn.cursor()
-        query = """ select %s, %s, %s, %s, %s, 
+        query = """ select id, %s, %s, %s, %s, %s, 
                             %s, %s, %s, %s, %s, %s from salts_testresult """ % tuple(self._log_files_fields)
         cursor.execute(query)
         self._db_records = cursor.fetchall()
@@ -165,23 +165,29 @@ class UselessTR():
         if not self._db_records:
             self.db_file_references()
         cursor = self._conn.cursor()
-        clear_executed = False
+        total = 0
         for rec in self._db_records:
-            m = zip(self._log_files_fields, rec)
+            m = zip(self._log_files_fields, rec[1:])
             for item in m:
                 (field, value) = item
-                if value in dead_ref:
+                if [ref for ref in dead_ref if value == ref[1]]:
                     query = "update salts_testresult set %s='' where %s='%s'" % (field, 
                                 field, value)
                     cursor.execute(query)                            
-                    self._logger.info("Dead reference %s will be cleared." % value)
+                    self._logger.info("Dead reference %s will be cleared (id = %s)." % (
+                                        value, rec[0]))
                     clear_executed = True
-        if clear_executed:
+                    total += 1
+        if total:
             self._conn.commit()
-            self._logger.info("All dead references have been cleared successfully.")
+            self._logger.info(
+                "All dead references have been cleared successfully. Total is %d." % total)
+        else:
+            self._logger.info("No dead references.")
         
     def useless_files(self, log_files, db_ref):
-        return ["%s/%s" % (self._media_res_path, lf) for lf in log_files if not lf in db_ref]
+        return ["%s/%s" % (self._media_res_path, lf) for lf in log_files if not [
+                    lf for ref in db_ref if lf == ref[1]]]
 
     def remove_empty_folders(self, path):
         if not os.path.isdir(path):
@@ -213,15 +219,17 @@ class UselessTR():
                 os.remove(ulf)
                 msg = "Useless %s file was removed." % ulf
             self._logger.info(msg)
+        self._logger.info("Number of useless files is %d." % len(ul_files))
 
     def dead_db_file_references(self, log_files, db_ref):
-        return [rf for rf in db_ref if not rf in log_files]
+        return [ref for ref in db_ref if not ref[1] in log_files]
 
     def log_dead_references(self, dead_ref):
         if not dead_ref:
-            self._logger.info("Dead references were not found.")
+            self._logger.info("No dead references.")
         for drf in dead_ref:
-            self._logger.info("Dead reference %s was found." % drf)
+            self._logger.info("Dead reference %s was found (id = %d)." % (drf[1], drf[0]))
+        self._logger.info("Number of dead references is %d." % len(dead_ref))
          
 def main():
     try:

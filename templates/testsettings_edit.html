@@ -1,0 +1,54 @@
+
+<html>
+  <head><title>Редактирование теста</title></head>
+  <style>
+    table, td{
+      border: 1px solid #ccc;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border-spacing: 0;
+    }
+    td {
+      padding: 4px;
+    }
+    td input {
+      width: 100%;
+      padding: 4px;
+      margin: 0;
+      border: none;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+      font: inherit;
+      height: 28px;
+    }
+    td input:focus {
+      outline: 1px solid blue;
+    }
+    .editable td {
+      padding: 0;
+    }
+    #edit {
+      width: 400px;
+    }
+  </style>
+  {% load staticfiles %}
+  <script type="text/javascript" src="{% static "js/jquery-1.11.3.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/edit.js" %}"></script>
+  <body> 
+    <form method="post" action="/tests/">{% csrf_token %}
+      <input name="settings" id="settings-id" type="hidden" value="{{ settings }}"></>
+      <input name="rpsid" id="rpsid-id" type="hidden" value="{{ rpsid }}"></>
+      <table>
+        {{ settings_form.as_table }}
+      </table>      
+      <br>
+      <table>
+        <caption>Значения RPS:</caption>
+        {{ rps_form.as_table }}
+      </table>
+      <br>
+      <input name="save-button" id="save-id" type="submit" value="Сохранить"></>
+      <input name="cancel-button" id="cancel-id" type="submit" value="Отменить"></>
+    </form>
+  </body>
+</html>
