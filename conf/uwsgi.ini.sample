@@ -1,5 +1,5 @@
 [uwsgi]
-plugins = python
+plugins = python27
 protocol = uwsgi
 
 # Настройки, связанные с Django
