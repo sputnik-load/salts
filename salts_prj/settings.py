@@ -102,7 +102,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 # STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATICFILES_DIRS = (
-    "/home/krylov/prj/salts",
+    BASE_DIR,
 )
 
 # MEDIA_ROOT = os.path.join(BASE_DIR, "utils/test_results/")
