@@ -109,7 +109,7 @@ def test_():
 
 def backup_files():
     with cd(_my_replace('#PROJECT_ROOT#')):
-        archive = '/tmp/salts-{ts}.tar.bz2'.format(ts=get_ts())
+        archive = '/tmp/salts-{ts}.tar.gz'.format(ts=get_ts())
         sudo('tar --exclude "./media/results/*" --exclude "*.bz2" -zcvf "{archive}" .'.format(archive=archive))
         get(archive)
         remote_rm(archive)
@@ -123,7 +123,7 @@ def backup_database():
 
 def backup_results():
     with cd(_my_replace('#PROJECT_ROOT#')):
-        archive = '/tmp/salts-results-{ts}.tar.bz2'.format(ts=get_ts())
+        archive = '/tmp/salts-results-{ts}.tar.gz'.format(ts=get_ts())
         sudo('tar -zcvf "{archive}" ./media/results/'.format(archive=archive))
         get(archive)
         remote_rm(archive)
