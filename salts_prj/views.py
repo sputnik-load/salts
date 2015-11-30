@@ -14,18 +14,35 @@ from django.core.context_processors import csrf
 from salts_prj.api_client import TankClient
 
 from django.forms.formsets import formset_factory
-
+from django.core.paginator import Paginator
 from django.views.generic.list import ListView
 from salts.models import TestSettings, RPS, Target, Generator
 from salts.forms import SettingsEditForm, RPSEditForm
 from settings import LT_PATH
 
 
+class TestSettingsPaginator(Paginator):
+
+    def __init__(self, object_list, per_page, orphans=0,
+                 allow_empty_first_page=True):
+        Paginator.__init__(self, object_list, per_page, orphans,
+                           allow_empty_first_page)
+        self._count = len(list(object_list))
+
+
 class TestSettingsList(ListView):
     template_name = "testsettings_list.html"
     queryset = TestSettings.objects.raw("SELECT ts.id, ts.test_name, \
 ts.file_path, g.host, g.port, g.tool FROM salts_testsettings ts \
-JOIN salts_generator g ON ts.generator_id = g.id")
+JOIN salts_generator g ON ts.generator_id = g.id \
+ORDER BY g.tool, ts.test_name")
+    paginate_by = 10
+    paginator_class = TestSettingsPaginator
+
+    def get_context_data(self, **kwargs):
+        context = super(TestSettingsList, self).get_context_data(**kwargs)
+        logger.warning("Context: %s" % context)
+        return context
 
 
 class UnicodeConfigParser(ConfigParser.RawConfigParser):
@@ -63,12 +80,14 @@ transitions = {"prepare": "finished", "finished": ""}
 
 def ini_files():
     ini = []
+    logger.debug("LT_PATH: %s" % LT_PATH)
     for root, dirs, files in os.walk(LT_PATH, topdown=False):
         for name in files:
             full_path = os.path.join(root, name)
             file_name, file_ext = os.path.splitext(full_path)
             if file_ext == ".ini":
                 ini.append(full_path)
+    logger.debug("INI: %s" % ini)
     return ini
 
 
@@ -227,8 +246,11 @@ def get_config_values(config, sec, lt_tool):
         rampup = config.get(sec, "rampup")
         testlen = config.get(sec, "testlen")
         rampdown = config.get(sec, "rampdown")
-        rps = config.get(sec, "rps1")
-        rps_value = "(%s,%s,%s,%s)" % (rps, rampup, testlen, rampdown)
+        rps1 = config.get(sec, "rps1")
+        rps2 = config.get(sec, "rps2")
+        if not rps1 == rps2:
+            raise TankConfigError("rps1 и rps2 должны быть равны.")
+        rps_value = "(%s,%s,%s,%s)" % (rps1, rampup, testlen, rampdown)
         target = config.get(sec, "hostname")
         port = config.get(sec, "port")
         return (rps_value, target, port)
@@ -245,6 +267,7 @@ def localhost_generator_id(lt_tool):
 
 
 def check_changes(full_path):
+    entity = {"ts": None, "tool": []}
     try:
         config = ConfigParser.RawConfigParser()
         config.read(full_path)
@@ -261,6 +284,7 @@ def check_changes(full_path):
                 tool_sections.append(sec)
         if not lt_tool:
             logger.info("%s ini-file isn't config for tank test." % full_path)
+            logger.warning("FUNC check_changes: %s ini-file isn't config for tank test." % full_path)
             return
         file_name = full_path.replace("%s/" % LT_PATH, "")
         try:
@@ -271,18 +295,18 @@ def check_changes(full_path):
                                     generator_id=localhost_generator_id(lt_tool),
                                     ticket="", version="")
             ts_record.save()
-
+        entity["ts"] = ts_record
         for sec in tool_sections:
             (rps_value,
                 target_host,
                 target_port) = get_config_values(config, sec, lt_tool)
+            tool_ent = {}
             try:
                 target = Target.objects.get(host=target_host, port=target_port)
             except Target.DoesNotExist:
                 target = Target(host=target_host, port=target_port)
                 target.save()
-                logger.debug("New target was added: %s" % target)
-
+                tool_ent["target"] = target
             try:
                 rps = RPS.objects.get(test_settings_id=ts_record.id,
                                         rps_name=sec)
@@ -299,12 +323,15 @@ def check_changes(full_path):
                     rps.schedule = rps_value
                 rps.save()
                 logger.debug("rps was updated: %s" % rps)
+            tool_ent["rps"] = rps
+        entity["tool"].append(tool_ent)
         sec = "sputnikreport"
         ts_record.test_name = config.get(sec, "test_name")
         ts_record.ticket = config.get(sec, "ticket_url")
         ts_record.version = config.get(sec, "version")
         ts_record.save()
         qs = RPS.objects.filter(test_settings_id=ts_record.id).exclude(rps_name__in=tool_sections).delete()
+        return
     except ConfigParser.NoOptionError as e:
         logger.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
                                                                    full_path))
@@ -317,6 +344,12 @@ def check_changes(full_path):
     except TankConfigError as e:
         logger.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
                                                                    full_path))
+    for tool_ent in entity["tool"]:
+        if "target" in tool_ent:
+            tool_ent["target"].delete()
+        tool_ent["rps"].delete()
+    if entity["ts"]:
+        entity["ts"].delete()
 
 
 def sync_config(file_path, *args, **kwargs):
