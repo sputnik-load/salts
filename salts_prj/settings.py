@@ -68,14 +68,14 @@ WSGI_APPLICATION = 'salts_prj.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'test_salts_db',
+        'NAME': 'salts',
         'USER': 'salts',
         'PASSWORD': 'salts',
-        'HOST': 'localhost',                      # Empty for localhost through domain sockets or           '127.0.0.1' for localhost through TCP.
+        'HOST': 'salt-dev.dev.ix.km',    # Empty for localhost through domain sockets or           '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
     }
 }
-LT_PATH = "/home/krylov/prj/test-repo"
+LT_PATH = "/data/qa/loadtest"
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
