@@ -38,12 +38,12 @@ class TestSettingsList(ListView):
 ts.file_path, g.host, g.port, g.tool FROM salts_testsettings ts \
 JOIN salts_generator g ON ts.generator_id = g.id \
 ORDER BY g.tool, ts.test_name")
-    paginate_by = 10
-    paginator_class = TestSettingsPaginator
+    # paginate_by = 10
+    # paginator_class = TestSettingsPaginator
 
     def get_context_data(self, **kwargs):
         context = super(TestSettingsList, self).get_context_data(**kwargs)
-        logger.warning("Context: %s" % context)
+        # logger.warning("Context: %s" % context)
         return context
 
 
