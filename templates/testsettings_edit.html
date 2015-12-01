@@ -32,8 +32,8 @@
     }
   </style>
   {% load staticfiles %}
-  <script type="text/javascript" src="{% static "js/jquery-1.11.3.js" %}"></script>
-  <script type="text/javascript" src="{% static "js/edit.js" %}"></script>
+  <script type="text/javascript" src="{% static "salts/js/jquery-1.11.3.js" %}"></script>
+  <script type="text/javascript" src="{% static "salts/js/edit.js" %}"></script>
   <body> 
     <form method="post" action="/tests/">{% csrf_token %}
       <input name="settings" id="settings-id" type="hidden" value="{{ settings }}"></>
