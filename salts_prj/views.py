@@ -169,9 +169,6 @@ def stop_test_api(request):
     port = sess[tsid]["port"]
     client = TankClient(host, port, logger)
     client.stop(sess[tsid]["session"])
-    tr = TestRun.objects.get(id=sess[tsid]["trid"])
-    tr.status = TestRun.STATUS_DONE
-    del sess[tsid]
     request.session["test_run"] = str(pickle.dumps(sess))
     response_dict = {}
     return HttpResponse(json.dumps(response_dict),
@@ -189,7 +186,17 @@ def status_info(tsid_info):
     resp = None
     wait_status = tsid_info["wait_status"]
     if session_id in status:
+        cur_status = status[session_id]["status"]
+        tsid_info["status"] = cur_status
         if status[session_id]["stage_completed"]:
+            resp = client.resume(session_id)
+        if not (cur_status == "running"):
+            logger.debug("CURRENT STATUS: %s." % cur_status)
+            tr = TestRun.objects.get(id=tsid_info["trid"])
+            tr.status = TestRun.STATUS_DONE
+            tr.save()
+            return False
+        if status[session_id]["stage_completed"] and False:
             if status[session_id]["current_stage"] == "finished":
                 tsid_info["wait_status"] = ""
                 wait_status = ""
@@ -202,7 +209,7 @@ def status_info(tsid_info):
                 tr.status = TestRun.STATUS_DONE
                 tr.save()
                 return False
-        if status[session_id]["current_stage"] == "poll":
+        if status[session_id]["current_stage"] == "poll" and False:
             tsid_info["wait_status"] = "finished"
     return True
 
@@ -225,6 +232,7 @@ def status_test_api(request):
                             content_type="application/json")
     r = status_info(sess[tsid])
     wait_status = sess[tsid]["wait_status"]
+    status = sess[tsid]["status"]
     session = sess[tsid]["session"]
     if not r:
         del sess[tsid]
@@ -234,6 +242,7 @@ def status_test_api(request):
     response_dict.update({"tsid": tsid})
     response_dict.update({"wait_status": wait_status})
     response_dict.update({"session": session})
+    response_dict.update({"status": status})
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
 
@@ -483,13 +492,14 @@ def poll_servers(request):
         test_run = {}
         test_run.update({"wait_status": tr_session[tsid]["wait_status"]})
         test_run.update({"session": tr_session[tsid]["session"]})
+        test_run.update({"status": tr_session[tsid]["status"]})
         if r:
             test_run.update({"run_status": "1"})
         else:
             test_run.update({"run_status": "0"})
         response_dict.update({tsid: test_run})
         logger.debug("RESPONSE DICT: %s" % response_dict)
-    remove_ids = [id for id in tr_session if tr_session[id]["wait_status"] == ""]
+    remove_ids = [id for id in tr_session if not (tr_session[id]["status"] == "running")]
     for id in remove_ids:
         del tr_session[id]
     logger.debug("TR_SESSION: %s" % tr_session)

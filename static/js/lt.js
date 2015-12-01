@@ -22,14 +22,15 @@ function csrfSafeMethod(method) {
 status_timeout_id = 0;
 
 function status_message(json) {
-  if (json["wait_status"] == "prepare") {
-    return "Тест с id=" + json["session"] + " готовится к запуску.";
-  }
-  if (json["wait_status"] == "finished") {
+  console.log("STATUS: " + json["status"]);
+  if (json["status"] == "running") {
     return "Тест с id=" + json["session"] + " выполняется.";
   }
-  if (json["wait_status"] == "") {
-    return "Тест с id=" + json["session"] + " завершен.";
+  if (json["status"] == "success") {
+    return "Тест с id=" + json["session"] + " выполнен успешно.";
+  }
+  if (json["status"] == "failed") {
+    return "Тест с id=" + json["session"] + " выполнен неуспешно.";
   }
   console.log("wait_status: '" + json["wait_status"] + "'");
   return "";
@@ -52,23 +53,25 @@ function statusTest(row_id) {
       console.log("success(statusTest): json = " + JSON.stringify(json))
       $("td#status_" + row_id).html(status_message(json)); 
       var wr_but = $("input[type=button]#" + row_id).get(0);
-      if (json["run_status"] == "0") {
+      if (json["status"] == "running") {
+        status_timeout_id = 
+          setTimeout(function() {
+            console.log("setTimeout handler: status_test");
+            statusTest(row_id);
+        }, 3000);
+        console.log("Status Timeout ID: " + status_timeout_id);
+        $(wr_but).attr("run_test", "On");
+        $(wr_but).attr("value", "Остановить");
+      }
+      else {
         if (status_timeout_id) {
+          console.log("Clear Status Timeout ID: " + status_timeout_id);
           clearTimeout(status_timeout_id);
         }
         var wr_but = $("input[type=button]#" + row_id).get(0);
         console.log("Button: " + wr_but);
         $(wr_but).attr("run_test", "Off");
         $(wr_but).attr("value", "Запустить");
-      }
-      else {
-        status_timeout_id = 
-          setTimeout(function() {
-            console.log("setTimeout handler: status_test");
-            statusTest(row_id, json);
-        }, 3000);
-        $(wr_but).attr("run_test", "On");
-        $(wr_but).attr("value", "Остановить");
       }
     }
   });
@@ -90,7 +93,16 @@ function pollServers() {
         console.log("Key: " + tsid + ". Value: " + el["session"] + ".");
         $("td#status_" + tsid).html(status_message(el)); 
         var wr_but = $("input[type=button]#" + tsid).get(0);
-        if (el["run_status"] == "0") {
+        if (el["status"] == "running") {
+          status_timeout_id = 
+            setTimeout(function() {
+              console.log("setTimeout handler: status_test");
+              statusTest(tsid);
+          }, 3000);
+          $(wr_but).attr("run_test", "On");
+          $(wr_but).attr("value", "Остановить");
+        }
+        else {
           if (status_timeout_id) {
             clearTimeout(status_timeout_id);
           }
@@ -98,15 +110,6 @@ function pollServers() {
           console.log("Button: " + wr_but);
           $(wr_but).attr("run_test", "Off");
           $(wr_but).attr("value", "Запустить");
-        }
-        else {
-          status_timeout_id = 
-            setTimeout(function() {
-              console.log("setTimeout handler: status_test");
-              statusTest(tsid, el);
-          }, 3000);
-          $(wr_but).attr("run_test", "On");
-          $(wr_but).attr("value", "Остановить");
         }
       });
     }
@@ -148,10 +151,12 @@ $(function() {
             $("p#status").html("Status: " + JSON.stringify(json));
           },
           success: function(json) {
-            console.log("Test STOPPED.");
-            $("td#status_" + tr_id).html("");
-            $(wr_item).attr("run_test", "Off");
-            $(wr_item).attr("value", "Запустить");
+            console.log("STOP ID = " + wr_item.id);
+            statusTest(wr_item.id);
+            // console.log("Test STOPPED.");
+            // $("td#status_" + tr_id).html("");
+            // $(wr_item).attr("run_test", "Off");
+            // $(wr_item).attr("value", "Запустить");
           }
         });
       } else {
@@ -167,7 +172,7 @@ $(function() {
             $("p#status").html("Status: " + JSON.stringify(json));
           },
           success: function(json) {
-            statusTest(wr_item.id, json);
+            statusTest(wr_item.id);
           }
         });
       }
