@@ -1,6 +1,9 @@
 upstream salt-dev-django {
         server unix:///var/run/uwsgi/#HOSTNAME#.sock;
 }
+upstream salt-dev-django-krylov {
+        server unix:///var/run/uwsgi/salts-krylov.sock;
+}
 
 server {
 	server_name salt-dev, salt-dev.dev.ix.km;
@@ -21,6 +24,11 @@ server {
 		alias #PROJECT_ROOT#/static;
 	}
 
+	location /krylov {
+		uwsgi_pass salt-dev-django-krylov;
+		include uwsgi_params;
+	}
+
 	location / {
 		uwsgi_pass salt-dev-django;
 		include uwsgi_params;
@@ -39,4 +47,35 @@ server {
 	location /ammo {
 		alias /data/qa/ammo;
 	}
+}
+
+server {
+    listen 81;
+	server_name salt-dev, salt-dev.dev.ix.km;
+	charset     utf-8;
+
+	client_max_body_size 75M;
+
+	location /media  {
+		alias #PROJECT_ROOT#/media;
+	}
+
+#	location /js  {
+#		alias #PROJECT_ROOT#/js;
+#	}
+
+	location /static  {
+		# for grafana dashboard
+	        add_header Access-Control-Allow-Origin "*";
+	        add_header Access-Control-Allow-Methods "GET, OPTIONS";
+	        add_header Access-Control-Allow-Headers "origin, authorization, accept";
+
+		alias #PROJECT_ROOT#/static;
+	}
+
+	location / {
+		uwsgi_pass salt-dev-django-krylov;
+		include uwsgi_params;
+	}
+
 }

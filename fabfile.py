@@ -45,6 +45,7 @@ def deploy(reload_=True):
     put('salts', remote_path=remote_dir)
     put('salts_prj', remote_path=remote_dir)
     put('templates', remote_path=remote_dir)
+    #put('js', remote_path=remote_dir+"/static/")
     put('static/favicon.ico', remote_path=remote_dir+"/static/")
     with settings(warn_only=True):
         put('*.py', remote_path=remote_dir)
@@ -55,6 +56,7 @@ def deploy(reload_=True):
 
     put('conf', remote_path=remote_dir)
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/uwsgi.ini.sample', '#PROJECT_ROOT#/conf/uwsgi.ini')
+    _my_replace_in_remote_file('#PROJECT_ROOT#/conf/uwsgi-krylov.ini.sample', '#PROJECT_ROOT#/conf/uwsgi-krylov.ini')
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/nginx.conf.sample', '#PROJECT_ROOT#/conf/nginx.conf')
 
     if reload_:
@@ -79,6 +81,7 @@ def install_req():
 
 def _setup_django():
     sudo(_my_replace('ln -fs #PROJECT_ROOT#/conf/uwsgi.ini /etc/uwsgi/#HOSTNAME#.ini'))
+    sudo(_my_replace('ln -fs #PROJECT_ROOT#/conf/uwsgi-krylov.ini /etc/uwsgi/uwsgi-krylov.ini'))
     sudo(_my_replace('ln -fs #PROJECT_ROOT#/conf/nginx.conf /etc/nginx/conf.d/#HOSTNAME#.conf'))
     # TODO: manage.py installstatic
     with cd(_my_replace("#PROJECT_ROOT#")):
