@@ -466,7 +466,10 @@ def poll_servers(request):
         logger.debug("SESSIONS: %s" % sessions)
         for sess in sessions:
             test_id = sess.replace("_0000000000", "")
-            tr = TestRun.objects.get(id=test_id)
+            try:
+                tr = TestRun.objects.get(id=test_id)
+            except TestRun.DoesNotExist:
+                continue
             ts = TestSettings.objects.get(id=tr.test_settings_id)
             tsid = str(ts.id)
             is_write = False
