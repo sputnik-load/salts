@@ -103,7 +103,7 @@ function pollServers() {
           status_timeout_id = 
             setTimeout(function() {
               console.log("setTimeout handler: status_test");
-              statusTest(tsid, json);
+              statusTest(tsid, el);
           }, 3000);
           $(wr_but).attr("run_test", "On");
           $(wr_but).attr("value", "Остановить");

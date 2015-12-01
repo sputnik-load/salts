@@ -129,6 +129,7 @@ JOIN salts_testsettings ts ON g.id = ts.generator_id WHERE ts.id = %s" % tsid)
         tr = TestRun(generator_id=gen_id, test_settings_id=tsid, status=TestRun.STATUS_RUNNING)
         tr.save()
         resp = client.run(ini_file.read(), "start", tr.id)
+        logger.debug("START: resp: %s" % resp)
         if not resp:
             msg = "No server response when test tried to start."
             logger.warning(msg)
@@ -182,9 +183,9 @@ def status_info(tsid_info):
     port = tsid_info["port"]
     client = TankClient(host, port, logger)
     session_id = tsid_info["session"]
-    status = client.status(session_id)
     logger.debug("TSID INFO is %s" % tsid_info)
-    logger.debug("Status Result is %s" % status)
+    status = client.status(session_id)
+    logger.debug("Status Result is %s. Session ID: %s." % (status, session_id))
     resp = None
     wait_status = tsid_info["wait_status"]
     if session_id in status:
@@ -201,6 +202,8 @@ def status_info(tsid_info):
                 tr.status = TestRun.STATUS_DONE
                 tr.save()
                 return False
+        if status[session_id]["current_stage"] == "poll":
+            tsid_info["wait_status"] = "finished"
     return True
 
 
@@ -443,38 +446,53 @@ def poll_servers(request):
     if "test_run" in request.session:
         del request.session["test_run"]
     tr_session = {}
-    if request.method == "POST":
-        generators = Generator.objects.all().values("host", "port").distinct()
-        for gen in generators:
-            client = TankClient(gen["host"], gen["port"], logger)
-            try:
-                data = client.status()
-            except ConnectionError as e:
-                continue
-            logger.debug("STATUS: %s" % data)
-            sessions = data.keys()
-            for sess in sessions:
-                test_id = sess.replace("_0000000000", "")
-                tr = TestRun.objects.get(id=test_id)
-                ts = TestSettings.objects.get(id=tr.test_settings_id)
-                # TODO проверить, если запущенный тест позднее, чем имеется
-                # в списке, то перезаписать
-                tr_session[ts.id] = {}
-                tr_session[ts.id]["host"] = gen["host"]
-                tr_session[ts.id]["port"] = gen["port"]
-                tr_session[ts.id]["session"] = sess
-                tr_session[ts.id]["wait_status"] = "prepare"
-                tr_session[ts.id]["trid"] = tr.id
-                r = status_info(tr_session[ts.id])
-                test_run = {}
-                test_run.update({"wait_status": tr_session[ts.id]["wait_status"]})
-                test_run.update({"session": tr_session[ts.id]["session"]})
-                if r:
-                    test_run.update({"run_status": "1"})
-                else:
-                    test_run.update({"run_status": "0"})
-                    del tr_session[ts.id]
-                response_dict.update({str(ts.id): test_run})
+    generators = Generator.objects.all().values("host", "port").distinct()
+    for gen in generators:
+        client = TankClient(gen["host"], gen["port"], logger)
+        try:
+            data = client.status()
+        except ConnectionError as e:
+            continue
+        sessions = data.keys()
+        logger.debug("SESSIONS: %s" % sessions)
+        for sess in sessions:
+            test_id = sess.replace("_0000000000", "")
+            tr = TestRun.objects.get(id=test_id)
+            ts = TestSettings.objects.get(id=tr.test_settings_id)
+            tsid = str(ts.id)
+            is_write = False
+            logger.debug("CHECK. START: tr_session: %s. tsid: %s" % (tr_session, tsid))
+            if tsid in tr_session:
+                logger.debug("CHECK: %s and %s" % (tr.id, tr_session[tsid]["trid"]))
+                if tr.id > int(tr_session[tsid]["trid"]):
+                    logger.debug("CHECK: %s and %s. REWRITE" % (tr.id, tr_session[tsid]["trid"]))
+                    is_write = True
+            else:
+                is_write = True
+            if is_write:
+                tr_session[tsid] = {}
+                tr_session[tsid]["host"] = gen["host"]
+                tr_session[tsid]["port"] = gen["port"]
+                tr_session[tsid]["session"] = sess
+                tr_session[tsid]["wait_status"] = "prepare"
+                tr_session[tsid]["trid"] = tr.id
+    for tsid in tr_session:
+        logger.debug("1. WAIT STATUS: %s" % tr_session[tsid]["wait_status"])
+        r = status_info(tr_session[tsid])
+        logger.debug("2. WAIT STATUS: %s" % tr_session[tsid]["wait_status"])
+        test_run = {}
+        test_run.update({"wait_status": tr_session[tsid]["wait_status"]})
+        test_run.update({"session": tr_session[tsid]["session"]})
+        if r:
+            test_run.update({"run_status": "1"})
+        else:
+            test_run.update({"run_status": "0"})
+        response_dict.update({tsid: test_run})
+        logger.debug("RESPONSE DICT: %s" % response_dict)
+    remove_ids = [id for id in tr_session if tr_session[id]["wait_status"] == ""]
+    for id in remove_ids:
+        del tr_session[id]
+    logger.debug("TR_SESSION: %s" % tr_session)
     request.session["test_run"] = str(pickle.dumps(tr_session))
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
