@@ -10,7 +10,7 @@ salt-dev.dev.ix.km
 logfile
 celerybeat-schedule
 media
-static
+./static
 dist
 
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
