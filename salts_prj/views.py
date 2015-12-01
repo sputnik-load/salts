@@ -7,6 +7,7 @@ import time
 import ConfigParser
 import codecs
 import re
+import pickle
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -16,9 +17,10 @@ from salts_prj.api_client import TankClient
 from django.forms.formsets import formset_factory
 from django.core.paginator import Paginator
 from django.views.generic.list import ListView
-from salts.models import TestSettings, RPS, Target, Generator
+from salts.models import TestSettings, RPS, Target, Generator, TestRun
 from salts.forms import SettingsEditForm, RPSEditForm
 from settings import LT_PATH
+from requests import ConnectionError
 
 
 class TestSettingsPaginator(Paginator):
@@ -73,8 +75,8 @@ class UnicodeConfigParser(ConfigParser.RawConfigParser):
 class TankConfigError(Exception):
     pass
 
+
 logger = logging.getLogger("salts")
-clients = {}
 transitions = {"prepare": "finished", "finished": ""}
 
 
@@ -103,8 +105,11 @@ def run_test_api(request):
     if not is_valid_request(request, ["tsid"]):
         return HttpResponse("Request isn't valid.")
 
+    sess = pickle.loads(request.session["test_run"])
+
+
     tsid = request.POST["tsid"]
-    if tsid in clients:
+    if tsid in sess:
         msg = "FUNC run_test_api: client with id=%s exist already." % tsid
         logger.warning(msg)
         return HttpResponse(msg)
@@ -115,30 +120,32 @@ def run_test_api(request):
 FROM salts_generator g \
 JOIN salts_testsettings ts ON g.id = ts.generator_id WHERE ts.id = %s" % tsid)
 
-    logger.debug("Path: %s" % path)
-    logger.debug("Generator: %s" % qs)
-
-    clients[tsid] = {}
-    clients[tsid]["client"] = TankClient(qs[0].host, qs[0].port, logger)
-    client = clients[tsid]["client"]
-    resp = ""
+    (gen_id, host, port) = (qs[0].id, qs[0].host, qs[0].port)
+    client = TankClient(host, port, logger)
+    sess[tsid] = {}
+    sess[tsid]["host"] = host
+    sess[tsid]["port"] = port
     with open(path, "r") as ini_file:
-        resp = client.run(ini_file.read(), "start")
-    if not resp:
-        clients.pop(path, None)
-        msg = "No server response when test tried to start."
-        logger.warning(msg)
-        return HttpResponse(msg)
+        tr = TestRun(generator_id=gen_id, test_settings_id=tsid, status=TestRun.STATUS_RUNNING)
+        tr.save()
+        resp = client.run(ini_file.read(), "start", tr.id)
+        if not resp:
+            msg = "No server response when test tried to start."
+            logger.warning(msg)
+            return HttpResponse(msg)
+        else:
+            sess[tsid]["trid"] = tr.id
 
-    logger.info("Response: %s" % resp)
-    clients[tsid]["session"] = resp["session"]
-    clients[tsid]["wait_status"] = "prepare"
+    logger.debug("Response: %s" % resp)
+    sess[tsid]["session"] = resp["session"]
+    sess[tsid]["wait_status"] = "prepare"
+    logger.debug("RUN SESSION: %s" % sess)
+    request.session["test_run"] = str(pickle.dumps(sess))
 
     response_dict = {}
     response_dict.update({"ini_path": path})
     response_dict.update({"wait_status": "prepare"})
     response_dict.update({"session": resp["session"]})
-    logger.info("JSON: %s" % json.dumps(response_dict))
 
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
@@ -148,26 +155,64 @@ def stop_test_api(request):
     if not is_valid_request(request, ["tsid"]):
         return HttpResponse("Request isn't valid.")
 
+    sess = pickle.loads(request.session["test_run"])
+
     tsid = request.POST["tsid"]
-    if tsid not in clients:
+    if tsid not in sess:
         msg = "FUNC stop_test_api: client with id=%s isn't exist yet." % tsid
-        logger.warning(msg)
+        logger.debug(msg)
         return HttpResponse(msg)
 
-    client = clients[tsid]["client"]
-    client.stop(clients[tsid]["session"])
-    clients.pop(tsid, None)
+
+    host = sess[tsid]["host"]
+    port = sess[tsid]["port"]
+    client = TankClient(host, port, logger)
+    client.stop(sess[tsid]["session"])
+    tr = TestRun.objects.get(id=sess[tsid]["trid"])
+    tr.status = TestRun.STATUS_DONE
+    del sess[tsid]
+    request.session["test_run"] = str(pickle.dumps(sess))
     response_dict = {}
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
+
+
+def status_info(tsid_info):
+    host = tsid_info["host"]
+    port = tsid_info["port"]
+    client = TankClient(host, port, logger)
+    session_id = tsid_info["session"]
+    status = client.status(session_id)
+    logger.debug("TSID INFO is %s" % tsid_info)
+    logger.debug("Status Result is %s" % status)
+    resp = None
+    wait_status = tsid_info["wait_status"]
+    if session_id in status:
+        if status[session_id]["stage_completed"]:
+            if status[session_id]["current_stage"] == "finished":
+                tsid_info["wait_status"] = ""
+                wait_status = ""
+            if status[session_id]["current_stage"] == wait_status:
+                resp = client.resume(session_id)
+                wait_status = transitions[wait_status]
+                tsid_info["wait_status"] = wait_status
+            if not wait_status:
+                tr = TestRun.objects.get(id=tsid_info["trid"])
+                tr.status = TestRun.STATUS_DONE
+                tr.save()
+                return False
+    return True
 
 
 def status_test_api(request):
     if not is_valid_request(request, ["tsid"]):
         return HttpResponse("Request isn't valid.")
 
+    sess = pickle.loads(request.session["test_run"])
+    logger.debug("STATUS SESSION: %s" % sess)
+
     tsid = request.POST["tsid"]
-    if tsid not in clients:
+    if tsid not in sess:
         msg = "FUNC status_test_api: client with id=%s isn't exist yet." % tsid
         logger.debug(msg)
         response_dict = {}
@@ -175,40 +220,19 @@ def status_test_api(request):
         response_dict.update({"run_status": 0})
         return HttpResponse(json.dumps(response_dict),
                             content_type="application/json")
+    r = status_info(sess[tsid])
+    wait_status = sess[tsid]["wait_status"]
+    session = sess[tsid]["session"]
+    if not r:
+        del sess[tsid]
 
-    client = clients[tsid]["client"]
-    session = clients[tsid]["session"]
-    status = client.status(session)
-    logger.debug("Status Result is %s" % status)
-    resp = None
-    wait_status = clients[tsid]["wait_status"]
-    if session in status and status[session]["current_stage"] == wait_status:
-        if status[session]["stage_completed"]:
-            resp = client.resume(session)
-            logger.debug("Status_test_api: response: %s" % resp)
-            wait_status = transitions[wait_status]
-            clients[tsid]["wait_status"] = wait_status
-            if not wait_status:
-                clients.pop(tsid, None)
+    request.session["test_run"] = str(pickle.dumps(sess))
     response_dict = {}
     response_dict.update({"tsid": tsid})
     response_dict.update({"wait_status": wait_status})
     response_dict.update({"session": session})
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
-
-
-def tests_list(request):
-    clients = {}
-    context = {}
-    context["configs"] = []
-    i = 1
-    for name in ini_files():
-        context["configs"].append({"name": name,
-                                   "id": "%d" % i})
-        i += 1
-    context.update(csrf(request))
-    return render_to_response("tests_list.html", context)
 
 
 def edit_test_parameters(request, settings_id):
@@ -403,7 +427,7 @@ def show_test_settings(request):
         sync_config(config_path, test_settings=ts_record)
         rpsid = request.POST["rpsid"].split(",")
         form_id = 0
-        for id_rps in rpsid:
+        for id_rps in id:
             rps_record = RPS.objects.get(id=id_rps)
             rps_record.rps_name = request.POST["form-%d-rps_name" % form_id]
             rps_record.schedule = request.POST["form-%d-schedule" % form_id]
@@ -412,3 +436,45 @@ def show_test_settings(request):
             sync_config(config_path, rps=rps_record)
             form_id += 1
         return HttpResponseRedirect("/tests/")
+
+
+def poll_servers(request):
+    response_dict = {}
+    if "test_run" in request.session:
+        del request.session["test_run"]
+    tr_session = {}
+    if request.method == "POST":
+        generators = Generator.objects.all().values("host", "port").distinct()
+        for gen in generators:
+            client = TankClient(gen["host"], gen["port"], logger)
+            try:
+                data = client.status()
+            except ConnectionError as e:
+                continue
+            logger.debug("STATUS: %s" % data)
+            sessions = data.keys()
+            for sess in sessions:
+                test_id = sess.replace("_0000000000", "")
+                tr = TestRun.objects.get(id=test_id)
+                ts = TestSettings.objects.get(id=tr.test_settings_id)
+                # TODO проверить, если запущенный тест позднее, чем имеется
+                # в списке, то перезаписать
+                tr_session[ts.id] = {}
+                tr_session[ts.id]["host"] = gen["host"]
+                tr_session[ts.id]["port"] = gen["port"]
+                tr_session[ts.id]["session"] = sess
+                tr_session[ts.id]["wait_status"] = "prepare"
+                tr_session[ts.id]["trid"] = tr.id
+                r = status_info(tr_session[ts.id])
+                test_run = {}
+                test_run.update({"wait_status": tr_session[ts.id]["wait_status"]})
+                test_run.update({"session": tr_session[ts.id]["session"]})
+                if r:
+                    test_run.update({"run_status": "1"})
+                else:
+                    test_run.update({"run_status": "0"})
+                    del tr_session[ts.id]
+                response_dict.update({str(ts.id): test_run})
+    request.session["test_run"] = str(pickle.dumps(tr_session))
+    return HttpResponse(json.dumps(response_dict),
+                        content_type="application/json")

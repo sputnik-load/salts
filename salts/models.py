@@ -152,3 +152,35 @@ class RPS(models.Model):
     target = models.ForeignKey(Target)
     def __unicode__(self):
         return "%s: %s" % (self.rps_name, self.schedule)
+
+
+class TestRun(models.Model):
+    STATUS_UPLOADING = 'upl'
+    STATUS_UPLOADED = 'upld'
+    STATUS_PREPARE = 'pre'
+    STATUS_RUNNING = 'run'
+    STATUS_ARCHIVING = 'arc'
+    STATUS_STORING = 'stor'
+    STATUS_UNKNOWN = 'unk'
+    STATUS_DONE = 'done'
+    STATUS_CHOICES = (
+        (STATUS_UPLOADING, 'Uploading'),
+        (STATUS_UPLOADED, 'Uploaded'),
+        (STATUS_PREPARE, 'Prepare'),
+        (STATUS_RUNNING, 'Running'),
+        (STATUS_ARCHIVING, 'Archiving'),
+        (STATUS_STORING, 'Storing'),
+        (STATUS_DONE, 'Done'),
+        (STATUS_UNKNOWN, 'Unknown'),
+    )
+
+    datetime = models.DateTimeField('Время запуска', auto_now=True)
+    test_settings = models.ForeignKey(TestSettings)
+    generator = models.ForeignKey(Generator)
+    status = models.CharField('Статус', max_length=4,
+                              choices=STATUS_CHOICES,
+                              default=STATUS_RUNNING,
+                              help_text='Финальный статус теста - Pass или Fail.')
+
+    def __unicode__(self):
+        return "Id: %s (datetime: %s)." % (self.id, self.datetime)

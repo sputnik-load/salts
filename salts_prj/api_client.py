@@ -52,6 +52,20 @@ class TankClient(object):
             self.logger.info("No stop: " + resp.text)
             return None
 
+    def test_id(self, session_id):
+        req = "http://{api_address}:{api_port}/artifact?session={session}".format(
+            api_address=self.api_address,
+            api_port=self.api_port,
+            session=session_id
+        )
+        resp = requests.get(req)
+        if resp.status_code == 200:
+            data = json.loads(resp.text)
+            return data
+        else:
+            self.logger.info("No test id: " + resp.text)
+            return None
+
     def list_artifacts(self, test_id):
         req = "http://{api_address}:{api_port}/artifact?test={test}".format(
             api_address=self.api_address,

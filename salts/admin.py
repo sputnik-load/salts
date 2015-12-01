@@ -32,8 +32,13 @@ class RPSAdmin(admin.ModelAdmin):
     pass
 
 
+class TestRunAdmin(admin.ModelAdmin):
+    pass
+
+
 admin.site.register(TestResult, TestResultAdmin)
 admin.site.register(Generator, GeneratorAdmin)
 admin.site.register(Target, TargetAdmin)
 admin.site.register(TestSettings, TestSettingsAdmin)
 admin.site.register(RPS, RPSAdmin)
+admin.site.register(TestRun, TestRunAdmin)

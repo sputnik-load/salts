@@ -70,6 +70,44 @@ function statusTest(row_id) {
 }
 
 
+function pollServers() {
+  $.ajax({
+    url: "/poll_servers/",
+    type: "POST",
+    dataType: "json",
+    data: {},
+    error: function(json) {
+      $("p#status").html("Status: " + json.status) 
+    },
+    success: function(json) {
+      /*
+      $("td#status_" + row_id).html(status_message(json)); 
+      var wr_but = $("input[type=button]#" + row_id).get(0);
+      if (json["run_status"] == "0") {
+        if (status_timeout_id) {
+          clearTimeout(status_timeout_id);
+        }
+        var wr_but = $("input[type=button]#" + row_id).get(0);
+        console.log("Button: " + wr_but);
+        $(wr_but).attr("run_test", "Off");
+        $(wr_but).attr("value", "Запустить");
+      }
+      else {
+        status_timeout_id = 
+          setTimeout(function() {
+            console.log("setTimeout handler: status_test");
+            statusTest(row_id, json);
+        }, 3000);
+        $(wr_but).attr("run_test", "On");
+        $(wr_but).attr("value", "Остановить");
+      }
+      */
+    }
+  });
+}
+
+
+
 $(function() {  
   var csrftoken = getCookie('csrftoken');
   $.ajaxSetup({
@@ -81,8 +119,8 @@ $(function() {
   });
   var buts = $("input[type=button]");
   console.log("Size: " + buts.size());
+  pollServers();
   $(buts).each(function() {
-    statusTest(this.id);
     $(this).bind("click", function(event) {
       var tr_id = this.id;
       var cur_action = $(this).attr("run_test");

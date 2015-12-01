@@ -64,17 +64,18 @@ WSGI_APPLICATION = 'salts_prj.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'salts',
+        'NAME': 'test_salts_db',
         'USER': 'salts',
         'PASSWORD': 'salts',
-        'HOST': 'salt-dev.dev.ix.km',    # Empty for localhost through domain sockets or           '127.0.0.1' for localhost through TCP.
+        'HOST': 'localhost',                      # Empty for localhost through domain sockets or           '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
     }
 }
-LT_PATH = "/data/qa/loadtest"
+LT_PATH = "/home/krylov/prj/test-repo"
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
@@ -95,9 +96,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
-# STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+STATIC_ROOT = os.path.join(BASE_DIR, "static_root")
 STATICFILES_DIRS = (
-    BASE_DIR,
+    os.path.join(BASE_DIR, "static"),
 )
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
