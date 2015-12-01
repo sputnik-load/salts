@@ -430,7 +430,7 @@ def show_test_settings(request):
         sync_config(config_path, test_settings=ts_record)
         rpsid = request.POST["rpsid"].split(",")
         form_id = 0
-        for id_rps in id:
+        for id_rps in rpsid:
             rps_record = RPS.objects.get(id=id_rps)
             rps_record.rps_name = request.POST["form-%d-rps_name" % form_id]
             rps_record.schedule = request.POST["form-%d-schedule" % form_id]
