@@ -20,6 +20,8 @@ function csrfSafeMethod(method) {
 }
 
 status_timeout_id = 0;
+status_timeout_obj = {};
+
 
 function status_message(json) {
   console.log("STATUS: " + json["status"]);
@@ -54,7 +56,7 @@ function statusTest(row_id) {
       $("td#status_" + row_id).html(status_message(json)); 
       var wr_but = $("input[type=button]#" + row_id).get(0);
       if (json["status"] == "running") {
-        status_timeout_id = 
+        status_timeout_obj[row_id] = 
           setTimeout(function() {
             console.log("setTimeout handler: status_test");
             statusTest(row_id);
@@ -64,9 +66,11 @@ function statusTest(row_id) {
         $(wr_but).attr("value", "Остановить");
       }
       else {
+        status_timeout_id = status_timeout_obj[row_id];
         if (status_timeout_id) {
           console.log("Clear Status Timeout ID: " + status_timeout_id);
           clearTimeout(status_timeout_id);
+          status_timeout_obj[row_id] = undefined;
         }
         var wr_but = $("input[type=button]#" + row_id).get(0);
         console.log("Button: " + wr_but);
