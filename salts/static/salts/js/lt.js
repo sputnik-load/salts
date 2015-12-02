@@ -19,7 +19,6 @@ function csrfSafeMethod(method) {
   return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 
-status_timeout_id = 0;
 status_timeout_obj = {};
 
 
@@ -61,15 +60,12 @@ function statusTest(row_id) {
             console.log("setTimeout handler: status_test");
             statusTest(row_id);
         }, 3000);
-        console.log("Status Timeout ID: " + status_timeout_id);
         $(wr_but).attr("run_test", "On");
         $(wr_but).attr("value", "Остановить");
       }
       else {
-        status_timeout_id = status_timeout_obj[row_id];
-        if (status_timeout_id) {
-          console.log("Clear Status Timeout ID: " + status_timeout_id);
-          clearTimeout(status_timeout_id);
+        if (status_timeout_obj[row_id]) {
+          clearTimeout(status_timeout_obj[row_id]);
           status_timeout_obj[row_id] = undefined;
         }
         var wr_but = $("input[type=button]#" + row_id).get(0);
@@ -94,27 +90,7 @@ function pollServers() {
     success: function(json) {
       console.log("JSON: " + JSON.stringify(json))
       $.each(json, function(tsid, el) {
-        console.log("Key: " + tsid + ". Value: " + el["session"] + ".");
-        $("td#status_" + tsid).html(status_message(el)); 
-        var wr_but = $("input[type=button]#" + tsid).get(0);
-        if (el["status"] == "running") {
-          status_timeout_id = 
-            setTimeout(function() {
-              console.log("setTimeout handler: status_test");
-              statusTest(tsid);
-          }, 3000);
-          $(wr_but).attr("run_test", "On");
-          $(wr_but).attr("value", "Остановить");
-        }
-        else {
-          if (status_timeout_id) {
-            clearTimeout(status_timeout_id);
-          }
-          var wr_but = $("input[type=button]#" + tsid).get(0);
-          console.log("Button: " + wr_but);
-          $(wr_but).attr("run_test", "Off");
-          $(wr_but).attr("value", "Запустить");
-        }
+        statusTest(tsid);
       });
     }
   });
@@ -140,8 +116,8 @@ $(function() {
       var cur_action = $(this).attr("run_test");
       var wr_item = this;
       if (cur_action == "On") {
-        if (status_timeout_id) {
-          clearTimeout(status_timeout_id);
+        if (status_timeout_obj[wr_item.id]) {
+          clearTimeout(status_timeout_obj[wr_item.id]);
         }
         $.ajax({
           url: "/stop_test/",
@@ -157,10 +133,6 @@ $(function() {
           success: function(json) {
             console.log("STOP ID = " + wr_item.id);
             statusTest(wr_item.id);
-            // console.log("Test STOPPED.");
-            // $("td#status_" + tr_id).html("");
-            // $(wr_item).attr("run_test", "Off");
-            // $(wr_item).attr("value", "Запустить");
           }
         });
       } else {

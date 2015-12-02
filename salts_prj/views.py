@@ -77,19 +77,16 @@ class TankConfigError(Exception):
 
 
 logger = logging.getLogger("salts")
-transitions = {"prepare": "finished", "finished": ""}
 
 
 def ini_files():
     ini = []
-    logger.debug("LT_PATH: %s" % LT_PATH)
     for root, dirs, files in os.walk(LT_PATH, topdown=False):
         for name in files:
             full_path = os.path.join(root, name)
             file_name, file_ext = os.path.splitext(full_path)
             if file_ext == ".ini":
                 ini.append(full_path)
-    logger.debug("INI: %s" % ini)
     return ini
 
 
@@ -129,7 +126,6 @@ JOIN salts_testsettings ts ON g.id = ts.generator_id WHERE ts.id = %s" % tsid)
         tr = TestRun(generator_id=gen_id, test_settings_id=tsid, status=TestRun.STATUS_RUNNING)
         tr.save()
         resp = client.run(ini_file.read(), "start", tr.id)
-        logger.debug("START: resp: %s" % resp)
         if not resp:
             msg = "No server response when test tried to start."
             logger.warning(msg)
@@ -137,10 +133,8 @@ JOIN salts_testsettings ts ON g.id = ts.generator_id WHERE ts.id = %s" % tsid)
         else:
             sess[tsid]["trid"] = tr.id
 
-    logger.debug("Response: %s" % resp)
     sess[tsid]["session"] = resp["session"]
     sess[tsid]["wait_status"] = "prepare"
-    logger.debug("RUN SESSION: %s" % sess)
     request.session["test_run"] = str(pickle.dumps(sess))
 
     response_dict = {}
@@ -161,7 +155,6 @@ def stop_test_api(request):
     tsid = request.POST["tsid"]
     if tsid not in sess:
         msg = "FUNC stop_test_api: client with id=%s isn't exist yet." % tsid
-        logger.debug(msg)
         return HttpResponse(msg)
 
 
@@ -180,9 +173,7 @@ def status_info(tsid_info):
     port = tsid_info["port"]
     client = TankClient(host, port, logger)
     session_id = tsid_info["session"]
-    logger.debug("TSID INFO is %s" % tsid_info)
     status = client.status(session_id)
-    logger.debug("Status Result is %s. Session ID: %s." % (status, session_id))
     resp = None
     wait_status = tsid_info["wait_status"]
     if session_id in status:
@@ -191,26 +182,10 @@ def status_info(tsid_info):
         if status[session_id]["stage_completed"]:
             resp = client.resume(session_id)
         if not (cur_status == "running"):
-            logger.debug("CURRENT STATUS: %s." % cur_status)
             tr = TestRun.objects.get(id=tsid_info["trid"])
             tr.status = TestRun.STATUS_DONE
             tr.save()
             return False
-        if status[session_id]["stage_completed"] and False:
-            if status[session_id]["current_stage"] == "finished":
-                tsid_info["wait_status"] = ""
-                wait_status = ""
-            if status[session_id]["current_stage"] == wait_status:
-                resp = client.resume(session_id)
-                wait_status = transitions[wait_status]
-                tsid_info["wait_status"] = wait_status
-            if not wait_status:
-                tr = TestRun.objects.get(id=tsid_info["trid"])
-                tr.status = TestRun.STATUS_DONE
-                tr.save()
-                return False
-        if status[session_id]["current_stage"] == "poll" and False:
-            tsid_info["wait_status"] = "finished"
     return True
 
 
@@ -219,12 +194,9 @@ def status_test_api(request):
         return HttpResponse("Request isn't valid.")
 
     sess = pickle.loads(request.session["test_run"])
-    logger.debug("STATUS SESSION: %s" % sess)
 
     tsid = request.POST["tsid"]
     if tsid not in sess:
-        msg = "FUNC status_test_api: client with id=%s isn't exist yet." % tsid
-        logger.debug(msg)
         response_dict = {}
         response_dict.update({"tsid": tsid})
         response_dict.update({"run_status": 0})
@@ -326,7 +298,6 @@ def check_changes(full_path):
         try:
             ts_record = TestSettings.objects.get(file_path=file_name)
         except TestSettings.DoesNotExist:
-            logger.debug("DB: record about %s file is absent." % file_name)
             ts_record = TestSettings(file_path=file_name, test_name = "",
                                     generator_id=localhost_generator_id(lt_tool),
                                     ticket="", version="")
@@ -351,14 +322,12 @@ def check_changes(full_path):
                             rps_name=sec, schedule=rps_value,
                             target_id=target.id)
                 rps.save()
-                logger.debug("New rps was added: %s" % rps)
             else:
                 if not rps.target_id:
                     rps.target_id = target.id
                 if not rps.schedule == rps_value:
                     rps.schedule = rps_value
                 rps.save()
-                logger.debug("rps was updated: %s" % rps)
             tool_ent["rps"] = rps
         entity["tool"].append(tool_ent)
         sec = "sputnikreport"
@@ -463,7 +432,6 @@ def poll_servers(request):
         except ConnectionError as e:
             continue
         sessions = data.keys()
-        logger.debug("SESSIONS: %s" % sessions)
         for sess in sessions:
             test_id = sess.replace("_0000000000", "")
             try:
@@ -473,11 +441,8 @@ def poll_servers(request):
             ts = TestSettings.objects.get(id=tr.test_settings_id)
             tsid = str(ts.id)
             is_write = False
-            logger.debug("CHECK. START: tr_session: %s. tsid: %s" % (tr_session, tsid))
             if tsid in tr_session:
-                logger.debug("CHECK: %s and %s" % (tr.id, tr_session[tsid]["trid"]))
                 if tr.id > int(tr_session[tsid]["trid"]):
-                    logger.debug("CHECK: %s and %s. REWRITE" % (tr.id, tr_session[tsid]["trid"]))
                     is_write = True
             else:
                 is_write = True
@@ -489,9 +454,7 @@ def poll_servers(request):
                 tr_session[tsid]["wait_status"] = "prepare"
                 tr_session[tsid]["trid"] = tr.id
     for tsid in tr_session:
-        logger.debug("1. WAIT STATUS: %s" % tr_session[tsid]["wait_status"])
         r = status_info(tr_session[tsid])
-        logger.debug("2. WAIT STATUS: %s" % tr_session[tsid]["wait_status"])
         test_run = {}
         test_run.update({"wait_status": tr_session[tsid]["wait_status"]})
         test_run.update({"session": tr_session[tsid]["session"]})
@@ -501,11 +464,9 @@ def poll_servers(request):
         else:
             test_run.update({"run_status": "0"})
         response_dict.update({tsid: test_run})
-        logger.debug("RESPONSE DICT: %s" % response_dict)
     remove_ids = [id for id in tr_session if not (tr_session[id]["status"] == "running")]
     for id in remove_ids:
         del tr_session[id]
-    logger.debug("TR_SESSION: %s" % tr_session)
     request.session["test_run"] = str(pickle.dumps(tr_session))
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
