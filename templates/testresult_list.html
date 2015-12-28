@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load salts_tags %}
+{% block container %}
+  <form method="post" name="tests_lt">{% csrf_token %}
+      <h3>Результаты тестов:</h3><br>
+      <p id="status"></p>
+      <table border="1">
+        <thead>
+          <tr>
+            <td>ID сценария</td>
+            <td>Группа</td>
+            <td>Имя теста</td>
+            <td>Статус</td>
+            <td>ID тикета</td>
+            <td>Имя пользователя</td>
+          </tr>
+        </thead>
+        <tbody>
+          {% for object in object_list %}
+            <tr name="result_line">
+              <td name="scenario_id">{{ object.scenario_id }}</td>
+              <td name="test_group">{{ object.group }}</td>
+              <td name="test_name">{{ object.name }}</td>
+              <td name="status">{{ object.status }}</td>
+              <td name="ticket_id">{{ object.ticket_id }}</td>
+              <td name="spe">{{ object.user }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+  </form>
+{% endblock container %}
+

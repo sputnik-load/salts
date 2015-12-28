@@ -17,7 +17,7 @@ from salts_prj.api_client import TankClient
 from django.forms.formsets import formset_factory
 from django.core.paginator import Paginator
 from django.views.generic.list import ListView
-from salts.models import TestSettings, RPS, Target, Generator, TestRun
+from salts.models import TestSettings, RPS, Target, Generator, TestRun, TestResult
 from salts.forms import SettingsEditForm, RPSEditForm
 from settings import LT_PATH
 from requests import ConnectionError
@@ -45,6 +45,12 @@ ORDER BY g.tool, ts.test_name")
         context = super(TestSettingsList, self).get_context_data(**kwargs)
         # logger.warning("Context: %s" % context)
         return context
+
+
+class TestResultList(ListView):
+    model = TestResult
+    template_name = "testresult_list.html"
+    paginate_by = 10
 
 
 class UnicodeConfigParser(ConfigParser.RawConfigParser):
