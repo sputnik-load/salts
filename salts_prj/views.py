@@ -19,7 +19,7 @@ from django.core.paginator import Paginator
 from django.views.generic.list import ListView
 from salts.models import TestSettings, RPS, Target, Generator, TestRun, TestResult
 from salts.forms import SettingsEditForm, RPSEditForm
-from settings import LT_PATH
+from settings import LT_PATH, DATABASES
 from requests import ConnectionError
 
 
@@ -50,6 +50,13 @@ ORDER BY g.tool, ts.test_name")
 class TestResultList(ListView):
     model = TestResult
     template_name = "testresult_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(TestResultList, self).get_context_data(**kwargs)
+        context["host"] = DATABASES["default"]["HOST"]
+        context["name"] = DATABASES["default"]["NAME"]
+        return context
+
 
 
 class UnicodeConfigParser(ConfigParser.RawConfigParser):
