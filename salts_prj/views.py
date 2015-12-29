@@ -50,7 +50,6 @@ ORDER BY g.tool, ts.test_name")
 class TestResultList(ListView):
     model = TestResult
     template_name = "testresult_list.html"
-    paginate_by = 10
 
 
 class UnicodeConfigParser(ConfigParser.RawConfigParser):
