@@ -34,7 +34,7 @@
           <td name="q90">{{ object.q50 }}</td>
           <td name="q50">{{ object.q50 }}</td>
           <td name="http_net_perc">{{ object.http_errors_perc }}/{{ object.net_errors_perc }}</td>
-          <td name="duration">0</td>
+          <td name="duration">{% duration object.dt_start object.dt_finish %}</td>
           <td name="graph">
             {% if object.graph_url %}
               <a href="{{ object.graph_url }}">График</a>
