@@ -8,23 +8,43 @@
   <table border="1">
     <thead>
       <tr>
-        <td>ID сценария</td>
-        <td>Группа</td>
-        <td>Имя теста</td>
-        <td>Статус</td>
-        <td>ID тикета</td>
-        <td>Имя пользователя</td>
+        <td>Тест</td>
+        <td>Нагружаемый сервис</td>
+        <td>Версия</td>
+        <td>RPS</td>
+        <td>q99%</td>
+        <td>q90%</td>
+        <td>q50%</td>
+        <td>Проц. ошибок http/net</td>
+        <td>Длительность</td>
+        <td>График</td>
+        <td>Генератор</td>
+        <td>ID теста</td>
+        <td>Задача</td>
       </tr>
     </thead>
     <tbody>
       {% for object in object_list %}
         <tr name="result_line">
-          <td name="scenario_id">{{ object.scenario_id }}</td>
-          <td name="test_group">{{ object.group }}</td>
-          <td name="test_name">{{ object.name }}</td>
-          <td name="status">{{ object.status }}</td>
+          <td name="test_name">{{ object.test_name }}</td>
+          <td name="target">{{ object.target }}</td>
+          <td name="version">{{ object.version }}</td>
+          <td name="rps">{{ object.rps }}</td>
+          <td name="q99">{{ object.q99 }}</td>
+          <td name="q90">{{ object.q50 }}</td>
+          <td name="q50">{{ object.q50 }}</td>
+          <td name="http_net_perc">{{ object.http_errors_perc }}/{{ object.net_errors_perc }}</td>
+          <td name="duration">0</td>
+          <td name="graph">
+            {% if object.graph_url %}
+              <a href="{{ object.graph_url }}">График</a>
+            {% else %}
+              <p>Нет графика</p>
+            {% endif %}
+          </td>
+          <td name="generator">{{ object.generator }}</td>
+          <td name="test_id">{{ object.test_id }}</td>
           <td name="ticket_id">{{ object.ticket_id }}</td>
-          <td name="spe">{{ object.user }}</td>
         </tr>
         {% endfor %}
     </tbody>
