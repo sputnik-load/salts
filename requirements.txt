@@ -10,3 +10,5 @@ pyyaml
 markdown
 django-filter
 simplejson
+djangular
+django-endless-pagination-angular
