@@ -48,3 +48,6 @@ com_crashlytics_export_strings.xml
 salts_nginx.conf
 salts_uwsgi.ini
 uwsgi_params
+
+# Config with test settings
+salts_prj/debug_settings.ini
