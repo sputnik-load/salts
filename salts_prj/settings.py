@@ -62,19 +62,6 @@ INSTALLED_APPS = (
     'salts_prj',
 )
 
-MIDDLEWARE_CLASSES = (
-    'django.middleware.cache.UpdateCacheMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'audit_log.middleware.UserLoggingMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',
-)
-
 ROOT_URLCONF = 'salts_prj.urls'
 
 WSGI_APPLICATION = 'salts_prj.wsgi.application'
@@ -181,16 +168,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': '/var/tmp/django_cache',
-        'TIMEOUT': 300,
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000
-        }
-    }
-}
 
 DEBUG_SETTINGS_NAME = 'debug_settings.ini'
 debug_settings_path = '%s/%s' % (os.path.dirname(os.path.realpath(__file__)), DEBUG_SETTINGS_NAME)
@@ -200,7 +177,6 @@ if os.path.exists(debug_settings_path):
     for k in DATABASES['default']:
         DATABASES['default'][k] = cfg.get('database', k)
     if 'on' in cfg.options('cache') and cfg.get('cache', 'on') != '1':
-        CACHES = {}
         MIDDLEWARE_CLASSES = (
             'django.contrib.sessions.middleware.SessionMiddleware',
             'django.middleware.common.CommonMiddleware',
@@ -211,3 +187,26 @@ if os.path.exists(debug_settings_path):
             'django.middleware.clickjacking.XFrameOptionsMiddleware',
             'audit_log.middleware.UserLoggingMiddleware',
         )
+else:
+    MIDDLEWARE_CLASSES = (
+        'django.middleware.cache.UpdateCacheMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'audit_log.middleware.UserLoggingMiddleware',
+        'django.middleware.cache.FetchFromCacheMiddleware',
+    )
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+            'LOCATION': '/var/tmp/django_cache',
+            'TIMEOUT': 300,
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000
+            }
+        }
+    }
