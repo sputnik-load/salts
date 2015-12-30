@@ -21,6 +21,7 @@ from salts.models import TestSettings, RPS, Target, Generator, TestRun, TestResu
 from salts.forms import SettingsEditForm, RPSEditForm
 from settings import LT_PATH, DATABASES
 from requests import ConnectionError
+from urllib import quote
 
 
 class TestSettingsPaginator(Paginator):
@@ -51,12 +52,46 @@ class TestResultList(ListView):
     model = TestResult
     template_name = "testresult_list.html"
 
+    def _get_value(self, request, param):
+        value = None
+        if param in request.GET:
+            value = request.GET[param]
+        return value
+
+    def get(self, request, *args, **kwargs):
+        logger.debug("TestResultList: get: request.GET = %s" % request.GET)
+        TestResultList.queryset = TestResult.objects.all()
+        self.scenario_id = self._get_value(request, "scid")
+        self.test_group = self._get_value(request, "tg")
+        self.test_search = self._get_value(request, "ts")
+        self.status = self._get_value(request, "st")
+        self.ticket_id = self._get_value(request, "tid")
+        self.spe = self._get_value(request, "spe")
+        return super(TestResultList, self).get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super(TestResultList, self).get_context_data(**kwargs)
+        logger.debug("TestResultList: get_context_data: queryset: %s" % TestResultList.queryset)
         context["host"] = DATABASES["default"]["HOST"]
         context["name"] = DATABASES["default"]["NAME"]
         return context
 
+    def get_queryset(self):
+        logger.debug("TestResultList: get_queryset")
+        results = TestResult.objects.all()
+        if self.scenario_id:
+            results = results.filter(scenario_id=self.scenario_id)
+        if self.test_group:
+            results = results.filter(group=self.test_group)
+        if self.test_search:
+            results = results.filter(test_name__contains=self.test_search)
+        if self.status:
+            results = results.filter(test_status=self.status)
+        if self.ticket_id:
+            results = results.filter(ticket_id=self.ticket_id)
+        if self.spe:
+            results = results.filter(user=self.spe)
+        return results
 
 
 class UnicodeConfigParser(ConfigParser.RawConfigParser):
