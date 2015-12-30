@@ -7,7 +7,7 @@
 .pydevproject
 .settings
 salt-dev.dev.ix.km
-logfile
+logfile*
 celerybeat-schedule
 media
 static
