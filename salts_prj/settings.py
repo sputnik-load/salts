@@ -57,9 +57,6 @@ INSTALLED_APPS = (
     'tastypie',
     'rest_framework',
     'rest_framework.authtoken',
-    'djangular',
-    'endless_pagination',
-    'salts_prj',
 )
 
 ROOT_URLCONF = 'salts_prj.urls'
@@ -184,7 +181,7 @@ if os.path.exists(debug_settings_path):
             'django.contrib.auth.middleware.AuthenticationMiddleware',
             'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
             'django.contrib.messages.middleware.MessageMiddleware',
-            'django.middleware.clickjacking.XFrameOptionsMiddleware',
+            # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
             'audit_log.middleware.UserLoggingMiddleware',
         )
 else:
@@ -196,7 +193,7 @@ else:
         'django.contrib.auth.middleware.AuthenticationMiddleware',
         'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
-        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
         'audit_log.middleware.UserLoggingMiddleware',
         'django.middleware.cache.FetchFromCacheMiddleware',
     )

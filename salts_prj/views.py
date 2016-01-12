@@ -24,6 +24,13 @@ from requests import ConnectionError
 from urllib import quote
 
 
+def request_get_value(request, param):
+    value = None
+    if param in request.GET:
+        value = request.GET[param]
+    return value
+
+
 class TestSettingsPaginator(Paginator):
 
     def __init__(self, object_list, per_page, orphans=0,
@@ -46,52 +53,6 @@ ORDER BY g.tool, ts.test_name")
         context = super(TestSettingsList, self).get_context_data(**kwargs)
         # logger.warning("Context: %s" % context)
         return context
-
-
-class TestResultList(ListView):
-    model = TestResult
-    template_name = "testresult_list.html"
-
-    def _get_value(self, request, param):
-        value = None
-        if param in request.GET:
-            value = request.GET[param]
-        return value
-
-    def get(self, request, *args, **kwargs):
-        logger.debug("TestResultList: get: request.GET = %s" % request.GET)
-        TestResultList.queryset = TestResult.objects.all()
-        self.scenario_id = self._get_value(request, "scid")
-        self.test_group = self._get_value(request, "tg")
-        self.test_search = self._get_value(request, "ts")
-        self.status = self._get_value(request, "st")
-        self.ticket_id = self._get_value(request, "tid")
-        self.spe = self._get_value(request, "spe")
-        return super(TestResultList, self).get(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super(TestResultList, self).get_context_data(**kwargs)
-        logger.debug("TestResultList: get_context_data: queryset: %s" % TestResultList.queryset)
-        context["host"] = DATABASES["default"]["HOST"]
-        context["name"] = DATABASES["default"]["NAME"]
-        return context
-
-    def get_queryset(self):
-        logger.debug("TestResultList: get_queryset")
-        results = TestResult.objects.all()
-        if self.scenario_id:
-            results = results.filter(scenario_id=self.scenario_id)
-        if self.test_group:
-            results = results.filter(group=self.test_group)
-        if self.test_search:
-            results = results.filter(test_name__contains=self.test_search)
-        if self.status:
-            results = results.filter(test_status=self.status)
-        if self.ticket_id:
-            results = results.filter(ticket_id=self.ticket_id)
-        if self.spe:
-            results = results.filter(user=self.spe)
-        return results
 
 
 class UnicodeConfigParser(ConfigParser.RawConfigParser):
@@ -515,5 +476,89 @@ def poll_servers(request):
     for id in remove_ids:
         del tr_session[id]
     request.session["test_run"] = str(pickle.dumps(tr_session))
+    return HttpResponse(json.dumps(response_dict),
+                        content_type="application/json")
+
+def show_results_page(request):
+    context = {}
+    context.update(csrf(request))
+    context["host"] = DATABASES["default"]["HOST"]
+    context["name"] = DATABASES["default"]["NAME"]
+    return render_to_response("testresult_list.html", context)
+
+
+def user_filter(request, results):
+    scen_id = request_get_value(request, "scid")
+    test_group = request_get_value(request, "tg")
+    test_search = request_get_value(request, "ts")
+    status = request_get_value(request, "st")
+    task_id = request_get_value(request, "tid")
+    spe = request_get_value(request, "spe")
+    if scen_id:
+        results = results.filter(scenario_id=scen_id)
+    if test_group:
+        results = results.filter(group=test_group)
+    if test_search:
+        results = results.filter(test_name__contains=test_search)
+    if status:
+        results = results.filter(test_status=status)
+    if task_id:
+        results = results.filter(ticket_id=task_id)
+    if spe:
+        results = results.filter(user=spe)
+    return results
+
+
+def get_results(request):
+    results = TestResult.objects.all()
+    results = results.values("test_name", "target", "version", "rps", "q99",
+                             "q90", "q50", "http_errors_perc",
+                             "net_errors_perc", "dt_start", "dt_finish",
+                             "graph_url", "generator", "test_id",
+                             "scenario_id", "group", "test_status",
+                             "ticket_id", "user")
+    results = user_filter(request, results)
+    sort_param = request_get_value(request, "sort")
+    if sort_param:
+        logger.debug("get_results: sort_param: %s" % sort_param)
+        order = request_get_value(request, "order")
+        if not order:
+            order = "asc"
+        if order == "asc":
+            results = results.order_by(sort_param)
+        else:
+            results = results.order_by("-%s" % sort_param)
+    results = list(results)
+
+    offset = request_get_value(request, "offset")
+    limit = request_get_value(request, "limit")
+
+    response_dict = {}
+    response_dict["total"] = len(results)
+    if offset and limit:
+        offset = int(offset)
+        limit = int(limit)
+        results = results[offset:offset+limit]
+    rows = []
+    for result in results:
+        row = {}
+        row["test_name"] = result["test_name"]
+        row["scenario_id"] = result["scenario_id"]
+        row["target"] = result["target"]
+        row["version"] = result["version"]
+        row["rps"] = result["rps"]
+        row["q99"] = result["q99"]
+        row["q90"] = result["q90"]
+        row["q50"] = result["q50"]
+        row["http/net"] = "%s/%s" % (result["http_errors_perc"],
+                                     result["net_errors_perc"])
+        row["duration"] = str(result["dt_finish"] - result["dt_start"])
+        row["graph_url"] = result["graph_url"]
+        row["generator"] = result["generator"]
+        row["test_id"] = result["test_id"]
+        row["ticket_id"] = result["ticket_id"]
+        rows.append(row)
+    response_dict["rows"] = rows
+
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")

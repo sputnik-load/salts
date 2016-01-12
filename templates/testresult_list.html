@@ -1,54 +1,75 @@
 {% extends "base.html" %}
-{% load salts_tags %}
-{% load endless %}
 {% block container %}
-  {% paginate 30 object_list %}
-  <h3>Результаты тестов:</h3><br>
-  <p id="status"></p>
-  <table border="1">
-    <thead>
-      <tr>
-        <td>Тест</td>
-        <td>Нагружаемый сервис</td>
-        <td>Версия</td>
-        <td>RPS</td>
-        <td>q99%</td>
-        <td>q90%</td>
-        <td>q50%</td>
-        <td>Проц. ошибок http/net</td>
-        <td>Длительность</td>
-        <td>График</td>
-        <td>Генератор</td>
-        <td>ID теста</td>
-        <td>Задача</td>
-      </tr>
-    </thead>
-    <tbody>
-      {% for object in object_list %}
-        <tr name="result_line">
-          <td name="test_name">{{ object.test_name }}</td>
-          <td name="target">{{ object.target }}</td>
-          <td name="version">{{ object.version }}</td>
-          <td name="rps">{{ object.rps }}</td>
-          <td name="q99">{{ object.q99 }}</td>
-          <td name="q90">{{ object.q50 }}</td>
-          <td name="q50">{{ object.q50 }}</td>
-          <td name="http_net_perc">{{ object.http_errors_perc }}/{{ object.net_errors_perc }}</td>
-          <td name="duration">{% duration object.dt_start object.dt_finish %}</td>
-          <td name="graph">
-            {% if object.graph_url %}
-              <a href="{{ object.graph_url }}">График</a>
-            {% else %}
-              <p>Нет графика</p>
-            {% endif %}
-          </td>
-          <td name="generator">{{ object.generator }}</td>
-          <td name="test_id">{{ object.test_id }}</td>
-          <td name="ticket_id">{{ object.ticket_id }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-  </table>
-  {% show_pages %}
+  <style>
+    .odd {
+      background-color: GainsBoro;
+    }
+  </style>
+  <div class="container">
+        <h1>Результаты тестов:</h1>
+        <table id="table" class="table table-striped"
+               data-toggle="table"
+               data-url="/get_results"
+               data-height="800"
+               data-side-pagination="server"
+               data-pagination="true"
+               data-page-list="[20, 50, All]"
+               data-row-style="row_style"
+               data-show-columns="true"
+               data-search="false">
+            <thead style="background-color: Bisque">
+            <tr>
+                <th data-field="test_name" data-sortable="true">Тест</th>
+                <th data-field="scenario_id" data-sortable="true">ID сценария</th>
+                <th data-field="target" data-sortable="true">Target</th>
+                <th data-field="version" data-sortable="true">Версия</th>
+                <th data-field="rps" data-sortable="true">RPS</th>
+                <th data-field="q99" data-sortable="true">99%</th>
+                <th data-field="q90" data-sortable="true">90%</th>
+                <th data-field="q50" data-sortable="true">50%</th>
+                <th data-field="http/net">% ошибок http/net</th>
+                <th data-field="duration" data-sortable="true">Длительность</th>
+                <th data-field="graph_url" data-formatter="graph_url_formatter">График</th>
+                <th data-field="generator" data-sortable="true">Генератор</th>
+                <th data-field="test_id" data-sortable="true">ID теста</th>
+                <th data-field="ticket_id" data-sortable="true" data-formatter="ticket_id_formatter">Задача</th>
+            </tr>
+            </thead>
+        </table>
+  </div>
+  <script>
+      var $table = $('#table');
+
+      $(function () {
+        var url = $table.attr("data-url");
+        var params = $.url().param();
+        console.log("params: " + params);
+        if (Object.keys(params).length > 0) {
+          console.log("Non-empty params.");
+          $table.attr("data-url", url + "?" + $.param(params));
+        }
+      });
+
+      function graph_url_formatter(value) {
+        if (value === "") {
+          return "-";
+        }
+        return "<a href='" + value + "'>График</a>";
+      }
+
+      function ticket_id_formatter(value) {
+        if (value === "") {
+          return "-";
+        }
+        return "<a href=https://task.ptnik.su/browse/" + value + ">" + value + "</a>";
+      }
+
+      function row_style(row, index) {
+        if (index % 2 === 0) {
+          return {};
+        }
+        return {classes: "odd"};
+      }
+  </script>
 {% endblock container %}
 
