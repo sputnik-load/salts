@@ -21,7 +21,6 @@ from salts.models import TestSettings, RPS, Target, Generator, TestRun, TestResu
 from salts.forms import SettingsEditForm, RPSEditForm
 from settings import LT_PATH, DATABASES
 from requests import ConnectionError
-from urllib import quote
 
 
 def request_get_value(request, param):
@@ -510,13 +509,12 @@ def user_filter(request, results):
 
 
 def get_results(request):
-    results = TestResult.objects.all()
+    results = TestResult.objects.extra(select={"http_net": "http_errors_perc || '/' || net_errors_perc",
+                                               "duration": "to_char(dt_finish - dt_start, 'HH24:MI:SS')"})
     results = results.values("test_name", "target", "version", "rps", "q99",
-                             "q90", "q50", "http_errors_perc",
-                             "net_errors_perc", "dt_start", "dt_finish",
-                             "graph_url", "generator", "test_id",
-                             "scenario_id", "group", "test_status",
-                             "ticket_id", "user")
+                             "q90", "q50", "graph_url", "generator",
+                             "test_id", "scenario_id", "group", "test_status",
+                             "ticket_id", "user", "duration", "http_net")
     results = user_filter(request, results)
     sort_param = request_get_value(request, "sort")
     if sort_param:
@@ -539,26 +537,7 @@ def get_results(request):
         offset = int(offset)
         limit = int(limit)
         results = results[offset:offset+limit]
-    rows = []
-    for result in results:
-        row = {}
-        row["test_name"] = result["test_name"]
-        row["scenario_id"] = result["scenario_id"]
-        row["target"] = result["target"]
-        row["version"] = result["version"]
-        row["rps"] = result["rps"]
-        row["q99"] = result["q99"]
-        row["q90"] = result["q90"]
-        row["q50"] = result["q50"]
-        row["http/net"] = "%s/%s" % (result["http_errors_perc"],
-                                     result["net_errors_perc"])
-        row["duration"] = str(result["dt_finish"] - result["dt_start"])
-        row["graph_url"] = result["graph_url"]
-        row["generator"] = result["generator"]
-        row["test_id"] = result["test_id"]
-        row["ticket_id"] = result["ticket_id"]
-        rows.append(row)
-    response_dict["rows"] = rows
+    response_dict["rows"] = results
 
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
