@@ -10,3 +10,4 @@ pyyaml
 markdown
 django-filter
 simplejson
+django-bower

@@ -12,6 +12,7 @@ celerybeat-schedule
 media
 static
 dist
+components
 
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
 

@@ -1,8 +1,8 @@
 <html>
   <head><title>Тесты НТ</title></head>
   {% load staticfiles %}
-  <script type="text/javascript" src="{% static "js/jquery-1.11.3.js" %}"></script>
-  <script type="text/javascript" src="{% static "js/lt.js" %}"></script>
+  <script type="text/javascript" src="{% static "jquery/dist/jquery.min.js" %}"></script>
+  <script type="text/javascript" src="{% static "salts/js/lt.js" %}"></script>
   <body> 
       <form method="post" name="tests_lt">{% csrf_token %}
         <h3>Результаты тестов: </h3><br>

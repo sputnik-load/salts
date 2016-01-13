@@ -57,6 +57,7 @@ INSTALLED_APPS = (
     'tastypie',
     'rest_framework',
     'rest_framework.authtoken',
+    'djangobower',
 )
 
 ROOT_URLCONF = 'salts_prj.urls'
@@ -103,6 +104,21 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 MEDIA_URL = '/media/'
+
+BOWER_COMPONENTS_ROOT = os.path.join(BASE_DIR, 'components')
+
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'djangobower.finders.BowerFinder',
+)
+
+BOWER_INSTALLED_APPS = (
+    'bootstrap-table#1.9.1',
+    'purl#2.3.1',
+    'bootstrap#3.3.6',
+    'jquery#2.2.0'
+)
 
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
