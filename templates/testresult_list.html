@@ -41,9 +41,7 @@
       $(function () {
         var url = $table.attr("data-url");
         var params = $.url().param();
-        console.log("params: " + params);
         if (Object.keys(params).length > 0) {
-          console.log("Non-empty params.");
           $table.attr("data-url", url + "?" + $.param(params));
         }
       });
