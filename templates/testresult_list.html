@@ -5,38 +5,36 @@
       background-color: GainsBoro;
     }
   </style>
-  <div class="container">
-        <h1>Результаты тестов:</h1>
-        <table id="table" class="table table-striped"
-               data-toggle="table"
-               data-url="/get_results"
-               data-height="800"
-               data-side-pagination="server"
-               data-pagination="true"
-               data-page-list="[20, 50, All]"
-               data-row-style="row_style"
-               data-show-columns="true"
-               data-search="false">
-            <thead style="background-color: Bisque">
-            <tr>
-                <th data-field="test_name" data-sortable="true">Тест</th>
-                <th data-field="scenario_id" data-sortable="true">ID сценария</th>
-                <th data-field="target" data-sortable="true">Target</th>
-                <th data-field="version" data-sortable="true">Версия</th>
-                <th data-field="rps" data-sortable="true">RPS</th>
-                <th data-field="q99" data-sortable="true">99%</th>
-                <th data-field="q90" data-sortable="true">90%</th>
-                <th data-field="q50" data-sortable="true">50%</th>
-                <th data-field="http/net">% ошибок http/net</th>
-                <th data-field="duration" data-sortable="true">Длительность</th>
-                <th data-field="graph_url" data-formatter="graph_url_formatter">График</th>
-                <th data-field="generator" data-sortable="true">Генератор</th>
-                <th data-field="test_id" data-sortable="true">ID теста</th>
-                <th data-field="ticket_id" data-sortable="true" data-formatter="ticket_id_formatter">Задача</th>
-            </tr>
-            </thead>
-        </table>
-  </div>
+  <h1>Результаты тестов:</h1>
+  <table id="table" class="table table-striped"
+         data-toggle="table"
+         data-url="/get_results"
+         data-height="800"
+         data-side-pagination="server"
+         data-pagination="true"
+         data-page-list="[20, 50, All]"
+         data-row-style="row_style"
+         data-show-columns="true"
+         data-search="false">
+      <thead style="background-color: Bisque">
+      <tr>
+          <th data-field="test_name" data-sortable="true">Тест</th>
+          <th data-field="scenario_id" data-sortable="true">ID сценария</th>
+          <th data-field="target" data-sortable="true">Target</th>
+          <th data-field="version" data-sortable="true">Версия</th>
+          <th data-field="rps" data-sortable="true">RPS</th>
+          <th data-field="q99" data-sortable="true">99%</th>
+          <th data-field="q90" data-sortable="true">90%</th>
+          <th data-field="q50" data-sortable="true">50%</th>
+          <th data-field="http/net">% ошибок http/net</th>
+          <th data-field="duration" data-sortable="true">Длительность</th>
+          <th data-field="graph_url" data-formatter="graph_url_formatter">График</th>
+          <th data-field="generator" data-sortable="true">Генератор</th>
+          <th data-field="test_id" data-sortable="true">ID теста</th>
+          <th data-field="ticket_id" data-sortable="true" data-formatter="ticket_id_formatter">Задача</th>
+      </tr>
+      </thead>
+  </table>
   <script>
       var $table = $('#table');
 
