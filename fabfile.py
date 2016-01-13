@@ -85,6 +85,7 @@ def _setup_django():
     sudo(_my_replace('ln -fs #PROJECT_ROOT#/conf/nginx.conf /etc/nginx/conf.d/#HOSTNAME#.conf'))
     # TODO: manage.py installstatic
     with cd(_my_replace("#PROJECT_ROOT#")):
+        run("python manage.py bower_install")
         run("python manage.py collectstatic --noinput")
 
 
