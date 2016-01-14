@@ -493,6 +493,8 @@ def user_filter(request, results):
     status = request_get_value(request, "st")
     task_id = request_get_value(request, "tid")
     spe = request_get_value(request, "spe")
+    from_time = request_get_value(request, "from")
+    to_time = request_get_value(request, "to")
     if scen_id:
         results = results.filter(scenario_id=scen_id)
     if test_group:
@@ -505,13 +507,19 @@ def user_filter(request, results):
         results = results.filter(ticket_id=task_id)
     if spe:
         results = results.filter(user=spe)
+    if from_time:
+        from_time = from_time.replace("_", " ")
+        results = results.filter(dt_finish__gte=from_time)
+    if to_time:
+        to_time = to_time.replace("_", " ")
+        results = results.filter(dt_finish__lte=to_time)
     return results
 
 
 def get_results(request):
     results = TestResult.objects.extra(select={"http_net": "http_errors_perc || '/' || net_errors_perc",
                                                "duration": "to_char(dt_finish - dt_start, 'HH24:MI:SS')",
-                                               "dt_finish": "to_char(dt_finish, 'YYYY-MM-DD HH24:MI:SS')"})
+                                               "dt_finish": "to_char(dt_finish at time zone 'MSK', 'YYYY-MM-DD HH24:MI:SS')"})
     results = results.values("test_name", "target", "version", "rps", "q99",
                              "q90", "q50", "graph_url", "generator",
                              "dt_finish", "test_id", "scenario_id", "group",
