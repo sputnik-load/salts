@@ -8,6 +8,8 @@ from fabric.api import put, env, run, cd, sudo, lcd, local, settings, get
 
 env.hosts = ['salt-dev.dev.ix.km']
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
+PYTHON = 'python2.7'
+PIP = 'pip2.7'
 
 _TPLS = {
     '#PROJECT_NAME#': lambda: 'salts_prj',
@@ -66,8 +68,8 @@ def deploy(reload_=True):
 def install_req():
 #    sudo('yum install -y uwsgi uwsgi-plugin-python supervisor')
 #    sudo('yum install -y MySQL-python mysql-connector-python python-pip')
-#    sudo('pip install -U pip setuptools')
-#    sudo('pip install -U paramiko pycrypto django django-debug-toolbar south fabric celery django-celery flower' +
+#    sudo(PIP + ' install -U pip setuptools')
+#    sudo(PIP + ' install -U paramiko pycrypto django django-debug-toolbar south fabric celery django-celery flower' +
 #         'requests jsonfield amqp amqplib kombu five django-audit-log')
 
 #    sudo('yum install -y uwsgi uwsgi-plugin-python')
@@ -76,7 +78,7 @@ def install_req():
     sudo('curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python2.7 get-pip.py')
     sudo('yum install -y python-ldap')
     sudo('bash -c "PATH=$PATH:/usr/pgsql-9.4/bin/ pip2.7 install psycopg2"')
-    sudo('pip2.7 install django django-debug-toolbar django-audit-log jsonfield django-auth-ldap slumber')  # slumber - для вызова rest api
+    sudo(PIP + ' install django django-debug-toolbar django-audit-log jsonfield django-auth-ldap slumber')  # slumber - для вызова rest api
 
 
 def _setup_django():
@@ -85,8 +87,8 @@ def _setup_django():
     sudo(_my_replace('ln -fs #PROJECT_ROOT#/conf/nginx.conf /etc/nginx/conf.d/#HOSTNAME#.conf'))
     # TODO: manage.py installstatic
     with cd(_my_replace("#PROJECT_ROOT#")):
-        run("python manage.py bower_install")
-        run("python manage.py collectstatic --noinput")
+        run(PYTHON + " manage.py bower_install")
+        run(PYTHON + " manage.py collectstatic --noinput")
 
 
 def setup():
