@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#
+
 import argparse
 import ConfigParser
 import psycopg2
@@ -36,9 +36,9 @@ def existed_types(conn):
 ORDER BY id DESC LIMIT 1"
         cursor.execute(query)
         rec = cursor.fetchone()
-        if not rec:
+        if not rec or rec[0] == "unknown":
             return []
-        return rec[0].split(",")
+        return rec[0].split()
 
 
 def generate_types(names, types=[]):
@@ -87,7 +87,7 @@ name_list ~ '^{new_type}$|{new_type},|,{new_type}'".format(new_type=new_value)
         query = "UPDATE salts_generatortype SET name_list=OVERLAY( \
 name_list PLACING '{new_type}' FROM POSITION ('{old_type}' in name_list) \
 FOR CHAR_LENGTH('{old_type}')) WHERE \
-name_list ~ '^{old_type}$|{old_type},|,{old_type}' RETURNING id".format(old_type=old_value,
+name_list ~ '^{old_type}$|{old_type} | {old_type}' RETURNING id".format(old_type=old_value,
                                                            new_type=new_value)
         cursor.execute(query)
         conn.commit()
@@ -117,7 +117,7 @@ if args.add:
     generate_type(conn, 1, "unknown")
     id = 2
     for t in types:
-        generate_type(conn, id, ",".join(t))
+        generate_type(conn, id, " ".join(t))
         id += 1
 elif args.rename and len(args.names) == 2:
     update_type_name(args.names[0], args.names[1])
