@@ -6,6 +6,12 @@ from jsonfield import JSONCharField
 from _bsddb import version
 
 # Create your models here.
+class GeneratorType(models.Model):
+    name_list = models.CharField('Список имен генераторов', max_length=255,
+                                 help_text='Список используемых генераторов',
+                                 null=False, blank=False)
+
+
 class TestResult(models.Model):
     """
     Результаты теста
@@ -55,6 +61,7 @@ class TestResult(models.Model):
     # length
     graph_url = models.CharField('Графики', max_length=256, help_text='html ссылки на графики', null=True, blank=True)
     generator = models.CharField('Генератор', max_length=128, help_text='сервер генератор нагрузки', null=True, blank=True)
+    generator_type = models.ForeignKey(GeneratorType, default=1, null=False, blank=False)
     user = models.CharField('SPE', max_length=128, help_text='кто запускал тест', null=True, blank=True)
     ticket_id = models.CharField('Тикет', max_length=64, help_text='', null=True, blank=True)
     mnt_url = models.CharField('Методика НТ', max_length=256, help_text='', null=True, blank=True)
