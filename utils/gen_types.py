@@ -30,11 +30,29 @@ def connect_db(args):
     return psycopg2.connect(conn_string)
 
 
-def generate_types(names):
+def existed_types(conn):
+    with conn.cursor() as cursor:
+        query = "SELECT name_list FROM salts_generatortype \
+ORDER BY id DESC LIMIT 1"
+        cursor.execute(query)
+        rec = cursor.fetchone()
+        if not rec:
+            return []
+        return rec[0].split(",")
+
+
+def generate_types(names, types=[]):
+    length = len(names)
+    if length > 1:
+        types = generate_types(names[:length-1], types)
     comb = []
     for i in range(len(names)):
         comb += list(combinations(names, i+1))
-    return comb
+    for t in types:
+        if t in comb:
+            comb.remove(t)
+    types += comb
+    return types
 
 
 def generate_type(conn, id, name_list):
@@ -55,6 +73,7 @@ def generate_type(conn, id, name_list):
             cursor.execute(query)
             conn.commit()
             print "Record (id=%d, name_list=%s). Inserted." % (id, name_list)
+
 
 def update_type_name(old_value, new_value):
     with conn.cursor() as cursor:
@@ -90,7 +109,11 @@ parser.add_argument("--rename", "-r", action="store_const",
 args = parser.parse_args()
 conn = connect_db(args)
 if args.add:
-    types = generate_types(args.names)
+    e_types = existed_types(conn)
+    for et in e_types:
+        if et in args.names:
+            args.names.remove(et)
+    types = generate_types(e_types + args.names)
     generate_type(conn, 1, "unknown")
     id = 2
     for t in types:
