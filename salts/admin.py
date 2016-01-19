@@ -16,29 +16,10 @@ class TestResultAdmin(admin.ModelAdmin):
         return str('%s' % (instance.dt_finish - instance.dt_start))
 
 
-class GeneratorAdmin(admin.ModelAdmin):
-    pass
-
-
-class TargetAdmin(admin.ModelAdmin):
-    pass
-
-
-class TestSettingsAdmin(admin.ModelAdmin):
-    pass
-
-
-class RPSAdmin(admin.ModelAdmin):
-    pass
-
-
-class TestRunAdmin(admin.ModelAdmin):
-    pass
-
-
 admin.site.register(TestResult, TestResultAdmin)
-admin.site.register(Generator, GeneratorAdmin)
-admin.site.register(Target, TargetAdmin)
-admin.site.register(TestSettings, TestSettingsAdmin)
-admin.site.register(RPS, RPSAdmin)
-admin.site.register(TestRun, TestRunAdmin)
+admin.site.register(GeneratorType, admin.ModelAdmin)
+admin.site.register(Generator, admin.ModelAdmin)
+admin.site.register(Target, admin.ModelAdmin)
+admin.site.register(TestSettings, admin.ModelAdmin)
+admin.site.register(RPS, admin.ModelAdmin)
+admin.site.register(TestRun, admin.ModelAdmin)

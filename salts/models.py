@@ -11,6 +11,9 @@ class GeneratorType(models.Model):
                                  help_text='Список используемых генераторов',
                                  null=False, blank=False)
 
+    def __unicode__(self):
+        return self.name_list
+
 
 class TestResult(models.Model):
     """
