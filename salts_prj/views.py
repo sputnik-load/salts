@@ -519,12 +519,13 @@ def user_filter(request, results):
 def get_results(request):
     results = TestResult.objects.extra(select={"http_net": "http_errors_perc || '/' || net_errors_perc",
                                                "duration": "to_char(dt_finish - dt_start, 'HH24:MI:SS')",
-                                               "dt_finish": "to_char(dt_finish at time zone 'MSK', 'YYYY-MM-DD HH24:MI:SS')"})
+                                               "dt_finish": "to_char(dt_finish at time zone 'MSK', 'YYYY-MM-DD HH24:MI:SS')",
+                                               "gen_type_list": "SELECT gt.name_list FROM salts_generatortype AS gt WHERE generator_type_id = gt.id"})
     results = results.values("test_name", "target", "version", "rps", "q99",
                              "q90", "q50", "graph_url", "generator",
                              "dt_finish", "test_id", "scenario_id", "group",
                              "test_status", "ticket_id", "user", "duration",
-                             "http_net")
+                             "http_net", "gen_type_list")
     results = user_filter(request, results)
     sort_param = request_get_value(request, "sort")
     if sort_param:
