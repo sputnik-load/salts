@@ -7,7 +7,6 @@
     <script type="text/javascript" src="{% static "jquery/dist/jquery.min.js" %}"></script>
     <script type="text/javascript" src="{% static "purl/purl.js" %}"></script>
     <script type="text/javascript" src="{% static "bootstrap/dist/js/bootstrap.min.js" %}"></script>
-    <script type="text/javascript" src="{% static "salts/js/lt.js" %}"></script>
   </head>
   <body>
 
@@ -34,11 +33,10 @@
     <div class="col-lg-12">
       {% block container %}{% endblock %}
     </div>
-
+    {% block scripts_blk %}{% endblock %}
     <script type="text/javascript" src="{% static "bootstrap-table/dist/bootstrap-table.min.js" %}"></script>
     <script type="text/javascript" src="{% static "bootstrap-table/src/extensions/key-events/bootstrap-table-key-events.js" %}"></script>
     <script type="text/javascript" src="{% static "bootstrap-table/dist/locale/bootstrap-table-ru-RU.js" %}"></script>
-    {% block scripts_blk %}{% endblock %}
   </body>
 </html>
 

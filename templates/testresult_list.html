@@ -9,7 +9,7 @@
   <a href="https://wiki.ptnik.su/pages/viewpage.action?pageId=27040006" target="_blank">Справка</a>
   <table id="table"
          data-toggle="table"
-         data-url="/get_results"
+         data-url="/get_results/"
          data-height="800"
          data-side-pagination="server"
          data-pagination="true"
@@ -48,18 +48,15 @@
   <script>
     var $table = $('#table');
 
-    window.onfocus = function() {
-      console.log("Tab Focus");
-    }
-
       function edit_page_url(id) {
-        return window.location.protocol + "//" + window.location.host + "/admin/salts/testresult/" + id + "/";
+        return window.location.protocol + "//" + window.location.host + "/admin/salts/testresult/?id=" + id;
       }
 
       $(function () {
         var url = $table.attr("data-url");
         var params = $.url().param();
         if (Object.keys(params).length > 0) {
+          data_url = url + "?" + $.param(params);
           $table.attr("data-url", url + "?" + $.param(params));
         }
       });
