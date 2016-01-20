@@ -19,10 +19,12 @@
          data-sort-order="desc"
          data-show-columns="true"
          data-resizable="true"
+         data-key-events="true"
          data-search="false">
       <thead style="background-color: Bisque">
-      <tr>
-          <th data-field="test_name" data-sortable="true">Тест</th>
+        <tr>
+          <th data-field="id" data-visible="false">ID</th>
+          <th data-field="test_name" data-sortable="true" data-formatter="test_name_formatter">Тест</th>
           <th data-field="scenario_id" data-sortable="true" data-visible="false">ID сценария</th>
           <th data-field="target" data-sortable="true">Target</th>
           <th data-field="version" data-sortable="true">Версия</th>
@@ -41,8 +43,18 @@
       </tr>
       </thead>
   </table>
+{% endblock container %}
+{% block scripts_blk %}
   <script>
-      var $table = $('#table');
+    var $table = $('#table');
+
+    window.onfocus = function() {
+      console.log("Tab Focus");
+    }
+
+      function edit_page_url(id) {
+        return window.location.protocol + "//" + window.location.host + "/admin/salts/testresult/" + id + "/";
+      }
 
       $(function () {
         var url = $table.attr("data-url");
@@ -63,7 +75,14 @@
         if (value === "") {
           return "-";
         }
-        return "<a href=https://task.ptnik.su/browse/" + value + ">" + value + "</a>";
+        return "<a href='https://task.ptnik.su/browse/" + value + "' target='_blank'>" + value + "</a>";
+      }
+
+      function test_name_formatter(value, row) {
+        if (value === "") {
+          return "-";
+        }
+        return "<a href='" + edit_page_url(row["id"]) + "' target='_blank'>" + value + "</a>";
       }
 
       function row_style(row, index) {
@@ -72,6 +91,10 @@
         }
         return {classes: "odd"};
       }
+      $('#table').bootstrapTable({
+        onDblClickRow: function (row, $element) {
+          window.open(edit_page_url(row["id"]));
+        }
+      });
   </script>
-{% endblock container %}
-
+{% endblock scripts_blk %}

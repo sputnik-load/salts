@@ -36,7 +36,9 @@
     </div>
 
     <script type="text/javascript" src="{% static "bootstrap-table/dist/bootstrap-table.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "bootstrap-table/src/extensions/key-events/bootstrap-table-key-events.js" %}"></script>
     <script type="text/javascript" src="{% static "bootstrap-table/dist/locale/bootstrap-table-ru-RU.js" %}"></script>
+    {% block scripts_blk %}{% endblock %}
   </body>
 </html>
 

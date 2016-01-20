@@ -521,7 +521,7 @@ def get_results(request):
                                                "duration": "to_char(dt_finish - dt_start, 'HH24:MI:SS')",
                                                "dt_finish": "to_char(dt_finish at time zone 'MSK', 'YYYY-MM-DD HH24:MI:SS')",
                                                "gen_type_list": "SELECT gt.name_list FROM salts_generatortype AS gt WHERE generator_type_id = gt.id"})
-    results = results.values("test_name", "target", "version", "rps", "q99",
+    results = results.values("id", "test_name", "target", "version", "rps", "q99",
                              "q90", "q50", "graph_url", "generator",
                              "dt_finish", "test_id", "scenario_id", "group",
                              "test_status", "ticket_id", "user", "duration",
