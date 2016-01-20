@@ -20,6 +20,7 @@
          data-show-columns="true"
          data-resizable="true"
          data-key-events="true"
+         data-ajax="ajax_request"
          data-search="false">
       <thead style="background-color: Bisque">
         <tr>
@@ -52,14 +53,15 @@
         return window.location.protocol + "//" + window.location.host + "/admin/salts/testresult/?id=" + id;
       }
 
-      $(function () {
-        var url = $table.attr("data-url");
-        var params = $.url().param();
-        if (Object.keys(params).length > 0) {
-          data_url = url + "?" + $.param(params);
-          $table.attr("data-url", url + "?" + $.param(params));
+      function ajax_request(params) {
+        url_param = $.url().param();
+        for (name in url_param) {
+          if (!params.data.hasOwnProperty(name)) {
+            params.data[name] = url_param[name];
+          }
         }
-      });
+        $.ajax(params);        
+      }
 
       function graph_url_formatter(value) {
         if (value === "") {
