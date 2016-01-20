@@ -502,7 +502,7 @@ def user_filter(request, results):
     if test_search:
         results = results.filter(test_name__contains=test_search)
     if status:
-        results = results.filter(test_status=status)
+        results = results.filter(test_status__in=status.split(","))
     if task_id:
         results = results.filter(ticket_id=task_id)
     if spe:
