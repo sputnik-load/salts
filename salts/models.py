@@ -47,7 +47,7 @@ class TestResult(models.Model):
         (STATUS_DONE, 'Done'),
         (STATUS_UNKNOWN, 'Unknown'),
     )
-    test_id = models.CharField('ID', max_length=32, help_text='ID теста', null=True, blank=True, unique=True)
+    test_id = models.CharField('ID теста', max_length=32, help_text='ID теста', null=True, blank=True, unique=True)
     scenario_id = models.CharField('ID сценария', max_length=256, help_text='Путь к файлу в репозитории', null=False, default='unknown')
     dt_start = models.DateTimeField('Дата и время начала теста', null=True, blank=True)
     dt_finish = models.DateTimeField('Дата и время завершения теста', null=True, blank=True)
