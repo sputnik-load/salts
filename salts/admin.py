@@ -11,7 +11,7 @@ class TestResultAdmin(admin.ModelAdmin):
     list_editable = ('test_name', 'test_status', 'rps', 'ticket_id', 'scenario_id', )
     list_per_page = 15
     readonly_fields = ('meta',)
-    search_fields = ('target', 'scenario_id', )
+    search_fields = ('test_name', 'group', 'target', 'scenario_id', 'ticket_id', 'test_id', )
 
     def show_graph_url(self, instance):
         return str('<a href="%s">graphs</a>' % (instance.graph_url.decode()))
