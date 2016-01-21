@@ -502,7 +502,13 @@ def user_filter(request, results):
     if test_search:
         results = results.filter(test_name__contains=test_search)
     if status:
-        results = results.filter(test_status=status)
+        status = status.split(",")
+        for (i, item) in enumerate(status):
+            if item == "unknown":
+                status[i] = u"unk"
+            if item == "debug":
+                status[i] = u"dbg"
+        results = results.filter(test_status__in=status)
     if task_id:
         results = results.filter(ticket_id=task_id)
     if spe:
@@ -529,7 +535,6 @@ def get_results(request):
     results = user_filter(request, results)
     sort_param = request_get_value(request, "sort")
     if sort_param:
-        logger.debug("get_results: sort_param: %s" % sort_param)
         order = request_get_value(request, "order")
         if not order:
             order = "asc"
