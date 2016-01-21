@@ -14,7 +14,7 @@ class TestResultAdmin(admin.ModelAdmin):
     search_fields = ('test_name', 'group', 'target', 'scenario_id', 'ticket_id', 'test_id', )
 
     def show_graph_url(self, instance):
-        return str('<a href="%s">graphs</a>' % (instance.graph_url.decode()))
+        return u'<a href="%s">Графики</a>' % (instance.graph_url.decode())
     show_graph_url.allow_tags = True
     def show_test_len(self, instance):
         return str('%s' % (instance.dt_finish - instance.dt_start))
