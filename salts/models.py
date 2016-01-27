@@ -6,13 +6,22 @@ from jsonfield import JSONCharField
 from _bsddb import version
 
 # Create your models here.
-class GeneratorType(models.Model):
+class GeneratorTypeList(models.Model):
     name_list = models.CharField(u'Список имен генераторов', max_length=255,
                                  help_text=u'Список используемых генераторов',
                                  null=False, blank=False)
 
     def __unicode__(self):
         return self.name_list
+
+
+class GeneratorType(models.Model):
+    name = models.CharField(u'Имя генератора', max_length=255,
+                            help_text=u'Имя генератора',
+                            null=False, blank=False)
+
+    def __unicode__(self):
+        return self.name
 
 
 class TestResult(models.Model):
@@ -64,7 +73,8 @@ class TestResult(models.Model):
     # length
     graph_url = models.CharField(u'Графики', max_length=256, help_text=u'html ссылки на графики', null=True, blank=True)
     generator = models.CharField(u'Генератор', max_length=128, help_text=u'сервер генератор нагрузки', null=True, blank=True)
-    generator_type = models.ForeignKey(GeneratorType, default=1, null=False, blank=False)
+    generator_type_list = models.ForeignKey(GeneratorTypeList, default=1, null=False, blank=False)
+    generator_types = models.ManyToManyField(GeneratorType)
     user = models.CharField('SPE', max_length=128, help_text=u'кто запускал тест', null=True, blank=True)
     ticket_id = models.CharField(u'Тикет', max_length=64, help_text='', null=True, blank=True)
     mnt_url = models.CharField(u'Методика НТ', max_length=256, help_text='', null=True, blank=True)

@@ -488,6 +488,7 @@ def show_results_page(request):
 
 def user_filter(request, results):
     scen_id = request_get_value(request, "scid")
+    target = request_get_value(request, "trg")
     test_group = request_get_value(request, "tg")
     test_search = request_get_value(request, "ts")
     status = request_get_value(request, "st")
@@ -497,6 +498,8 @@ def user_filter(request, results):
     to_time = request_get_value(request, "to")
     if scen_id:
         results = results.filter(scenario_id=scen_id)
+    if target:
+        results = results.filter(target__contains=target)
     if test_group:
         results = results.filter(group=test_group)
     if test_search:
@@ -526,7 +529,7 @@ def get_results(request):
     results = TestResult.objects.extra(select={"http_net": "http_errors_perc || '/' || net_errors_perc",
                                                "duration": "to_char(dt_finish - dt_start, 'HH24:MI:SS')",
                                                "dt_finish": "to_char(dt_finish at time zone 'MSK', 'YYYY-MM-DD HH24:MI:SS')",
-                                               "gen_type_list": "SELECT gt.name_list FROM salts_generatortype AS gt WHERE generator_type_id = gt.id"})
+                                               "gen_type_list": "SELECT gt.name_list FROM salts_generatortypelist AS gt WHERE generator_type_list_id = gt.id"})
     results = results.values("id", "test_name", "target", "version", "rps", "q99",
                              "q90", "q50", "graph_url", "generator",
                              "dt_finish", "test_id", "scenario_id", "group",

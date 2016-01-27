@@ -22,6 +22,7 @@ class TestResultAdmin(admin.ModelAdmin):
 
 admin.site.register(TestResult, TestResultAdmin)
 admin.site.register(GeneratorType, admin.ModelAdmin)
+admin.site.register(GeneratorTypeList, admin.ModelAdmin)
 admin.site.register(Generator, admin.ModelAdmin)
 admin.site.register(Target, admin.ModelAdmin)
 admin.site.register(TestSettings, admin.ModelAdmin)
