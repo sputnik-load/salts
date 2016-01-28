@@ -490,6 +490,7 @@ def user_filter(request, results):
     scen_id = request_get_value(request, "scid")
     target = request_get_value(request, "trg")
     gen_type = request_get_value(request, "gt")
+    generator = request_get_value(request, "gen")
     test_group = request_get_value(request, "tg")
     test_search = request_get_value(request, "ts")
     status = request_get_value(request, "st")
@@ -507,6 +508,8 @@ def user_filter(request, results):
         results = results.filter(test_name__contains=test_search)
     if gen_type:
         results = results.filter(generator_types__name__contains=gen_type)
+    if generator:
+        results = results.filter(generator__contains=generator)
     if status:
         status = status.split(",")
         for (i, item) in enumerate(status):
