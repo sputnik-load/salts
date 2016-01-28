@@ -489,6 +489,7 @@ def show_results_page(request):
 def user_filter(request, results):
     scen_id = request_get_value(request, "scid")
     target = request_get_value(request, "trg")
+    gen_type = request_get_value(request, "gt")
     test_group = request_get_value(request, "tg")
     test_search = request_get_value(request, "ts")
     status = request_get_value(request, "st")
@@ -504,6 +505,8 @@ def user_filter(request, results):
         results = results.filter(group=test_group)
     if test_search:
         results = results.filter(test_name__contains=test_search)
+    if gen_type:
+        results = results.filter(generator_types__name__contains=gen_type)
     if status:
         status = status.split(",")
         for (i, item) in enumerate(status):
@@ -529,12 +532,12 @@ def get_results(request):
     results = TestResult.objects.extra(select={"http_net": "http_errors_perc || '/' || net_errors_perc",
                                                "duration": "to_char(dt_finish - dt_start, 'HH24:MI:SS')",
                                                "dt_finish": "to_char(dt_finish at time zone 'MSK', 'YYYY-MM-DD HH24:MI:SS')",
-                                               "gen_type_list": "SELECT gt.name_list FROM salts_generatortypelist AS gt WHERE generator_type_list_id = gt.id"})
+                                               "comment": "comments"})
     results = results.values("id", "test_name", "target", "version", "rps", "q99",
                              "q90", "q50", "graph_url", "generator",
                              "dt_finish", "test_id", "scenario_id", "group",
                              "test_status", "ticket_id", "user", "duration",
-                             "http_net", "gen_type_list")
+                             "http_net", "comment")
     results = user_filter(request, results)
     sort_param = request_get_value(request, "sort")
     if sort_param:
@@ -545,6 +548,8 @@ def get_results(request):
             results = results.order_by(sort_param)
         else:
             results = results.order_by("-%s" % sort_param)
+    for r in results:
+        r["gen_type_list"] = " ".join(sorted([item.name for item in TestResult.objects.get(id=r["id"]).generator_types.all()]))
     results = list(results)
 
     offset = request_get_value(request, "offset")

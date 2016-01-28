@@ -24,23 +24,24 @@
          data-search="false">
       <thead style="background-color: Bisque">
         <tr>
-          <th data-field="id" data-visible="false">ID</th>
-          <th data-field="test_name" data-sortable="true" data-formatter="test_name_formatter">Тест</th>
-          <th data-field="scenario_id" data-sortable="true" data-visible="false">ID сценария</th>
-          <th data-field="target" data-sortable="true">Target</th>
-          <th data-field="version" data-sortable="true">Версия</th>
-          <th data-field="rps" data-sortable="true">RPS</th>
-          <th data-field="q99" data-sortable="true">99%</th>
-          <th data-field="q90" data-sortable="true">90%</th>
-          <th data-field="q50" data-sortable="true">50%</th>
-          <th data-field="http_net">% ошибок http/net</th>
-          <th data-field="duration" data-sortable="true">Длительность</th>
-          <th data-field="dt_finish" data-sortable="true">Время окончания</th>
-          <th data-field="graph_url" data-formatter="graph_url_formatter">График</th>
-          <th data-field="generator" data-sortable="true">Генератор</th>
-          <th data-field="gen_type_list" data-sortable="true">Тип генератора</th>
-          <th data-field="test_id" data-sortable="true">ID теста</th>
-          <th data-field="ticket_id" data-sortable="true" data-formatter="ticket_id_formatter">Задача</th>
+          <th data-field="id" data-visible="false" title="ID">ID</th>
+          <th data-field="test_name" data-sortable="true" data-formatter="test_name_formatter" title="Тест">Тест</th>
+          <th data-field="scenario_id" data-sortable="true" data-visible="false" title="ID сценария">Сценарий</th>
+          <th data-field="target" data-sortable="true" title="Нагружаемый сервис">Target</th>
+          <th data-field="version" data-sortable="true" title="Версия">Версия</th>
+          <th data-field="rps" data-sortable="true" title="RPS">RPS</th>
+          <th data-field="q99" data-sortable="true" title="99%">99%</th>
+          <th data-field="q90" data-sortable="true" title="90%">90%</th>
+          <th data-field="q50" data-sortable="true" title="50%">50%</th>
+          <th data-field="http_net" title="% ошибок http/net">Ошибки</th>
+          <th data-field="duration" data-sortable="true" title="Длительность">Время</th>
+          <th data-field="dt_finish" data-sortable="true" title="Время окончания">Окончание</th>
+          <th data-field="graph_url" data-formatter="graph_url_formatter" title="График">График</th>
+          <th data-field="generator" data-sortable="true" title="Генератор">Генератор</th>
+          <th data-field="gen_type_list" data-visible="false" data-sortable="true" title="Тип генератора">Тип</th>
+          <th data-field="test_id" data-sortable="true" title="ID теста">ID теста</th>
+          <th data-field="ticket_id" data-sortable="true" data-formatter="ticket_id_formatter" title="Задача">Задача</th>
+          <th data-field="comment" title="Комментарий">Комментарий</th>
       </tr>
       </thead>
   </table>
