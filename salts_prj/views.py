@@ -548,9 +548,24 @@ def get_results(request):
             results = results.order_by(sort_param)
         else:
             results = results.order_by("-%s" % sort_param)
-    for r in results:
-        r["gen_type_list"] = " ".join(sorted([item.name for item in TestResult.objects.get(id=r["id"]).generator_types.all()]))
+    query = """SELECT tmp.id, STRING_AGG(tmp.name, ' ') gen_type_list FROM
+                        ( SELECT trgt.testresult_id id, gt.name FROM salts_testresult_generator_types trgt
+                          JOIN salts_generatortype gt ON trgt.generatortype_id = gt.id
+                          GROUP BY testresult_id, name
+                          ORDER BY testresult_id, name
+                        ) tmp
+                GROUP BY id
+            """
+    gen_types_results = TestResult.objects.raw(query)
+    gen_types = {}
+    for r in gen_types_results:
+        gen_types[r.id] = r.gen_type_list
     results = list(results)
+    for r in results:
+        if r["id"] in gen_types:
+            r["gen_type_list"] = gen_types[r["id"]]
+        else:
+            r["gen_type_list"] = ""
 
     offset = request_get_value(request, "offset")
     limit = request_get_value(request, "limit")
