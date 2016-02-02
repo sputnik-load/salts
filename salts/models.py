@@ -74,11 +74,11 @@ class TestResult(models.Model):
     graph_url = models.CharField(u'Графики', max_length=256, help_text=u'html ссылки на графики', null=True, blank=True)
     generator = models.CharField(u'Генератор', max_length=128, help_text=u'сервер генератор нагрузки', null=True, blank=True)
     generator_type_list = models.ForeignKey(GeneratorTypeList, default=1, null=False, blank=False)
-    generator_types = models.ManyToManyField(GeneratorType)
+    generator_types = models.ManyToManyField(GeneratorType, related_name='generator_types')
     user = models.CharField('SPE', max_length=128, help_text=u'кто запускал тест', null=True, blank=True)
     ticket_id = models.CharField(u'Тикет', max_length=64, help_text='', null=True, blank=True)
     mnt_url = models.CharField(u'Методика НТ', max_length=256, help_text='', null=True, blank=True)
-    comments = models.CharField(u'Комментарии', max_length=256, help_text='', null=True, blank=True)
+    comments = models.TextField(u'Комментарии', max_length=1024, help_text=u'Комментарий к результатам теста', null=True, blank=True)
 #    dt_start2 = models.DateTimeField(help_text='Дата и время начала теста (зачетный период)', null=True, blank=True)
 #    dt_finish2 = models.DateTimeField(help_text='Дата и время завершения теста (зачетный период)', null=True,
 #                                      blank=True)
