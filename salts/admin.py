@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 from salts.models import *
+from django.forms import Textarea
 
 
 # Register your models here.
 class TestResultAdmin(admin.ModelAdmin):
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows': 3, 'cols': 40})},
+    }
     #list_display = ('id', 'status', 'test_status', 'dt_start', 'dt_finish', 'results')
     list_display = ('id', 'test_name', 'group', 'version', 'test_status', 'comments',
                     'rps', 'show_test_len', 'q99', 'q90', 'q50',
