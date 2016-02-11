@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import re
 import datetime
+from os.path import abspath,dirname
 from fabric.api import put, env, run, cd, sudo, lcd, local, settings, get
 
 #import logging
 #logging.basicConfig(level=logging.DEBUG)
 
-env.hosts = ['salt-dev.dev.ix.km']
+if not env.hosts:
+    env.hosts = ['salt-dev.dev.ix.km']
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 PYTHON = 'python2.7'
 PIP = 'pip2.7'
@@ -16,6 +18,20 @@ _TPLS = {
     '#PROJECT_ROOT#': lambda: '/usr/local/salts',
     '#HOSTNAME#': lambda: env.host_string,
 }
+
+
+def checkout_last_version():
+    v = None
+    fabfile_dir = dirname(abspath(env.fabfile))
+    with cd(fabfile_dir):
+        tags_out = run("git tag")
+        if tags_out:
+            tags = tags_out.split()
+            v = tags[-1]
+        if v:
+            with open("version", "w") as ver_file:
+                ver_file.write(v)
+            run("git checkout %s ." % v)
 
 
 def get_ts():
@@ -142,3 +158,4 @@ def backup_all():
     backup_database()
     backup_files()
     backup_results()
+
