@@ -80,6 +80,7 @@ DATABASES = {
     }
 }
 LT_PATH = "/data/qa/ltbot/loadtest"
+VERSION_FILE_NAME = "version"
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
