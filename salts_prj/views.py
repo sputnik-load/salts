@@ -19,7 +19,7 @@ from django.core.paginator import Paginator
 from django.views.generic.list import ListView
 from salts.models import TestSettings, RPS, Target, Generator, TestRun, TestResult
 from salts.forms import SettingsEditForm, RPSEditForm
-from settings import LT_PATH, DATABASES
+from settings import LT_PATH, DATABASES, BASE_DIR, VERSION_FILE_NAME
 from requests import ConnectionError
 
 
@@ -28,6 +28,16 @@ def request_get_value(request, param):
     if param in request.GET:
         value = request.GET[param]
     return value
+
+
+def set_version(response):
+    version_path = "%s/%s" % (BASE_DIR, VERSION_FILE_NAME)
+    if os.path.exists(version_path):
+        with open(version_path, "r") as ver_file:
+            v = ver_file.readlines()[0]
+            v = v.rstrip("\n")
+        if v:
+            response["X-Version"] = v
 
 
 class TestSettingsPaginator(Paginator):
@@ -473,17 +483,20 @@ def poll_servers(request):
         response_dict.update({tsid: test_run})
     remove_ids = [id for id in tr_session if not (tr_session[id]["status"] == "running")]
     for id in remove_ids:
-        del tr_session[id]
+         tr_session[id]
     request.session["test_run"] = str(pickle.dumps(tr_session))
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
+
 
 def show_results_page(request):
     context = {}
     context.update(csrf(request))
     context["host"] = DATABASES["default"]["HOST"]
     context["name"] = DATABASES["default"]["NAME"]
-    return render_to_response("testresult_list.html", context)
+    response = render_to_response("testresult_list.html", context)
+    set_version(response)
+    return response
 
 
 def user_filter(request, results):
@@ -581,5 +594,7 @@ def get_results(request):
         results = results[offset:offset+limit]
     response_dict["rows"] = results
 
-    return HttpResponse(json.dumps(response_dict),
-                        content_type="application/json")
+    response = HttpResponse(json.dumps(response_dict),
+                            content_type="application/json")
+    set_version(response)
+    return response
