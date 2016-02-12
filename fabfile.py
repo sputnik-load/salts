@@ -61,6 +61,8 @@ def deploy(reload_=True):
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/uwsgi-krylov.ini.sample', '#PROJECT_ROOT#/conf/uwsgi-krylov.ini')
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/nginx.conf.sample', '#PROJECT_ROOT#/conf/nginx.conf')
 
+    sudo('rm -rf /var/tmp/django_cache/*')
+
     if reload_:
         reload_svc()
 
