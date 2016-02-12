@@ -65,6 +65,7 @@ def deploy(reload_=True):
     put('templates', remote_path=remote_dir)
     #put('js', remote_path=remote_dir+"/static/")
     put('static/favicon.ico', remote_path=remote_dir+"/static/")
+    put('version', remote_path=remote_dir)
     with settings(warn_only=True):
         put('*.py', remote_path=remote_dir)
         # put('*.sh', remote_path=remote_dir)
