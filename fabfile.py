@@ -24,6 +24,7 @@ def checkout_last_version():
     v = None
     fabfile_dir = dirname(abspath(env.fabfile))
     with cd(fabfile_dir):
+        run("git pull")
         tags_out = run("git tag")
         if tags_out:
             tags = tags_out.split()
