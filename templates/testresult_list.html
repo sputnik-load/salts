@@ -1,10 +1,5 @@
 {% extends "base.html" %}
 {% block container %}
-  <style>
-    .odd {
-      background-color: GainsBoro;
-    }
-  </style>
   <h1>Результаты тестов:</h1>
   <a href="https://wiki.ptnik.su/pages/viewpage.action?pageId=27040006" target="_blank">Справка</a>
   <table id="table"
@@ -26,6 +21,7 @@
         <tr>
           <th data-field="id" data-visible="false" title="ID">ID</th>
           <th data-field="test_name" data-sortable="true" data-formatter="test_name_formatter" title="Тест">Тест</th>
+          <th data-field="test_status" data-sortable="true" data-formatter="test_status_formatter" title="Статус">Статус</th>
           <th data-field="scenario_id" data-sortable="true" data-visible="false" title="ID сценария">Сценарий</th>
           <th data-field="target" data-sortable="true" title="Нагружаемый сервис">Target</th>
           <th data-field="version" data-sortable="true" title="Версия">Версия</th>
@@ -48,7 +44,7 @@
 {% endblock container %}
 {% block scripts_blk %}
   <script>
-    var $table = $('#table');
+    var $table = $('.table');
 
       function edit_page_url(id) {
         return window.location.protocol + "//" + window.location.host + "/admin/salts/testresult/?id=" + id;
@@ -85,13 +81,29 @@
         return "<a href='" + edit_page_url(row["id"]) + "' target='_blank'>" + value + "</a>";
       }
 
-      function row_style(row, index) {
-        if (index % 2 === 0) {
-          return {};
-        }
-        return {classes: "odd"};
+      function test_status_formatter(value, row) {
+        var human_values = {
+          unk: "Unknown",
+          dbg: "Debug",
+          pass: "Pass",
+          fail: "Fail"
+        };
+        return human_values[value];
       }
-      $('#table').bootstrapTable({
+
+      function row_style(row, index) {
+        var css_status_classes = { 
+          unk: "unk", 
+          dbg: "debug",
+          fail: "failed",
+          pass: "success"
+        };
+        if (index % 2 === 0) {
+          return {classes: css_status_classes[row["test_status"]] + "_even"};
+        }
+        return {classes: css_status_classes[row["test_status"]] + "_odd"};
+      }
+      $('.table').bootstrapTable({
         onDblClickRow: function (row, $element) {
           window.open(edit_page_url(row["id"]));
         }
