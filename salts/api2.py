@@ -5,6 +5,9 @@ from salts.models import GeneratorTypeList
 from salts.models import GeneratorType
 
 
+# from logging import getLogger
+# log = getLogger("salts")
+
 
 class GeneratorTypeSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
@@ -25,9 +28,10 @@ class GeneratorTypeViewSet(viewsets.ModelViewSet):
 class TestResultSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     generator_types = GeneratorTypeSerializer(many=True)
-    artifact_names = ["metrics", "jm_jtl", "phout", "yt_log",
+    updated_fields = ["metrics", "jm_jtl", "phout", "yt_log",
                       "jm_log", "yt_conf", "ph_conf", "modified_jmx",
-                      "console_log", "report_txt", "jm_log_2"]
+                      "console_log", "report_txt", "jm_log_2",
+                      "test_status"]
     class Meta:
         model = TestResult
 
@@ -43,7 +47,7 @@ class TestResultSerializer(serializers.HyperlinkedModelSerializer):
 
     def update(self, instance, validated_data):
         for k in validated_data:
-            if k in self.artifact_names:
+            if k in self.updated_fields:
                 setattr(instance, k,
                         validated_data.get(k, getattr(instance, k)))
         instance.save()
