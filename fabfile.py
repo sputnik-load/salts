@@ -57,6 +57,7 @@ def _my_replace_in_remote_file(src, dst):
 
 
 def deploy(reload_=True):
+    checkout_last_version()
     remote_dir = _my_replace('#PROJECT_ROOT#')
     sudo(_my_replace('mkdir -p "#PROJECT_ROOT#"'))
     sudo(_my_replace('chown suhov.uwsgi -R "#PROJECT_ROOT#"'))
