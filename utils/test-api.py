@@ -61,6 +61,12 @@ try:
         tr.put(files={'metrics': fp})
     with open('test2.txt') as fp:
         api.testresult(new['id']).put(files={'yt_log': fp})
+    api.testresult(new["id"]).put({"test_status": "dbg",
+                                   "generator_types": gen_type_objects})
+    new = api.testresult.get(test_id="2016-03-11_09-00-00.G2TESB")
+    print "new.metrics: %s" % new[0]["metrics"]
+    print "new.yt_log: %s" % new[0]["yt_log"]
+    print "new.test_status: %s" % new[0]["test_status"]
 except Exception as exc:
     print "Error sending results to salts: " + str(exc)
     if hasattr(exc, 'content'):
