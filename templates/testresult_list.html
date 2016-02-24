@@ -103,7 +103,7 @@
         }
         return {classes: css_status_classes[row["test_status"]] + "_odd"};
       }
-      $('.table').bootstrapTable({
+      $('#table').bootstrapTable({
         onDblClickRow: function (row, $element) {
           window.open(edit_page_url(row["id"]));
         }
