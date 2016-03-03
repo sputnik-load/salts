@@ -30,6 +30,7 @@ server {
 	}
 
 	location / {
+        add_header Access-Control-Allow-Origin "*";
 		uwsgi_pass salt-dev-django;
 		include uwsgi_params;
 	}
