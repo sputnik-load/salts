@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Динамика по результатам тестов</title>
+
+        <script src="http://dygraphs.com/1.1.0/dygraph-combined-dev.js" type="text/javascript"></script>
+        
+        <!-- Include the Javascript for the plug-in -->
+        <script type="text/javascript" src="http://dygraphs.com/extras/unzoom.js"></script>       
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
+    </head>
+
+    <body>
+        <table><tr width=95%><td width=95%>
+            <p id="linker"></p>
+        <div id="roll" style="width:95%; height:400px;"></div>  
+        </td><td valign=top>
+        <div id="status" style="width:200px; font-size:0.8em; padding-top:5px;"></div>
+        </td>
+        </tr></table>
+        
+        <script type="text/javascript">
+                                
+                var chartData = [];
+
+                //chartData = generateChartData();  
+                //drawGraph(chartData);
+            
+                var xmlhttp = new XMLHttpRequest();
+                
+                // var url = "http://salt-dev.dev.ix.km/get_results/?sort=dt_finish&scid=services/maps_continuos_testing/load_test_stand_tiles_zoom%234.ini&st=pass,fail,unknown";
+            
+                get_args = location.search;
+                var url = "/get_results/?sort=dt_finish&order=desc&offset=0" + get_args;
+            
+                var a = document.createElement('a');
+                var linkText = document.createTextNode("Результаты тестов");
+                a.appendChild(linkText);
+                a.title = "Хорошие результатики";
+                var res_url = "/results/" + get_args;
+                a.href = res_url;
+                //document.body.appendChild(a);
+            
+                var parent = document.getElementById("linker");      
+                parent.appendChild(a);
+
+                xmlhttp.onreadystatechange = function() {
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                        var myArr = JSON.parse(xmlhttp.responseText);
+
+                        chartData = prepareJSON(myArr);
+                        drawGraph(chartData);
+                    }
+                };
+            
+                xmlhttp.open("GET", url, true);
+                xmlhttp.send();
+            
+                function prepareJSON(arr) {
+                    var locarr = arr["rows"];
+                    var rpsarr = [];
+                    
+                    console.log(locarr[0]["dt_finish"]);
+
+                    date_time = locarr[0]["dt_finish"].split(',').join('T') + 'Z';
+
+                    dt = new Date(date_time);
+                    mt = moment(date_time);
+                    console.log(mt.toDate().toDateString());
+
+                    for (var i = 0; i < locarr.length; i++) {
+                        rpsarr.push([
+                            moment(locarr[i]["dt_finish"]).toDate(),
+                            locarr[i]["q99"],
+                            locarr[i]["q90"],
+                            locarr[i]["q50"]
+                        ]);
+                    }
+                    
+                    rpsarr.sort(function(a,b){
+                        return a[0] - b[0];
+                    });
+                        
+                    return rpsarr;
+                }
+
+                function drawGraph(data) {
+                    console.log(data);             
+                
+                    g = new Dygraph(
+                        document.getElementById("roll"),
+                        chartData,
+                        {
+                            labelsDiv: document.getElementById('status'),
+                            labelsSeparateLines: true,
+                            labelsKMB: false,
+                            rollPeriod: 1,
+                            showRoller: true,
+                            //customBars: true,
+                            title: 'Load tests response time trend',
+                            ylabel: 'milliseconds',
+                            labels: ["date", "quantile 99", "quantile 90", "quantile 50"],
+                            legend: 'always',
+                            labelsDivStyles: { 'textAlign': 'right' },
+                            showRangeSelector: true,
+                            rangeSelectorHeight: 50,
+                            rangeSelectorPlotStrokeColor: 'blue',
+                            rangeSelectorPlotFillColor: 'lightblue',
+                            colors: ["rgb(70,220,110)", "rgb(51,204,204)", "rgb(240,200,100)"],
+                            axisLineColor: 'white',
+                            zoomCallback : function(minDate, maxDate, yRange) {
+                                showDimensions(minDate, maxDate, yRange);
+                            },
+
+                            // Set the plug-ins in the options.
+                            plugins : [
+                                Dygraph.Plugins.Unzoom
+                            ]
+                        }
+                    );
+                }
+            
+                // generate some random data, quite different range
+                function generateChartData() {
+                    var firstDate = new Date();
+                    firstDate.setDate(firstDate.getDate() - 1);
+                    
+                    var localData = [];
+
+                    for (var i = 0; i < 3600 * 24; i++) {
+                        // we create date objects here. In your data, you can have date strings
+                        // and then set format of your dates using chart.dataDateFormat property,
+                        // however when possible, use date objects, as this will speed up chart rendering.
+                        var timeStamp = new Date(firstDate);
+                        timeStamp.setUTCSeconds(timeStamp.getUTCSeconds() + i);
+
+                        var values_1 = Math.round(Math.random() * 40) - 20;
+                        
+                        var values_2 = values_1 + Math.sign(Math.random()) * 5;
+                
+                        localData.push([
+                            timeStamp,
+                            values_1,
+                            values_2
+                        ]);
+                    }
+                    
+                    console.log(localData);
+                    
+                    return localData;
+                }                                     
+        </script>        
+    </body>
+
+</html>

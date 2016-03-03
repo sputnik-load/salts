@@ -488,6 +488,12 @@ def poll_servers(request):
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
 
+def set_context(request):
+    context = {}
+    context.update(csrf(request))
+    context["host"] = DATABASES["default"]["HOST"]
+    context["name"] = DATABASES["default"]["NAME"]
+    return context
 
 def show_results_page(request):
     context = {}
@@ -495,6 +501,12 @@ def show_results_page(request):
     context["host"] = DATABASES["default"]["HOST"]
     context["name"] = DATABASES["default"]["NAME"]
     response = render_to_response("testresult_list.html", context)
+    set_version(response)
+    return response
+
+def show_trends_page(request):
+    context = set_context(request) 
+    response = render_to_response("graph_trends.html", context)
     set_version(response)
     return response
 

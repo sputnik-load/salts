@@ -6,6 +6,7 @@ from django.contrib import admin
 from salts_prj.views import run_test_api, stop_test_api, status_test_api
 from salts_prj.views import show_test_settings, edit_test_parameters, poll_servers
 from salts_prj.views import show_results_page, get_results
+from salts_prj.views import show_trends_page
 
 
 admin.autodiscover()
@@ -26,7 +27,8 @@ urlpatterns = patterns('',
     url(r'^status_test/$', status_test_api),
     url(r'^poll_servers/$', poll_servers),
     url(r'^results/$', show_results_page, name="test_results"),
-    url(r'^get_results/$', get_results)
+    url(r'^get_results/$', get_results),
+    url(r'^results/graph/$', show_trends_page)
 )
 
 if settings.DEBUG:
