@@ -2,6 +2,7 @@
 {% block container %}
   <h1>Результаты тестов:</h1>
   <a href="https://wiki.ptnik.su/pages/viewpage.action?pageId=27040006" target="_blank">Справка</a>
+  <p id="linker" align="right"></p>
   <table id="table"
          data-toggle="table"
          data-url="/get_results/"
@@ -44,6 +45,15 @@
 {% endblock container %}
 {% block scripts_blk %}
   <script>
+    get_args = location.search;
+    var a = document.createElement('a');
+    var linkText = document.createTextNode("Динамика результатов");
+    a.appendChild(linkText);
+    a.title = "Графики трендов времён отклика";
+    a.href = "/results/graph/" + get_args;    
+    var parent = document.getElementById("linker");      
+    parent.appendChild(a);      
+      
     var $table = $('.table');
 
       function edit_page_url(id) {
