@@ -1,5 +1,5 @@
 <html>
-  <head><title>Результаты тестов</title>
+  <head><title>{{ title }}</title>
     {% load staticfiles %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link href="{% static "bootstrap/dist/css/bootstrap.min.css" %}" rel="stylesheet" />
@@ -10,7 +10,8 @@
     <script type="text/javascript" src="{% static "bootstrap/dist/js/bootstrap.min.js" %}"></script>
     <script type="text/javascript" src="{% static "bootstrap-table/dist/bootstrap-table.min.js" %}"></script>
     <script type="text/javascript" src="{% static "bootstrap-table/src/extensions/key-events/bootstrap-table-key-events.js" %}"></script>
-    <script type="text/javascript" src="{% static "bootstrap-table/dist/locale/bootstrap-table-ru-RU.js" %}"></script> 
+    <script type="text/javascript" src="{% static "bootstrap-table/dist/locale/bootstrap-table-ru-RU.js" %}"></script>
+    {% block ext_static_files %}{% endblock %} 
   </head>
   <body>
 
@@ -37,7 +38,9 @@
     <div class="col-lg-12">
       {% block container %}{% endblock %}
     </div>
-    {% block scripts_blk %}{% endblock %}
+    <script>
+      {% block scripts_blk %}{% endblock %}
+    </script>
   </body>
 </html>
 

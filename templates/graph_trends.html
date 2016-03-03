@@ -1,28 +1,23 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        <title>Динамика по результатам тестов</title>
-
-        <script src="http://dygraphs.com/1.1.0/dygraph-combined-dev.js" type="text/javascript"></script>
-        
-        <!-- Include the Javascript for the plug-in -->
-        <script type="text/javascript" src="http://dygraphs.com/extras/unzoom.js"></script>       
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
-    </head>
-
-    <body>
-        <table><tr width=95%><td width=95%>
-            <p id="linker"></p>
+{% extends "base.html" %}
+{% block ext_static_files %}
+    {% load staticfiles %}
+    <script type="text/javascript" src="{% static "dygraphs/dygraph-combined-dev.js" %}"></script>
+    <script type="text/javascript" src="{% static "dygraphs/extras/unzoom.js" %}"></script>
+    <script type="text/javascript" src="{% static "moment/min/moment.min.js" %}"></script>
+{% endblock ext_static_files %}
+{% block container %}
+  <table>
+    <tr width=95%>
+      <td width=95%>
+        <p id="linker"></p>
         <div id="roll" style="width:95%; height:400px;"></div>  
-        </td><td valign=top>
+      </td>
+      <td valign=top>
         <div id="status" style="width:200px; font-size:0.8em; padding-top:5px;"></div>
-        </td>
-        </tr></table>
-        
-        <script type="text/javascript">
-                                
+      </td>
+    </tr></table>
+{% endblock container %}
+{% block scripts_blk %}
                 var chartData = [];
 
                 //chartData = generateChartData();  
@@ -151,7 +146,4 @@
                     
                     return localData;
                 }                                     
-        </script>        
-    </body>
-
-</html>
+{% endblock scripts_blk %}

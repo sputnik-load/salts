@@ -488,6 +488,7 @@ def poll_servers(request):
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
 
+
 def set_context(request):
     context = {}
     context.update(csrf(request))
@@ -495,17 +496,26 @@ def set_context(request):
     context["name"] = DATABASES["default"]["NAME"]
     return context
 
-def show_results_page(request):
+
+def generate_context(request):
     context = {}
     context.update(csrf(request))
     context["host"] = DATABASES["default"]["HOST"]
     context["name"] = DATABASES["default"]["NAME"]
+    return context
+
+
+def show_results_page(request):
+    context = generate_context(request)
+    context["title"] = u'Результаты теста'
     response = render_to_response("testresult_list.html", context)
     set_version(response)
     return response
 
+
 def show_trends_page(request):
-    context = set_context(request) 
+    context = generate_context(request)
+    context["title"] = u'Динамика по результатам тестов'
     response = render_to_response("graph_trends.html", context)
     set_version(response)
     return response

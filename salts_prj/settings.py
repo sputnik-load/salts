@@ -118,7 +118,9 @@ BOWER_INSTALLED_APPS = (
     'bootstrap-table#1.9.1',
     'purl#2.3.1',
     'bootstrap#3.3.6',
-    'jquery#2.2.0'
+    'jquery#2.2.0',
+    'dygraphs#1.1.1',
+    'moment#2.11.2'
 )
 
 DEBUG_TOOLBAR_PATCH_SETTINGS = False

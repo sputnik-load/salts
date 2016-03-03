@@ -44,7 +44,6 @@
   </table>
 {% endblock container %}
 {% block scripts_blk %}
-  <script>
     get_args = location.search;
     var a = document.createElement('a');
     var linkText = document.createTextNode("Динамика результатов");
@@ -118,5 +117,4 @@
           window.open(edit_page_url(row["id"]));
         }
       });
-  </script>
 {% endblock scripts_blk %}
