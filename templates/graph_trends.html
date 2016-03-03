@@ -33,7 +33,7 @@
                 // var url = "http://salt-dev.dev.ix.km/get_results/?sort=dt_finish&scid=services/maps_continuos_testing/load_test_stand_tiles_zoom%234.ini&st=pass,fail,unknown";
             
                 get_args = location.search;
-                var url = "/get_results/?sort=dt_finish&order=desc&offset=0" + get_args;
+                var url = "/get_results/" + get_args + "&sort=dt_finish&order=desc&offset=0";
             
                 var a = document.createElement('a');
                 var linkText = document.createTextNode("Результаты тестов");
