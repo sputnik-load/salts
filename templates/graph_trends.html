@@ -11,10 +11,10 @@
     <tr width=95%>
       <td width=95%>
         <p id="linker"></p>
-        <div id="roll" style="width:90%; height:400px;"></div>  
+        <div id="roll" style="width:95%; height:400px;"></div>  
       </td>
-      <td valign=top align="left">
-        <div id="status" style="width:200px; font-size:0.8em; padding-top:5px;"></div>
+      <td valign=top>
+        <div id="status" style="width:200px; font-size:0.8em; padding-top:15px;"></div>
       </td>
     </tr></table>
 {% endblock container %}
@@ -69,14 +69,17 @@
                     console.log(mt.toDate().toDateString());
 
                     for (var i = 0; i < locarr.length; i++) {
+                        if ( locarr[i]["comment"] == "" ) {
+                            locarr[i]["comment"] = "-";
+                        }
                         rpsarr.push([
                             moment(locarr[i]["dt_finish"]).toDate(),
                             locarr[i]["q99"],
                             locarr[i]["q90"],
                             locarr[i]["q50"],
                             locarr[i]["test_name"],
-                         //   locarr[i]["rps"],
-                            locarr[i]["scenario_id"]
+                            locarr[i]["scenario_id"],
+                            locarr[i]["comment"]
                         ]);
                     }
                     
@@ -122,31 +125,33 @@
                             labelsSeparateLines: true,
                             labelsKMB: false,
                             rollPeriod: 1,
-                            showRoller: true,
+                            showRoller: true,   
                             animatedZooms: true,
                             // customBars: true,
                             title: 'Квантили времён отклика в нагрузочных тестах',
                             ylabel: 'milliseconds',
-                            labels: ["date", "quantile 99", "quantile 90", "quantile 50", "test_name", "scid"],
+                            labels: ["date", "quantile 99", "quantile 90", "quantile 50", "test_name", "scid", "comment"],
                             legend: 'always',
-                            labelsDivStyles: { 'textAlign': 'right' },
-                            showRangeSelector: false,
-                            rangeSelectorHeight: 50,
-                            rangeSelectorPlotStrokeColor: 'blue',
-                            rangeSelectorPlotFillColor: 'lightblue',
+                            labelsDivStyles: { 'textAlign': 'left', 'textValign': 'top'},
 
                             legendFormatter: legendFormatter,
                             
                             axisLineColor: 'white',  
-
                             series : {
                                 'test_name': { axis: 'y2', strokeWidth: 0, strokeBorderWidth: 0 },
                                 'scid': { axis: 'y2', strokeWidth: 0, strokeBorderWidth: 0 },
+                                'comment': { axis: 'y2', strokeWidth: 0, strokeBorderWidth: 0 }
                             },
+
+                            xLabelHeight: 26,
+                            yLabelWidth: 16,
+                            yRangePad: 5,
+                            xRangePad: 5,
 
                             axes: {
                                 y1: {
-                                    drawAxis: true,
+                                    yAxisLabelWidth: 70,
+                                    drawAxis: true
                                 },
                                 y2: {
                                     valueRange: [0, 0],
@@ -154,12 +159,13 @@
                                 },
                             },
 
-                            colors: ["rgb(70,220,110)", "rgb(51,204,204)", "rgb(240,200,100)", "rgb(255,255,255)", "rgb(255,255,255)"],
-                            visibility: [true, true, true, true, true],
+                            colors: ["rgb(70,220,110)", "rgb(51,204,204)", "rgb(240,200,100)", "rgb(255,255,255)", "rgb(255,255,255)", "rgb(255,255,255)"],
+                            visibility: [true, true, true, true, true, true],
                                                       
                             // Set the plug-ins in the options.
                             plugins : [
-                                Dygraph.Plugins.Unzoom
+                                Dygraph.Plugins.Unzoom,
+                                Dygraph.Plugins.Legend
                             ]
                         }
                     );
