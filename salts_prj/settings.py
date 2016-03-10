@@ -187,23 +187,15 @@ REST_FRAMEWORK = {
 
 DEBUG_SETTINGS_NAME = 'debug_settings.ini'
 debug_settings_path = '%s/%s' % (os.path.dirname(os.path.realpath(__file__)), DEBUG_SETTINGS_NAME)
+cache_on = True
 if os.path.exists(debug_settings_path):
     cfg = ConfigParser.RawConfigParser()
     cfg.read(debug_settings_path)
     for k in DATABASES['default']:
         DATABASES['default'][k] = cfg.get('database', k)
     if 'on' in cfg.options('cache') and cfg.get('cache', 'on') != '1':
-        MIDDLEWARE_CLASSES = (
-            'django.contrib.sessions.middleware.SessionMiddleware',
-            'django.middleware.common.CommonMiddleware',
-            'django.middleware.csrf.CsrfViewMiddleware',
-            'django.contrib.auth.middleware.AuthenticationMiddleware',
-            'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-            'django.contrib.messages.middleware.MessageMiddleware',
-            # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-            'audit_log.middleware.UserLoggingMiddleware',
-        )
-else:
+        cache_on = False
+if cache_on:
     MIDDLEWARE_CLASSES = (
         'django.middleware.cache.UpdateCacheMiddleware',
         'django.contrib.sessions.middleware.SessionMiddleware',
@@ -226,3 +218,14 @@ else:
             }
         }
     }
+else:
+    MIDDLEWARE_CLASSES = (
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'audit_log.middleware.UserLoggingMiddleware',
+    )
