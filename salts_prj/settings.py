@@ -119,7 +119,7 @@ BOWER_INSTALLED_APPS = (
     'purl#2.3.1',
     'bootstrap#3.3.6',
     'jquery#2.2.0',
-    'dygraphs#1.1.1',
+    'git@github.com:burthen/dygraphs.git#1.1.2',
     'moment#2.11.2'
 )
 

@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block ext_static_files %}
     {% load staticfiles %}
-    <script type="text/javascript" src="{% static "dygraphs/dygraph-combined-dev.js" %}"></script>
+    <script type="text/javascript" src="{% static "dygraphs/dygraph.js" %}"></script>
     <script type="text/javascript" src="{% static "dygraphs/extras/unzoom.js" %}"></script>
+    <script type="text/javascript" src="{% static "dygraphs/plugins/legend.js" %}"></script>
     <script type="text/javascript" src="{% static "moment/min/moment.min.js" %}"></script>
 {% endblock ext_static_files %}
 {% block container %}
@@ -10,9 +11,9 @@
     <tr width=95%>
       <td width=95%>
         <p id="linker"></p>
-        <div id="roll" style="width:95%; height:400px;"></div>  
+        <div id="roll" style="width:90%; height:400px;"></div>  
       </td>
-      <td valign=top>
+      <td valign=top align="left">
         <div id="status" style="width:200px; font-size:0.8em; padding-top:5px;"></div>
       </td>
     </tr></table>
@@ -72,7 +73,10 @@
                             moment(locarr[i]["dt_finish"]).toDate(),
                             locarr[i]["q99"],
                             locarr[i]["q90"],
-                            locarr[i]["q50"]
+                            locarr[i]["q50"],
+                            locarr[i]["test_name"],
+                         //   locarr[i]["rps"],
+                            locarr[i]["scenario_id"]
                         ]);
                     }
                     
@@ -81,6 +85,30 @@
                     });
                         
                     return rpsarr;
+                }
+                                                      
+                function legendFormatter(data) {
+                  if (data.x == null) {
+                    // This happens when there's no selection and {legend: 'always'} is set.
+                    return '<br>' + data.series.map(function(series) { return series.dashHTML + ' ' + series.labelHTML }).join('<br>');
+                  }
+
+                  var html = this.getLabels()[0] + ': ' + data.xHTML;
+                  data.series.forEach(function(series) {
+                    
+                    var labeledData = series.labelHTML + ': ' + series.yHTML;
+                    if (!series.isVisible) {
+                        labeledData = series.labelHTML + ': ' + series.y;
+                    }
+
+                    if (series.isHighlighted) {
+                      labeledData = '<b>' + labeledData + '</b>';
+                    }
+                    html += '<br>' + series.dashHTML + ' ' + labeledData;
+
+                    //console.log(series);
+                  });
+                  return html;
                 }
 
                 function drawGraph(data) {
@@ -95,22 +123,40 @@
                             labelsKMB: false,
                             rollPeriod: 1,
                             showRoller: true,
-                            //customBars: true,
-                            title: 'Load tests response time trend',
+                            animatedZooms: true,
+                            // customBars: true,
+                            title: 'Квантили времён отклика в нагрузочных тестах',
                             ylabel: 'milliseconds',
-                            labels: ["date", "quantile 99", "quantile 90", "quantile 50"],
+                            labels: ["date", "quantile 99", "quantile 90", "quantile 50", "test_name", "scid"],
                             legend: 'always',
                             labelsDivStyles: { 'textAlign': 'right' },
-                            showRangeSelector: true,
+                            showRangeSelector: false,
                             rangeSelectorHeight: 50,
                             rangeSelectorPlotStrokeColor: 'blue',
                             rangeSelectorPlotFillColor: 'lightblue',
-                            colors: ["rgb(70,220,110)", "rgb(51,204,204)", "rgb(240,200,100)"],
-                            axisLineColor: 'white',
-                            zoomCallback : function(minDate, maxDate, yRange) {
-                                showDimensions(minDate, maxDate, yRange);
+
+                            legendFormatter: legendFormatter,
+                            
+                            axisLineColor: 'white',  
+
+                            series : {
+                                'test_name': { axis: 'y2', strokeWidth: 0, strokeBorderWidth: 0 },
+                                'scid': { axis: 'y2', strokeWidth: 0, strokeBorderWidth: 0 },
                             },
 
+                            axes: {
+                                y1: {
+                                    drawAxis: true,
+                                },
+                                y2: {
+                                    valueRange: [0, 0],
+                                    drawAxis: false,
+                                },
+                            },
+
+                            colors: ["rgb(70,220,110)", "rgb(51,204,204)", "rgb(240,200,100)", "rgb(255,255,255)", "rgb(255,255,255)"],
+                            visibility: [true, true, true, true, true],
+                                                      
                             // Set the plug-ins in the options.
                             plugins : [
                                 Dygraph.Plugins.Unzoom
