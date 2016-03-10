@@ -151,14 +151,14 @@
 .table > thead > tr.success_odd > th,
 .table > tbody > tr.success_odd > th,
 .table > tfoot > tr.success_odd > th {
-  background-color: #a8ffb9;
+  background-color: #00cc44;
 }
 .table-hover > tbody > tr > td.success_odd:hover,
 .table-hover > tbody > tr > th.success_odd:hover,
 .table-hover > tbody > tr.success_odd:hover > td,
 .table-hover > tbody > tr:hover > .success_odd,
 .table-hover > tbody > tr.success_odd:hover > th {
-  background-color: #93ffa7;
+  background-color: #00b33c;
 }
 
 /* Статус теста: success. Четная строка */
@@ -174,12 +174,12 @@
 .table > thead > tr.success_even > th,
 .table > tbody > tr.success_even > th,
 .table > tfoot > tr.success_even > th {
-  background-color: #71ff8b;
+  background-color: #009933;
 }
 .table-hover > tbody > tr > td.success_even:hover,
 .table-hover > tbody > tr > th.success_even:hover,
 .table-hover > tbody > tr.success_even:hover > td,
 .table-hover > tbody > tr:hover > .success_even,
 .table-hover > tbody > tr.success_even:hover > th {
-  background-color: #5dff7b;
+  background-color: #00802b;
 }
