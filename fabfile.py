@@ -83,6 +83,10 @@ def deploy(reload_=True):
 
     sudo('rm -rf /var/tmp/django_cache/*')
 
+    with cd(_my_replace("#PROJECT_ROOT#")):
+        run(PYTHON + " manage.py bower_install")
+        run(PYTHON + " manage.py collectstatic --noinput")
+
     if reload_:
         reload_svc()
 
