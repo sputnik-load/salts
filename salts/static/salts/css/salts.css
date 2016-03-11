@@ -1,3 +1,4 @@
+/* Нумерация строк начинается с нуля. Предполагается, что четные строки темнее нечетных */
 /* Статус теста: unknown. Нечетная строка */
 .table > thead > tr > td.unk_odd, 
 .table > tbody > tr > td.unk_odd, 
@@ -151,14 +152,14 @@
 .table > thead > tr.success_odd > th,
 .table > tbody > tr.success_odd > th,
 .table > tfoot > tr.success_odd > th {
-  background-color: #00cc44;
+  background-color: #d9e5cc;
 }
 .table-hover > tbody > tr > td.success_odd:hover,
 .table-hover > tbody > tr > th.success_odd:hover,
 .table-hover > tbody > tr.success_odd:hover > td,
 .table-hover > tbody > tr:hover > .success_odd,
 .table-hover > tbody > tr.success_odd:hover > th {
-  background-color: #00b33c;
+  background-color: #cdddbb;
 }
 
 /* Статус теста: success. Четная строка */
@@ -174,12 +175,12 @@
 .table > thead > tr.success_even > th,
 .table > tbody > tr.success_even > th,
 .table > tfoot > tr.success_even > th {
-  background-color: #009933;
+  background-color: #c0d4aa;
 }
 .table-hover > tbody > tr > td.success_even:hover,
 .table-hover > tbody > tr > th.success_even:hover,
 .table-hover > tbody > tr.success_even:hover > td,
 .table-hover > tbody > tr:hover > .success_even,
 .table-hover > tbody > tr.success_even:hover > th {
-  background-color: #00802b;
+  background-color: #b3cc99;
 }
