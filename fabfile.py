@@ -89,8 +89,8 @@ def deploy(reload_=True):
     with settings(warn_only=True):
         put('*.py', remote_path=remote_dir)
         # put('*.sh', remote_path=remote_dir)
-    with cd(remote_dir):
-        run('chmod +x manage.py')
+ #   with cd(remote_dir):
+ #       run('chmod +x manage.py')
  #       run('chmod +x *.sh')
 
     put('conf', remote_path=remote_dir)
