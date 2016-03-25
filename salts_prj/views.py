@@ -533,7 +533,7 @@ def user_filter(request, results):
     spe = request_get_value(request, "spe")
     from_time = request_get_value(request, "from")
     to_time = request_get_value(request, "to")
-    rps = request_get_value(request, "rps")
+    rps_value = request_get_value(request, "rps")
     if scen_id:
         results = results.filter(scenario_id=scen_id)
     if target:
@@ -546,8 +546,8 @@ def user_filter(request, results):
         results = results.filter(generator_types__name__contains=gen_type)
     if generator:
         results = results.filter(generator__contains=generator)
-    if rps:
-        results = results.filter(rps__contains=rps)
+    if rps_value:
+        results = results.filter(rps=rps_value)
     if status:
         status = status.split(",")
         for (i, item) in enumerate(status):
