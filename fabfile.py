@@ -20,6 +20,22 @@ _TPLS = {
 }
 
 
+def _compare_ver(x, y):
+    x_items = x.split(".")
+    y_items = y.split(".")
+    len_x = len(x_items)
+    len_y = len(y_items)
+    i = 0
+    while True:
+        if i < len_x and i < len_y:
+            r = int(y_items[i])-int(x_items[i])
+        else:
+            return len_y - len_x
+        if r:
+            return r
+        i += 1
+
+
 def checkout_last_version():
     v = None
     fabfile_dir = dirname(abspath(env.fabfile))
@@ -29,7 +45,8 @@ def checkout_last_version():
         tags_out = run("git tag")
         if tags_out:
             tags = tags_out.split()
-            v = tags[-1]
+            tags.sort(cmp=_compare_ver)
+            v = tags[0]
         if v:
             with open("version", "w") as ver_file:
                 ver_file.write(v)
