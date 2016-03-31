@@ -191,10 +191,18 @@ cache_on = True
 if os.path.exists(debug_settings_path):
     cfg = ConfigParser.RawConfigParser()
     cfg.read(debug_settings_path)
+    sections = cfg.sections()
     for k in DATABASES['default']:
         DATABASES['default'][k] = cfg.get('database', k)
     if 'on' in cfg.options('cache') and cfg.get('cache', 'on') != '1':
         cache_on = False
+    if 'cache' in sections:
+        if 'on' in cfg.options('cache') and cfg.get('cache', 'on') != '1':
+            cache_on = False
+    if 'repo' in sections:
+        options = cfg.options('repo')
+        if 'lt_path' in cfg.options('repo'):
+            LT_PATH = cfg.get('repo', 'lt_path')
 if cache_on:
     MIDDLEWARE_CLASSES = (
         'django.middleware.cache.UpdateCacheMiddleware',
