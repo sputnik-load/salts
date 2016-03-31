@@ -205,3 +205,25 @@ class TestRun(models.Model):
 
     def __unicode__(self):
         return "Id: %s (datetime: %s)." % (self.id, self.datetime)
+
+
+class GroupIni(models.Model):
+    name = models.CharField(u'Имя группы', max_length=256,
+                            help_text=u'Имя группы',
+                            null=True, blank=True)
+    codename = models.CharField(u'Короткий идентификатор группы', max_length=256,
+                            help_text=u'Имя группы на английском',
+                            null=True, blank=True)
+
+    def __unicode__(self):
+        return name
+
+
+class TestIni(models.Model):
+    scenario_id = models.CharField(u'Id сценария', max_length=256,
+                                   help_text=u'Относительный путь к сценарию внутри репозитория',
+                                   null=True, blank=True)
+    group_ini = models.ForeignKey(GroupIni, null=False, blank=False)
+
+    def __unicode__(self):
+        return scenario_id
