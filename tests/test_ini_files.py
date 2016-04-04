@@ -25,27 +25,23 @@ def check_files(found, base_dir, sub, fnames, expected):
 
 
 def test_ini_files(tmpdir):
-    ini_f = ["1.ini", "2.ini"]
+    ini_f = ["1.ini", "2.ini", "common1.ini"]
     no_ini_f = ["1.txt", "2.", "3"]
-    specific_ini_f = ["common.ini", "common1.ini", "graphite.ini", "graphite1.ini"]
+    specific_ini_f = ["common.ini", "graphite.ini", "graphite1.ini"]
     files = ini_f + no_ini_f + specific_ini_f
     dirs = ["", "sub1", "sub2"]
     sub = []
     for d in dirs:
         if d:
             sub.append(d)
-        print "sub: %s" % sub
         join_files(tmpdir, files, sub)
     base_dir = str(tmpdir.realpath())
     exclude_names = ["common.ini", "user.ini", "graphite*.ini"]
     found = ini_files(base_dir, exclude_names)
-    print "found: %s" % found
-
+    sub = []
     for d in dirs:
         if d:
             sub.append(d)
         check_files(found, base_dir, sub, ini_f, True)
         check_files(found, base_dir, sub, no_ini_f, False)
-        check_files(found, base_dir, sub, specific_ini_f, True)
-
-    assert False
+        check_files(found, base_dir, sub, specific_ini_f, False)
