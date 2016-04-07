@@ -216,7 +216,7 @@ class GroupIni(models.Model):
                             null=True, blank=True)
 
     def __unicode__(self):
-        return name
+        return self.name
 
 
 class TestIni(models.Model):
@@ -226,4 +226,4 @@ class TestIni(models.Model):
     group_ini = models.ForeignKey(GroupIni, null=False, blank=False)
 
     def __unicode__(self):
-        return scenario_id
+        return self.scenario_id
