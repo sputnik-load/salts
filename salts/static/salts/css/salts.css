@@ -12,14 +12,14 @@
 .table > thead > tr.unk_odd > th,
 .table > tbody > tr.unk_odd > th,
 .table > tfoot > tr.unk_odd > th {
-  background-color: #fcf8e3;
+  background-color: #f3e28c;
 }
 .table-hover > tbody > tr > td.unk_odd:hover,
 .table-hover > tbody > tr > th.unk_odd:hover,
 .table-hover > tbody > tr.unk_odd:hover > td,
 .table-hover > tbody > tr:hover > .unk_odd,
 .table-hover > tbody > tr.unk_odd:hover > th {
-  background-color: #faf2cc;
+  background-color: #f0dc75;
 }
 
 /* Статус теста: unknown. Четная строка */
@@ -35,14 +35,14 @@
 .table > thead > tr.unk_even > th,
 .table > tbody > tr.unk_even > th,
 .table > tfoot > tr.unk_even > th {
-  background-color: #ffed9b;
+  background-color: #eed65d;
 }
 .table-hover > tbody > tr > td.unk_even:hover,
 .table-hover > tbody > tr > th.unk_even:hover,
 .table-hover > tbody > tr.unk_even:hover > td,
 .table-hover > tbody > tr:hover > .unk_even,
 .table-hover > tbody > tr.unk_even:hover > th {
-  background-color: #fde267;
+    background-color: #ecd046;
 }
 
 
@@ -139,7 +139,7 @@
 }
 
 
-/* Статус теста: success. Нечетная строка */
+/* Статус теста: pass. Нечетная строка */
 .table > thead > tr > td.success_odd, 
 .table > tbody > tr > td.success_odd, 
 .table > tfoot > tr > td.success_odd, 
@@ -152,17 +152,17 @@
 .table > thead > tr.success_odd > th,
 .table > tbody > tr.success_odd > th,
 .table > tfoot > tr.success_odd > th {
-  background-color: #d9e5cc;
+  background-color: #c1d4aa;
 }
 .table-hover > tbody > tr > td.success_odd:hover,
 .table-hover > tbody > tr > th.success_odd:hover,
 .table-hover > tbody > tr.success_odd:hover > td,
 .table-hover > tbody > tr:hover > .success_odd,
 .table-hover > tbody > tr.success_odd:hover > th {
-  background-color: #cdddbb;
+  background-color: #b4cc99;
 }
 
-/* Статус теста: success. Четная строка */
+/* Статус теста: pass. Четная строка */
 .table > thead > tr > td.success_even, 
 .table > tbody > tr > td.success_even, 
 .table > tfoot > tr > td.success_even, 
@@ -175,12 +175,12 @@
 .table > thead > tr.success_even > th,
 .table > tbody > tr.success_even > th,
 .table > tfoot > tr.success_even > th {
-  background-color: #c0d4aa;
+  background-color: #a8c388;
 }
 .table-hover > tbody > tr > td.success_even:hover,
 .table-hover > tbody > tr > th.success_even:hover,
 .table-hover > tbody > tr.success_even:hover > td,
 .table-hover > tbody > tr:hover > .success_even,
 .table-hover > tbody > tr.success_even:hover > th {
-  background-color: #b3cc99;
+  background-color: #9bbb77;
 }
