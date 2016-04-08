@@ -220,9 +220,19 @@ class GroupIni(models.Model):
 
 
 class TestIni(models.Model):
+    STATUS_ACTIVE = 'A'
+    STATUS_DELETE = 'D'
+    STATUS_CHOICES = (
+        (STATUS_ACTIVE, 'Active'),
+        (STATUS_DELETE, 'Deleled'),
+    )
     scenario_id = models.CharField(u'Id сценария', max_length=256,
                                    help_text=u'Относительный путь к сценарию внутри репозитория',
                                    null=True, blank=True)
+    status = models.CharField(u'Статус', max_length=1,
+                              choices=STATUS_CHOICES,
+                              default=STATUS_ACTIVE,
+                              help_text=u'Статус сценария - Aктивный или Удаленный.')
     group_ini = models.ForeignKey(GroupIni, null=False, blank=False)
 
     def __unicode__(self):
