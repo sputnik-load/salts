@@ -20,17 +20,24 @@ def join_files(tmpdir, files, sub):
                     tmp = tmp.join(s)
                 else:
                     tmp = tmp.mkdir(s)
-    for fname in files:
-        p = tmp.join(fname)
-        p.write("content")
+    for item in files:
+        if type(item) is str:
+            p = tmp.join(item)
+            p.write("[sputnikreport]")
+        if type(item) is dict:
+            p = tmp.join(item["name"])
+            p.write(item["content"])
 
 
-def check_files(found, base_dir, sub, fnames, expected):
+def check_files(scenario_pathes, base_dir, sub, files, expected):
     sub_dir_path = "/".join(sub)
     dir_path = os.path.join(base_dir, sub_dir_path)
-    for fn in fnames:
-        file_path = os.path.join(dir_path, fn)
-        assert not (file_path in found) ^ expected
+    for item in files:
+        if type(item) is str:
+            assert not (item in scenario_pathes) ^ expected
+        if type(item) is dict:
+            assert not (item["name"] in scenario_pathes) ^ expected
+
 
 # pytestmark = pytest.mark.django_db
 
@@ -42,29 +49,32 @@ class TestIniCtrl(object):
     tmp = None
     exclude_names = ["common.ini", "user.ini", "graphite*.ini"]
 
-    def _check_table_content(self, pathes):
-        db_ini_files = TestIniCtrl.ini_ctrl.get_db_ini_files()
-        for ini_file in db_ini_files:
-            assert "%s/%s" % (TestIniCtrl.ini_ctrl.get_root(), ini_file.scenario_id) in pathes
-        assert len(db_ini_files) == len(pathes)
+    def _check_table_content(self, scenario_pathes):
+        for spath in scenario_pathes:
+            print "\nspath: %s" % os.path.join(TestIniCtrl.ini_ctrl.get_root(),
+                                             spath)
+            file_test_id = TestIniCtrl.ini_ctrl.get_test_id(spath)
+            db_test_id = TestIniCtrl.ini_ctrl.get_test_id(spath, from_db=True)
+            assert file_test_id == db_test_id
+            assert TestIniCtrl.ini_ctrl.get_group_id(spath) == 1
 
-    def _insert_pathes(self, pathes):
+    def _insert_pathes(self, scenario_pathes):
         with open("/tmp/1.csv", "w") as f:
             id = 0
             sys.stdin = StringIO.StringIO()
-            for path in pathes:
+            for spath in scenario_pathes:
                 values = []
                 id += 1
                 values.append(str(id))
                 fields = {}
-                values.append(re.sub("%s/" % TestIniCtrl.ini_ctrl.get_root(),
-                                     "", path))
+                values.append(spath)
                 values.append("1")
+                values.append("A")
                 f.write(";".join(values) + "\n")
         with open("/tmp/1.csv", "r") as f:
             cursor = connection.cursor()
             cursor.copy_from(f, "salts_testini", sep=";")
-        self._check_table_content(pathes)
+        self._check_table_content(scenario_pathes)
         os.unlink("/tmp/1.csv")
 
     def _create_files(self, tmpdir, file_pathes, dir_names = [""]):
@@ -88,27 +98,26 @@ class TestIniCtrl(object):
         files = ini_f + no_ini_f + specific_ini_f
         dirs = ["", "sub1", "sub2"]
         self._create_files(tmpdir, files, dirs)
-
         base_dir = str(tmpdir.realpath())
-        found = TestIniCtrl.ini_ctrl.find_ini_files(base_dir, TestIniCtrl.exclude_names)
+        scenario_pathes = TestIniCtrl.ini_ctrl.find_ini_files(base_dir, TestIniCtrl.exclude_names)
         sub = []
         for d in dirs:
             if d:
                 sub.append(d)
-            check_files(found, base_dir, sub, ini_f, True)
-            check_files(found, base_dir, sub, no_ini_f, False)
-            check_files(found, base_dir, sub, specific_ini_f, False)
+            check_files(scenario_pathes, base_dir, sub, ini_f, True)
+            check_files(scenario_pathes, base_dir, sub, no_ini_f, False)
+            check_files(scenario_pathes, base_dir, sub, specific_ini_f, False)
         assert TestIniCtrl.ini_ctrl.get_root() == base_dir
         TestIniCtrl.tmp = tmpdir
 
-    def test_load_db(self):
-        ini_pathes = TestIniCtrl.ini_ctrl.get_ini_files()
-        self._insert_pathes(ini_pathes)
-
     def test_sync(self):
-        files = ["4.ini"]
+        files = [{"name": "scenario_wo_sect.ini", "content": "[test]"},
+                 {"name": "scenario_with_sect.ini", "content": "[sputnikreport]\nt=1\n"}
+                ]
         self._create_files(TestIniCtrl.tmp, files)
-        found = TestIniCtrl.ini_ctrl.find_ini_files(TestIniCtrl.ini_ctrl.get_root(),
-                                                    TestIniCtrl.exclude_names)
-        check_files(found, TestIniCtrl.ini_ctrl.get_root(), [], files, True)
+        scenario_pathes = TestIniCtrl.ini_ctrl.find_ini_files(TestIniCtrl.ini_ctrl.get_root(),
+                                                              TestIniCtrl.exclude_names)
+        check_files(scenario_pathes,
+                    TestIniCtrl.ini_ctrl.get_root(), [], files, True)
         TestIniCtrl.ini_ctrl.sync()
+        self._check_table_content(scenario_pathes)
