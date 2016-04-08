@@ -39,8 +39,6 @@ def check_files(scenario_pathes, base_dir, sub, files, expected):
             assert not (item["name"] in scenario_pathes) ^ expected
 
 
-# pytestmark = pytest.mark.django_db
-
 @pytest.mark.django_db
 class TestIniCtrl(object):
 
@@ -49,10 +47,9 @@ class TestIniCtrl(object):
     tmp = None
     exclude_names = ["common.ini", "user.ini", "graphite*.ini"]
 
+
     def _check_table_content(self, scenario_pathes):
         for spath in scenario_pathes:
-            print "\nspath: %s" % os.path.join(TestIniCtrl.ini_ctrl.get_root(),
-                                             spath)
             file_test_id = TestIniCtrl.ini_ctrl.get_test_id(spath)
             db_test_id = TestIniCtrl.ini_ctrl.get_test_id(spath, from_db=True)
             assert file_test_id == db_test_id
@@ -91,7 +88,7 @@ class TestIniCtrl(object):
         g = GroupIni.objects.get(id=1)
         assert g.codename == "unknown"
 
-    def test_find_ini_files(self, tmpdir):
+    def test_sync(self, tmpdir):
         ini_f = ["1.ini", "2.ini", "common1.ini"]
         no_ini_f = ["1.txt", "2.", "3"]
         specific_ini_f = ["common.ini", "graphite.ini", "graphite1.ini"]
@@ -110,7 +107,11 @@ class TestIniCtrl(object):
         assert TestIniCtrl.ini_ctrl.get_root() == base_dir
         TestIniCtrl.tmp = tmpdir
 
-    def test_sync(self):
+        scenario_pathes = TestIniCtrl.ini_ctrl.find_ini_files(TestIniCtrl.ini_ctrl.get_root(),
+                                                              TestIniCtrl.exclude_names)
+        TestIniCtrl.ini_ctrl.sync()
+        self._check_table_content(scenario_pathes)
+
         files = [{"name": "scenario_wo_sect.ini", "content": "[test]"},
                  {"name": "scenario_with_sect.ini", "content": "[sputnikreport]\nt=1\n"}
                 ]
