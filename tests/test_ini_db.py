@@ -4,10 +4,11 @@ import pytest
 import os
 import re
 import sys
+import shutil
 import StringIO
 from django.db import connection
 from django.db.utils import (DEFAULT_DB_ALIAS, ConnectionHandler)
-from salts_prj.ini import ini_files, IniCtrl
+from salts_prj.ini import ini_files, IniCtrl, IniDuplicateError
 from salts.models import TestIni, GroupIni
 
 
@@ -94,6 +95,7 @@ class TestIniCtrl(object):
         assert g.codename == "unknown"
 
     def test_sync(self, tmpdir):
+
         ini_f = ["1.ini", "2.ini", "common1.ini"]
         no_ini_f = ["1.txt", "2.", "3"]
         specific_ini_f = ["common.ini", "graphite.ini", "graphite1.ini"]
@@ -137,3 +139,23 @@ class TestIniCtrl(object):
                     TestIniCtrl.ini_ctrl.get_root(), [], files, False)
         TestIniCtrl.ini_ctrl.sync()
         self._check_table_content(scenario_pathes, files, True)
+
+        dupl_name = "2.ini"
+        dupl_test_id = TestIniCtrl.ini_ctrl.get_test_id(dupl_name, from_db=True)
+        srcfile = os.path.join(TestIniCtrl.ini_ctrl.get_root(), dupl_name)
+        dstdir = os.path.join(TestIniCtrl.ini_ctrl.get_root(), "sub_a")
+        os.makedirs(dstdir)
+        shutil.copy(srcfile, dstdir)
+        assert os.path.exists(os.path.join(dstdir, dupl_name))
+
+        scenario_pathes = TestIniCtrl.ini_ctrl.find_ini_files(TestIniCtrl.ini_ctrl.get_root(),
+                                                              TestIniCtrl.exclude_names)
+        with pytest.raises(IniDuplicateError) as excinfo:
+            TestIniCtrl.ini_ctrl.sync()
+        # print "e: %s" % excinfo
+        os.unlink(srcfile)
+        scenario_pathes = TestIniCtrl.ini_ctrl.find_ini_files(TestIniCtrl.ini_ctrl.get_root(),
+                                                              TestIniCtrl.exclude_names)
+        TestIniCtrl.ini_ctrl.sync()
+        assert TestIniCtrl.ini_ctrl.get_test_id(dupl_name, from_db=True) == 0
+        assert TestIniCtrl.ini_ctrl.get_test_id("%s/%s" % ("sub_a", dupl_name), from_db=True) == dupl_test_id

@@ -29,6 +29,9 @@ def ini_files(dir_path, exclude_names):
     return ini
 
 
+class IniDuplicateError(Exception):
+    pass
+
 class IniCtrl(object):
 
     SECTION = "sputnikreport"
@@ -123,7 +126,14 @@ class IniCtrl(object):
         absent_ini_pathes = []
         for spath in self.scenario_pathes:
             test_id = self._test_id_from_ini(os.path.join(self.dir_path, spath))
-            if not test_id:
+            if test_id:
+                if not self.get_test_id(spath, from_db=True):
+                    t = TestIni.objects.get(id=test_id)
+                    if os.path.exists(os.path.join(self.dir_path, t.scenario_id)):
+                        raise IniDuplicateError("Two ini files %s and %s have same test id." % (spath, t.scenario_id))
+                    t.scenario_id = spath
+                    t.save()
+            else:
                 absent_ini_pathes.append(spath)
         if absent_ini_pathes:
             with open("/tmp/1.csv", "w") as f:
