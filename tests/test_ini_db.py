@@ -44,7 +44,6 @@ def check_files(scenario_pathes, base_dir, sub, files, expected):
 class TestIniCtrl(object):
 
     pytestmark = pytest.mark.django_db
-    tmp = None
     exclude_names = ["common.ini", "user.ini", "graphite*.ini"]
 
     def _check_table_content(self, ini_ctrl, scenario_pathes, del_pathes=[], expected=True):
@@ -95,21 +94,32 @@ class TestIniCtrl(object):
             check_files(scenario_pathes, base_dir, sub, no_ini_f, False)
             check_files(scenario_pathes, base_dir, sub, specific_ini_f, False)
         assert ini_ctrl.get_root() == base_dir
-        TestIniCtrl.tmp = tmpdir
-
         self._check_table_content(ini_ctrl, scenario_pathes)
 
+    def test_content(self, tmpdir):
+        base_dir = str(tmpdir.realpath())
+        ini_ctrl = IniCtrl(base_dir, TestIniCtrl.exclude_names)
         files = [{"name": "scenario_wo_sect.ini", "content": "[test]"},
                  {"name": "scenario_with_sect.ini", "content": "[sputnikreport]\nt=1\n"}
                 ]
-        self._create_files(TestIniCtrl.tmp, files)
+        self._create_files(tmpdir, files)
         ini_ctrl.sync()
         scenario_pathes = ini_ctrl.get_scenario_pathes('A')
         check_files(scenario_pathes,
                     ini_ctrl.get_root(), [], files, True)
         self._check_table_content(ini_ctrl, scenario_pathes)
 
+    def test_delete(self, tmpdir):
+        base_dir = str(tmpdir.realpath())
+        ini_ctrl = IniCtrl(base_dir, TestIniCtrl.exclude_names)
         files = ["1.ini"]
+        self._create_files(tmpdir, files)
+        ini_ctrl.sync()
+        scenario_pathes = ini_ctrl.get_scenario_pathes('A')
+        check_files(scenario_pathes,
+                    ini_ctrl.get_root(), [], files, True)
+        self._check_table_content(ini_ctrl, scenario_pathes)
+
         for fpath in files:
             ini_ctrl.set_scenario_status(fpath, 'D')
         ini_ctrl.sync()
@@ -118,7 +128,19 @@ class TestIniCtrl(object):
                     ini_ctrl.get_root(), [], files, False)
         self._check_table_content(ini_ctrl, scenario_pathes, files, True)
 
+    def test_move(self, tmpdir):
         dupl_name = "2.ini"
+        base_dir = str(tmpdir.realpath())
+        ini_ctrl = IniCtrl(base_dir, TestIniCtrl.exclude_names)
+
+        files = [dupl_name]
+        self._create_files(tmpdir, files)
+        ini_ctrl.sync()
+        scenario_pathes = ini_ctrl.get_scenario_pathes('A')
+        check_files(scenario_pathes,
+                    ini_ctrl.get_root(), [], files, True)
+        self._check_table_content(ini_ctrl, scenario_pathes)
+
         dupl_test_id = ini_ctrl.get_test_id(dupl_name, from_db=True)
         srcfile = os.path.join(ini_ctrl.get_root(), dupl_name)
         dstdir = os.path.join(ini_ctrl.get_root(), "sub_a")
