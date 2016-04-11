@@ -36,10 +36,10 @@ class IniCtrl(object):
 
     SECTION = "sputnikreport"
 
-    def __init__(self):
-        self.scenario_pathes = []
-        self.db_ini_files = []
-        self.dir_path = ""
+    def __init__(self, root, exclude):
+        self.scenario_pathes = ini_files(root, exclude)
+        self.dir_path = root
+        self.exclude_names = exclude
 
     def _test_id_from_ini(self, ini_path):
         config = ConfigParser()
@@ -76,11 +76,6 @@ class IniCtrl(object):
             return 0
         return res[0][0]
 
-    def find_ini_files(self, dir_path, exclude_names):
-        self.scenario_pathes = ini_files(dir_path, exclude_names)
-        self.dir_path = dir_path
-        return self.scenario_pathes
-
     def set_scenario_status(self, scen_id, status_value):
         try:
             t = TestIni.objects.get(scenario_id=scen_id)
@@ -97,8 +92,8 @@ class IniCtrl(object):
     def get_root(self):
         return self.dir_path
 
-    def deleted_scenario_pathes(self):
-        res = TestIni.objects.filter(status='D')
+    def get_scenario_pathes(self, status_value):
+        res = TestIni.objects.filter(status=status_value)
         return [r.scenario_id for r in res]
 
     def get_test_id(self, scen_id, from_db=False):
@@ -121,8 +116,7 @@ class IniCtrl(object):
             return 0
 
     def sync(self):
-        if not self.scenario_pathes:
-            return False
+        self.scenario_pathes = ini_files(self.dir_path, self.exclude_names)
         absent_ini_pathes = []
         for spath in self.scenario_pathes:
             test_id = self._test_id_from_ini(os.path.join(self.dir_path, spath))
