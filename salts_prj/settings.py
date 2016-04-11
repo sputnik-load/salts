@@ -238,3 +238,8 @@ else:
         # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
         'audit_log.middleware.UserLoggingMiddleware',
     )
+
+
+from salts_prj.ini import IniCtrl
+ini_ctrl = IniCtrl(LT_PATH, EXCLUDE_INI_FILES)
+ini_ctrl.sync()
