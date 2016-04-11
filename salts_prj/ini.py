@@ -48,9 +48,10 @@ class IniCtrl(object):
         except (NoOptionError, NoSectionError):
             return 0
 
-    def _add_test_id(self, ini_path, test_id):
+    def _add_test_id(self, scen_id, test_id):
         section_line = "[%s]" % IniCtrl.SECTION
         config = ConfigParser()
+        ini_path = os.path.join(self.dir_path, scen_id)
         config.read(ini_path)
         if IniCtrl.SECTION not in config.sections():
             with open(ini_path, "a") as f:
@@ -61,11 +62,11 @@ class IniCtrl(object):
         ix = 0
         for line in content:
             if line.strip() == section_line:
-                content.insert(ix + 1, "test_id = %s" % test_id)
+                content.insert(ix + 1, "test_id = %s\n" % test_id)
                 break
             ix += 1
         with open(ini_path, "w") as f:
-            f.writelines("\n".join(content))
+            f.writelines("".join(content))
 
     def _last_test_id(self):
         cursor = connection.cursor()
@@ -127,7 +128,11 @@ class IniCtrl(object):
                     t.scenario_id = spath
                     t.save()
             else:
-                absent_ini_pathes.append(spath)
+                test_id = self.get_test_id(spath, from_db=True)
+                if test_id:
+                    self._add_test_id(spath, test_id)
+                else:
+                    absent_ini_pathes.append(spath)
         if absent_ini_pathes:
             with open("/tmp/1.csv", "w") as f:
                 id = self._last_test_id() + 1
@@ -138,7 +143,7 @@ class IniCtrl(object):
                     rec.append("1")
                     rec.append("A")
                     f.write(";".join(rec) + "\n")
-                    self._add_test_id(os.path.join(self.dir_path, spath), id)
+                    self._add_test_id(spath, id)
                     id += 1
             with open("/tmp/1.csv", "r") as f:
                 cursor = connection.cursor()
