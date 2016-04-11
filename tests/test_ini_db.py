@@ -112,18 +112,18 @@ class TestIniCtrl(object):
     def test_delete(self, tmpdir):
         base_dir = str(tmpdir.realpath())
         ini_ctrl = IniCtrl(base_dir, TestIniCtrl.exclude_names)
-        files = ["1.ini"]
+        files = ["1.ini", "2.ini"]
         self._create_files(tmpdir, files)
         ini_ctrl.sync()
-        scenario_pathes = ini_ctrl.get_scenario_pathes('A')
+        scenario_pathes = ini_ctrl.get_scenario_pathes("A")
         check_files(scenario_pathes,
                     ini_ctrl.get_root(), [], files, True)
         self._check_table_content(ini_ctrl, scenario_pathes)
 
-        for fpath in files:
-            ini_ctrl.set_scenario_status(fpath, 'D')
+        ini_ctrl.set_scenario_status("1.ini", "D")
+        os.remove(os.path.join(ini_ctrl.get_root(), "2.ini"))
         ini_ctrl.sync()
-        scenario_pathes = ini_ctrl.get_scenario_pathes('A')
+        scenario_pathes = ini_ctrl.get_scenario_pathes("A")
         check_files(scenario_pathes,
                     ini_ctrl.get_root(), [], files, False)
         self._check_table_content(ini_ctrl, scenario_pathes, files, True)
@@ -151,7 +151,7 @@ class TestIniCtrl(object):
         with pytest.raises(IniDuplicateError) as excinfo:
             ini_ctrl.sync()
         # print "e: %s" % excinfo
-        os.unlink(srcfile)
+        os.remove(srcfile)
         ini_ctrl.sync()
         assert ini_ctrl.get_test_id(dupl_name, from_db=True) == 0
         assert ini_ctrl.get_test_id("%s/%s" % ("sub_a", dupl_name), from_db=True) == dupl_test_id

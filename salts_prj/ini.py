@@ -37,7 +37,6 @@ class IniCtrl(object):
     SECTION = "sputnikreport"
 
     def __init__(self, root, exclude):
-        self.scenario_pathes = ini_files(root, exclude)
         self.dir_path = root
         self.exclude_names = exclude
 
@@ -84,7 +83,7 @@ class IniCtrl(object):
             if status_value == 'D':
                 del_path = os.path.join(self.dir_path, scen_id)
                 if os.path.exists(del_path):
-                    os.unlink(del_path)
+                    os.remove(del_path)
             return True
         except TestIni.DoesNotExist:
             return False
@@ -116,9 +115,9 @@ class IniCtrl(object):
             return 0
 
     def sync(self):
-        self.scenario_pathes = ini_files(self.dir_path, self.exclude_names)
+        scenario_pathes = ini_files(self.dir_path, self.exclude_names)
         absent_ini_pathes = []
-        for spath in self.scenario_pathes:
+        for spath in scenario_pathes:
             test_id = self._test_id_from_ini(os.path.join(self.dir_path, spath))
             if test_id:
                 if not self.get_test_id(spath, from_db=True):
@@ -144,3 +143,6 @@ class IniCtrl(object):
             with open("/tmp/1.csv", "r") as f:
                 cursor = connection.cursor()
                 cursor.copy_from(f, "salts_testini", sep=";")
+        for spath in self.get_scenario_pathes("A"):
+            if spath not in scenario_pathes:
+                self.set_scenario_status(spath, "D")
