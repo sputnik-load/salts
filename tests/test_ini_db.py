@@ -47,13 +47,18 @@ class TestIniCtrl(object):
     tmp = None
     exclude_names = ["common.ini", "user.ini", "graphite*.ini"]
 
-
-    def _check_table_content(self, scenario_pathes):
+    def _check_table_content(self, scenario_pathes, del_pathes=[], expected=True):
         for spath in scenario_pathes:
             file_test_id = TestIniCtrl.ini_ctrl.get_test_id(spath)
             db_test_id = TestIniCtrl.ini_ctrl.get_test_id(spath, from_db=True)
             assert file_test_id == db_test_id
             assert TestIniCtrl.ini_ctrl.get_group_id(spath) == 1
+        db_del_pathes = TestIniCtrl.ini_ctrl.deleted_scenario_pathes()
+        for dp in db_del_pathes:
+            assert not os.path.exists(os.path.join(TestIniCtrl.ini_ctrl.get_root(), dp))
+        for dpath in del_pathes:
+            assert not (dpath in db_del_pathes) ^ expected
+
 
     def _insert_pathes(self, scenario_pathes):
         with open("/tmp/1.csv", "w") as f:
@@ -84,7 +89,7 @@ class TestIniCtrl(object):
     def setup_class(cls):
         cursor = connection.cursor()
         db_settings = cursor.db.settings_dict
-        print "\nCurrent db_settings: %s" % db_settings
+        # print "\nCurrent db_settings: %s" % db_settings
         g = GroupIni.objects.get(id=1)
         assert g.codename == "unknown"
 
@@ -122,3 +127,13 @@ class TestIniCtrl(object):
                     TestIniCtrl.ini_ctrl.get_root(), [], files, True)
         TestIniCtrl.ini_ctrl.sync()
         self._check_table_content(scenario_pathes)
+
+        files = ["1.ini"]
+        for fpath in files:
+            TestIniCtrl.ini_ctrl.set_scenario_status(fpath, 'D')
+        scenario_pathes = TestIniCtrl.ini_ctrl.find_ini_files(TestIniCtrl.ini_ctrl.get_root(),
+                                                              TestIniCtrl.exclude_names)
+        check_files(scenario_pathes,
+                    TestIniCtrl.ini_ctrl.get_root(), [], files, False)
+        TestIniCtrl.ini_ctrl.sync()
+        self._check_table_content(scenario_pathes, files, True)

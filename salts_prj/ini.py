@@ -78,16 +78,25 @@ class IniCtrl(object):
         self.dir_path = dir_path
         return self.scenario_pathes
 
+    def set_scenario_status(self, scen_id, status_value):
+        try:
+            t = TestIni.objects.get(scenario_id=scen_id)
+            t.status = status_value
+            t.save()
+            if status_value == 'D':
+                del_path = os.path.join(self.dir_path, scen_id)
+                if os.path.exists(del_path):
+                    os.unlink(del_path)
+            return True
+        except TestIni.DoesNotExist:
+            return False
+
     def get_root(self):
         return self.dir_path
 
-    def select_db_ini_files(self):
-        self.db_ini_files = TestIni.objects.all()
-
-    def get_db_ini_files(self):
-        if not self.db_ini_files:
-            self.select_db_ini_files()
-        return self.db_ini_files
+    def deleted_scenario_pathes(self):
+        res = TestIni.objects.filter(status='D')
+        return [r.scenario_id for r in res]
 
     def get_test_id(self, scen_id, from_db=False):
         if from_db:
