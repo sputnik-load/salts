@@ -78,12 +78,12 @@ class IniCtrl(object):
                     continue
                 if re.match("^ *test_id *=", strip_line):
                     del(content[ix])
-                    content.insert(ix, "\ntest_id = %s\n" % test_id)
+                    content.insert(ix, "test_id = %s\n" % test_id)
                     break
             if strip_line == section_line:
                 section_found = True
                 if not old_test_id:
-                    content.insert(ix + 1, "\ntest_id = %s\n" % test_id)
+                    content.insert(ix + 1, "test_id = %s\n" % test_id)
                     break
             ix += 1
         with open(ini_path, "w") as f:

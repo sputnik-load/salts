@@ -24,7 +24,7 @@ def join_files(tmpdir, files, sub):
     for item in files:
         if type(item) is str:
             p = tmp.join(item)
-            p.write("[sputnikreport]")
+            p.write("[sputnikreport]\n")
         if type(item) is dict:
             p = tmp.join(item["name"])
             p.write(item["content"])
