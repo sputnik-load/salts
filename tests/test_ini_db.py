@@ -69,8 +69,6 @@ class TestIniCtrl(object):
         cursor = connection.cursor()
         db_settings = cursor.db.settings_dict
         # print "\nCurrent db_settings: %s" % db_settings
-        g = GroupIni.objects.get(id=1)
-        assert g.codename == "unknown"
 
     def test_sync(self, tmpdir):
         base_dir = str(tmpdir.realpath())
@@ -152,6 +150,26 @@ class TestIniCtrl(object):
             ini_ctrl.sync()
         # print "e: %s" % excinfo
         os.remove(srcfile)
+        assert not os.path.exists(srcfile)
         ini_ctrl.sync()
         assert ini_ctrl.get_test_id(dupl_name, from_db=True) == 0
         assert ini_ctrl.get_test_id("%s/%s" % ("sub_a", dupl_name), from_db=True) == dupl_test_id
+
+    def test_rewrite_id(self, tmpdir):
+        base_dir = str(tmpdir.realpath())
+        ini_ctrl = IniCtrl(base_dir, TestIniCtrl.exclude_names)
+        files = ["1.ini", "2.ini"]
+        self._create_files(tmpdir, files)
+        ini_ctrl.sync()
+        scenario_pathes = ini_ctrl.get_scenario_pathes("A")
+        check_files(scenario_pathes,
+                    ini_ctrl.get_root(), [], files, True)
+        self._check_table_content(ini_ctrl, scenario_pathes)
+        old_id = ini_ctrl.get_test_id("1.ini", from_db=False)
+        assert old_id != 101
+        with open(os.path.join(ini_ctrl.get_root(), "1.ini"), "w") as f1:
+            f1.write("[sputnikreport]\ntest_id=101\n")
+        assert ini_ctrl.get_test_id("1.ini", from_db=False) == 101
+        ini_ctrl.sync()
+        self._check_table_content(ini_ctrl, scenario_pathes)
+        assert ini_ctrl.get_test_id("1.ini", from_db=False) == old_id
