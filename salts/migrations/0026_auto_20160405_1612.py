@@ -11,7 +11,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL("""INSERT INTO salts_groupini (id, name, codename)
-                             VALUES (1, 'Неизвестно', 'unknown')
-                          """),
+        migrations.RunSQL(
+            ["INSERT INTO salts_groupini (name, codename) VALUES ('Неизвестно', 'unknown')"],
+            ["DELETE FROM salts_groupini WHERE codename='unknown'"]
+        ),
     ]
