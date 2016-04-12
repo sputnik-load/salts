@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+
 import os
 import re
 import codecs
 from glob import glob
 from settings import LT_PATH, EXCLUDE_INI_FILES
 from django.db import connection
-from salts.models import TestIni
+from salts.models import TestIni, GroupIni
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 
@@ -39,17 +41,24 @@ class IniCtrl(object):
     def __init__(self, root, exclude):
         self.dir_path = root
         self.exclude_names = exclude
+        g = GroupIni.objects.get(codename="unknown")
+        self.default_group_id = g.id
 
-    def _test_id_from_ini(self, ini_path):
+    def _test_id_from_ini(self, scen_id):
         config = ConfigParser()
-        config.read(ini_path)
+        config.read(os.path.join(self.dir_path, scen_id))
         try:
             return int(config.get(IniCtrl.SECTION, "test_id"))
         except (NoOptionError, NoSectionError):
             return 0
 
     def _add_test_id(self, scen_id, test_id):
+        old_test_id = self._test_id_from_ini(scen_id)
+        if test_id == old_test_id:
+            return
+
         section_line = "[%s]" % IniCtrl.SECTION
+        default_line = "[DEFAULT]"
         config = ConfigParser()
         ini_path = os.path.join(self.dir_path, scen_id)
         config.read(ini_path)
@@ -60,10 +69,22 @@ class IniCtrl(object):
         with open(ini_path, "r") as f:
             content = f.readlines()
         ix = 0
+        section_found = False
         for line in content:
-            if line.strip() == section_line:
-                content.insert(ix + 1, "test_id = %s\n" % test_id)
-                break
+            strip_line = line.strip()
+            if section_found:
+                if re.match("^ *\[.*\]", line):
+                    section_found = False
+                    continue
+                if re.match("^ *test_id *=", strip_line):
+                    del(content[ix])
+                    content.insert(ix, "\ntest_id = %s\n" % test_id)
+                    break
+            if strip_line == section_line:
+                section_found = True
+                if not old_test_id:
+                    content.insert(ix + 1, "\ntest_id = %s\n" % test_id)
+                    break
             ix += 1
         with open(ini_path, "w") as f:
             f.writelines("".join(content))
@@ -106,7 +127,7 @@ class IniCtrl(object):
         else:
             if not self.dir_path:
                 return 0
-            return self._test_id_from_ini(os.path.join(self.dir_path, scen_id))
+            return self._test_id_from_ini(scen_id)
 
     def get_group_id(self, scen_id):
         try:
@@ -119,18 +140,29 @@ class IniCtrl(object):
         scenario_pathes = ini_files(self.dir_path, self.exclude_names)
         absent_ini_pathes = []
         for spath in scenario_pathes:
-            test_id = self._test_id_from_ini(os.path.join(self.dir_path, spath))
-            if test_id:
-                if not self.get_test_id(spath, from_db=True):
-                    t = TestIni.objects.get(id=test_id)
-                    if os.path.exists(os.path.join(self.dir_path, t.scenario_id)):
-                        raise IniDuplicateError("Two ini files %s and %s have same test id." % (spath, t.scenario_id))
-                    t.scenario_id = spath
+            ini_test_id = self.get_test_id(spath, from_db=False)
+            db_test_id = self.get_test_id(spath, from_db=True)
+            if ini_test_id:
+                if db_test_id:
+                    if ini_test_id == db_test_id:
+                        continue
+                    else:
+                        self._add_test_id(spath, db_test_id)
+                else:
+                    res = TestIni.objects.filter(id=ini_test_id)
+                    if res:
+                        if os.path.exists(os.path.join(self.dir_path, res[0].scenario_id)):
+                            raise IniDuplicateError("Two ini files %s and %s have same test id." % (spath, res[0].scenario_id))
+                        else:
+                            res[0].delete()
+                    t = TestIni(id=ini_test_id,
+                                scenario_id=spath,
+                                group_ini_id=self.default_group_id,
+                                status='A')
                     t.save()
             else:
-                test_id = self.get_test_id(spath, from_db=True)
-                if test_id:
-                    self._add_test_id(spath, test_id)
+                if db_test_id:
+                    self._add_test_id(spath, db_test_id)
                 else:
                     absent_ini_pathes.append(spath)
         if absent_ini_pathes:
@@ -140,7 +172,7 @@ class IniCtrl(object):
                     rec = []
                     rec.append(str(id))
                     rec.append(spath)
-                    rec.append("1")
+                    rec.append(str(self.default_group_id))
                     rec.append("A")
                     f.write(";".join(rec) + "\n")
                     self._add_test_id(spath, id)
