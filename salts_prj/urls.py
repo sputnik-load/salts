@@ -3,6 +3,7 @@ from django.conf.urls import patterns, include, url
 from django.http import HttpResponseRedirect
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.contrib import admin
+from django.views.generic import RedirectView
 from salts_prj.views import run_test_api, stop_test_api, status_test_api
 from salts_prj.views import show_test_settings, edit_test_parameters, poll_servers
 from salts_prj.views import show_results_page, get_results
@@ -18,6 +19,7 @@ urlpatterns = patterns('',
     # url(r'^$', 'salts.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
 
+    url(r'^$', RedirectView.as_view(url='/results/')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^favicon.ico/$', lambda x: HttpResponseRedirect(settings.STATIC_URL+'favicon.ico')), #google chrome favicon fix
     url(r'^tests/$', show_test_settings),
