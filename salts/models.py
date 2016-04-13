@@ -4,6 +4,10 @@ import logging
 from jsonfield import JSONCharField
 #from test.test_threading_local import target
 from _bsddb import version
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 
 # Create your models here.
 class GeneratorTypeList(models.Model):
@@ -217,6 +221,30 @@ class GroupIni(models.Model):
 
     def __unicode__(self):
         return self.name
+
+@receiver(post_save, sender=GroupIni)
+def add_group_perm(instance, **kwargs):
+    content_type = ContentType.objects.get_for_model(GroupIni)
+    Permission.objects.create(
+        codename="can_edit_%s" % instance.codename,
+        name='Can edit test of group "%s"' % instance.name,
+        content_type=content_type
+    )
+    Permission.objects.create(
+        codename="can_run_%s" % instance.codename,
+        name='Can run test of group "%s"' % instance.name,
+        content_type=content_type
+    )
+
+
+@receiver(post_delete, sender=GroupIni)
+def delete_group_perm(instance, **kwargs):
+    actions = ["edit", "run"]
+    for act in actions:
+        perm = Permission.objects.get(
+                codename="can_%s_%s" % (act, instance.codename)
+               )
+        perm.delete()
 
 
 class TestIni(models.Model):
