@@ -607,6 +607,7 @@ def get_results(request):
             r["gen_type_list"] = gen_types[r["id"]]
         else:
             r["gen_type_list"] = ""
+        r["generator"] = "%s / %s" % (r["generator"], r["gen_type_list"])
 
     offset = request_get_value(request, "offset")
     limit = request_get_value(request, "limit")
