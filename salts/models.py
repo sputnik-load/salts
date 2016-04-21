@@ -120,6 +120,11 @@ class TestResult(models.Model):
         return self.group + '.' + self.test_name #+ ' ' + self.version + ' ' + self.test_id
 
 
+#@receiver(post_save, sender=TestResult)
+#def post_save_actions(instance, **kwargs):
+#    print "post_save TestResult"
+
+
 class Generator(models.Model):
     host = models.CharField(u'Хост', max_length=128,
                             help_text=u'Сервер нагрузки',
@@ -265,3 +270,19 @@ class TestIni(models.Model):
 
     def __unicode__(self):
         return self.scenario_id
+
+
+class Shooting(models.Model):
+    dt_start = models.DateTimeField(u'Дата и время начала стрельбы',
+                                    null=True, blank=True)
+    dt_finish = models.DateTimeField(u'Дата и время завершения стрельбы',
+                                     null=True, blank=True)
+    test_ini = models.ForeignKey(TestIni, null=False, blank=False)
+
+    def __unicode__(self):
+        return "Shooting %s" % self.id
+
+
+@receiver(post_save, sender=Shooting)
+def start_shooting(instance, **kwargs):
+    print "Start Shooting"
