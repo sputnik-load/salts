@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from rest_framework import routers, serializers, viewsets, generics, filters
-from salts.models import TestResult
-from salts.models import GeneratorTypeList
-from salts.models import GeneratorType
+from rest_framework import authentication, permissions
+from salts.models import (TestResult, GeneratorTypeList,
+                          GeneratorType, Shooting, TestIni)
 
 
-# from logging import getLogger
-# log = getLogger("salts")
+from logging import getLogger
+log = getLogger("salts")
 
 
 class GeneratorTypeSerializer(serializers.HyperlinkedModelSerializer):
@@ -23,6 +23,36 @@ class GeneratorTypeViewSet(viewsets.ModelViewSet):
     filter_fields = ('id', 'name')
 
 
+class ShootingSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    class Meta:
+        model = Shooting
+
+
+class ShootingViewSet(viewsets.ModelViewSet):
+    serializer_class = ShootingSerializer
+    queryset = Shooting.objects.all()
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ("id",)
+
+    def create(self, request, *args, **kwargs):
+        log.info("Create Shooting: request_body: %s" % request.body)
+        log.info("Create Shooting: request: %s" % request.META)
+        return viewsets.ModelViewSet.create(self, request, *args, **kwargs)
+
+
+
+class TestIniSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    class Meta:
+        model = TestIni
+
+
+class TestIniViewSet(viewsets.ModelViewSet):
+    serializer_class = TestIniSerializer
+    queryset = TestIni.objects.all()
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ("id", "scenario_id", "status")
 
 # Serializers define the API representation.
 class TestResultSerializer(serializers.HyperlinkedModelSerializer):
@@ -36,6 +66,7 @@ class TestResultSerializer(serializers.HyperlinkedModelSerializer):
         model = TestResult
 
     def create(self, validated_data):
+        log.info("validated_data: %s" % validated_data)
         gt_data = validated_data.pop("generator_types")
         test_result = TestResult.objects.create(**validated_data)
         test_result.save()

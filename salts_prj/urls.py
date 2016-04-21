@@ -54,14 +54,17 @@ urlpatterns += patterns('',
 
 
 from rest_framework import routers
-from salts.api2 import TestResultViewSet, GeneratorTypeViewSet
-from salts.api2 import GeneratorTypeListViewSet
+from salts.api2 import (TestResultViewSet, GeneratorTypeViewSet,
+                        GeneratorTypeListViewSet, ShootingViewSet,
+                        TestIniViewSet)
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
 router.register(r'testresult', TestResultViewSet)
 router.register(r'generatortype', GeneratorTypeViewSet)
 router.register(r'generatortypelist', GeneratorTypeListViewSet)
+router.register(r'shooting', ShootingViewSet)
+router.register(r'testini', TestIniViewSet)
 
 
 urlpatterns += patterns('',
