@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from rest_framework import routers, serializers, viewsets, generics, filters
-from rest_framework import authentication, permissions
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import Permission
 from salts.models import (TestResult, GeneratorTypeList,
                           GeneratorType, Shooting, TestIni)
+from django.db import connection
 
 
 from logging import getLogger
@@ -23,11 +27,42 @@ class GeneratorTypeViewSet(viewsets.ModelViewSet):
     filter_fields = ('id', 'name')
 
 
+class ShootingHttpIssue(Exception):
+    def __init__(self, errno, msg):
+        self.args = (errno, msg)
+        self.code = errno
+        self.message = msg
+
 class ShootingSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     class Meta:
         model = Shooting
 
+    def create(self, validated_data):
+        log.info("Shooting: validated_data: %s" % validated_data)
+        if "test_ini" not in validated_data:
+            raise ShootingHttpIssue(status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                    "TestIni object cannot be obtained.")
+        cursor = connection.cursor()
+        ti = validated_data["test_ini"]
+        cursor.execute(
+            """
+                SELECT perm.id
+                FROM auth_permission perm
+                JOIN auth_user_user_permissions uup ON perm.id = uup.permission_id
+                JOIN authtoken_token tok ON tok.user_id = uup.user_id
+                WHERE perm.codename ~ ('can_run_' || '{codename}')
+                        AND tok.key = '{token}';
+            """.format(codename=ti.group_ini.codename,
+                       token=validated_data["token"]))
+        if not cursor.fetchone():
+            token = Token.objects.get(key=validated_data["token"])
+            raise ShootingHttpIssue(
+                    status.HTTP_403_FORBIDDEN,
+                    "Test %s disabled for '%s' user." % (ti.scenario_id, token.user.username))
+        sh_data = {"test_ini_id": ti.id}
+        shooting = Shooting.objects.create(**sh_data)
+        return shooting
 
 class ShootingViewSet(viewsets.ModelViewSet):
     serializer_class = ShootingSerializer
@@ -36,10 +71,21 @@ class ShootingViewSet(viewsets.ModelViewSet):
     filter_fields = ("id",)
 
     def create(self, request, *args, **kwargs):
-        log.info("Create Shooting: request_body: %s" % request.body)
-        log.info("Create Shooting: request: %s" % request.META)
-        return viewsets.ModelViewSet.create(self, request, *args, **kwargs)
+        ex_data = {}
+        if "HTTP_AUTHORIZATION" in request.META:
+            ex_data["token"] = request.META["HTTP_AUTHORIZATION"].replace("Token ", "")
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer, **ex_data)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except ShootingHttpIssue, exc:
+            log.warning("Shooting HTTP Issue: %s" % exc.message)
+            return Response(status=exc.code)
 
+    def perform_create(self, serializer, **kwargs):
+        serializer.save(**kwargs)
 
 
 class TestIniSerializer(serializers.HyperlinkedModelSerializer):
@@ -66,7 +112,7 @@ class TestResultSerializer(serializers.HyperlinkedModelSerializer):
         model = TestResult
 
     def create(self, validated_data):
-        log.info("validated_data: %s" % validated_data)
+        log.info("TestResult: validated_data: %s" % validated_data)
         gt_data = validated_data.pop("generator_types")
         test_result = TestResult.objects.create(**validated_data)
         test_result.save()
