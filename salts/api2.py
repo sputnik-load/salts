@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import Permission
 from salts.models import (TestResult, GeneratorTypeList,
-                          GeneratorType, Shooting, TestIni)
+                          GeneratorType, Shooting, TestIni, Tank)
 from django.db import connection
 
 
@@ -27,11 +27,25 @@ class GeneratorTypeViewSet(viewsets.ModelViewSet):
     filter_fields = ('id', 'name')
 
 
+class TankSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    class Meta:
+        model = Tank
+
+
+class TankViewSet(viewsets.ModelViewSet):
+    serializer_class = TankSerializer
+    queryset = Tank.objects.all()
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ("id",)
+
+
 class ShootingHttpIssue(Exception):
     def __init__(self, errno, msg):
         self.args = (errno, msg)
         self.code = errno
         self.message = msg
+
 
 class ShootingSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
@@ -39,12 +53,12 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
         model = Shooting
 
     def create(self, validated_data):
-        log.info("Shooting: validated_data: %s" % validated_data)
         if "test_ini" not in validated_data:
             raise ShootingHttpIssue(status.HTTP_500_INTERNAL_SERVER_ERROR,
                                     "TestIni object cannot be obtained.")
-        cursor = connection.cursor()
         ti = validated_data["test_ini"]
+        tank = validated_data["tank"]
+        cursor = connection.cursor()
         cursor.execute(
             """
                 SELECT perm.id
@@ -60,7 +74,7 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
             raise ShootingHttpIssue(
                     status.HTTP_403_FORBIDDEN,
                     "Test %s disabled for '%s' user." % (ti.scenario_id, token.user.username))
-        sh_data = {"test_ini_id": ti.id}
+        sh_data = {"test_ini_id": ti.id, "tank_id": tank.id}
         shooting = Shooting.objects.create(**sh_data)
         return shooting
 

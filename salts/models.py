@@ -8,6 +8,8 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+import threading
+from salts_prj.api_client import run_shooting
 
 # Create your models here.
 class GeneratorTypeList(models.Model):
@@ -272,12 +274,25 @@ class TestIni(models.Model):
         return self.scenario_id
 
 
+class Tank(models.Model):
+    host = models.CharField(u'Хост', max_length=128,
+                            help_text=u'Хост',
+                            null=True, blank=True)
+    port = models.IntegerField(u'Порт',
+                               help_text=u'Порт',
+                               null=True, blank=True)
+
+    def __unicode__(self):
+        return "Tank %s:%s" % (self.host, self.port)
+
+
 class Shooting(models.Model):
     dt_start = models.DateTimeField(u'Дата и время начала стрельбы',
                                     null=True, blank=True)
     dt_finish = models.DateTimeField(u'Дата и время завершения стрельбы',
                                      null=True, blank=True)
     test_ini = models.ForeignKey(TestIni, null=False, blank=False)
+    tank = models.ForeignKey(Tank, null=False, blank=False)
 
     def __unicode__(self):
         return "Shooting %s" % self.id
@@ -285,4 +300,7 @@ class Shooting(models.Model):
 
 @receiver(post_save, sender=Shooting)
 def start_shooting(instance, **kwargs):
-    print "Start Shooting"
+    thread_data = {"instance": instance}
+    t = threading.Thread(name="Shooting Id", target=run_shooting,
+                         kwargs=thread_data)
+    t.start()

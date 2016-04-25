@@ -1,6 +1,9 @@
 import requests
 import simplejson as json
 
+def run_shooting(**kwargs):
+    print "Run Shooting: kwargs=%s" % kwargs
+
 class TankClient(object):
     def __init__(self, api_address, api_port, logger):
         self.api_address = api_address
