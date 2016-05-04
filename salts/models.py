@@ -8,8 +8,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-import threading
-from salts_prj.api_client import run_shooting
+from tankmanager import tank_manager
 
 # Create your models here.
 class GeneratorTypeList(models.Model):
@@ -122,11 +121,6 @@ class TestResult(models.Model):
         return self.group + '.' + self.test_name #+ ' ' + self.version + ' ' + self.test_id
 
 
-#@receiver(post_save, sender=TestResult)
-#def post_save_actions(instance, **kwargs):
-#    print "post_save TestResult"
-
-
 class Generator(models.Model):
     host = models.CharField(u'Хост', max_length=128,
                             help_text=u'Сервер нагрузки',
@@ -152,6 +146,7 @@ class Target(models.Model):
 
     def __unicode__(self):
         return "%s:%s" % (self.host, self.port)
+
 
 class TestSettings(models.Model):
     file_path = models.CharField(u'Путь к файлу', max_length=128,
@@ -287,12 +282,30 @@ class Tank(models.Model):
 
 
 class Shooting(models.Model):
+    STATUS_PREPARE = 'P'
+    STATUS_RUNNING = 'R'
+    STATUS_FINISHED = 'F'
+    STATUS_INTERRUPTED = 'I'
+    STATUS_CHOICES = (
+        (STATUS_PREPARE, 'Prepare'),
+        (STATUS_RUNNING, 'Running'),
+        (STATUS_FINISHED, 'Finished'),
+        (STATUS_INTERRUPTED, 'Interrupted'),
+    )
+
+    test_id = models.CharField(u"ID теста",
+                               max_length=32, help_text=u"ID теста",
+                               null=True, blank=True, unique=True)
     dt_start = models.DateTimeField(u'Дата и время начала стрельбы',
                                     null=True, blank=True)
     dt_finish = models.DateTimeField(u'Дата и время завершения стрельбы',
                                      null=True, blank=True)
     test_ini = models.ForeignKey(TestIni, null=False, blank=False)
     tank = models.ForeignKey(Tank, null=False, blank=False)
+    status = models.CharField(u'Статус стрельбы', max_length=1,
+                              choices=STATUS_CHOICES,
+                              default=STATUS_PREPARE,
+                              help_text=u'Статус стрельбы - Готовится, Выполняется, Закончен или Прерван.')
 
     def __unicode__(self):
         return "Shooting %s" % self.id
@@ -300,7 +313,8 @@ class Shooting(models.Model):
 
 @receiver(post_save, sender=Shooting)
 def start_shooting(instance, **kwargs):
-    thread_data = {"instance": instance}
-    t = threading.Thread(name="Shooting Id", target=run_shooting,
-                         kwargs=thread_data)
-    t.start()
+    if kwargs["created"]:
+        tank_manager.start(instance)
+    else:
+        if instance.status in ['F', 'I']:
+            tank_manager.free(instance.tank.id)

@@ -33,8 +33,16 @@ class DRFApikeyAuth(AuthBase):
 try:
     #api_url = "http://salt-dev.dev.ix.km/api2/"
     api_url = "http://wks-krylov:8000/api2/"
-    api = slumber.API(api_url, auth=DRFApikeyAuth("8111a8d18f8e4cb4923c605238c954db85f8edb7"))
+    try:
+        api = slumber.API(api_url, auth=DRFApikeyAuth("6574ce5cf1a5260a1c20394e182976439e977a9c"))
+    except Exception, exc:
+        print "exception: %s" % exc
+        exit(1)
+    print "api: %s" % api
+    old = api.get()
+    print "old: %s" % old
     old = api.testresult.get(test_id="2016-03-11_09-00-00.G2TESB")
+    print "old: %s" % old
     gen_types = ["jmeter", "phantom"]
     gen_type_objects = [api.generatortype.get(name=gt)[0]
                         for gt in gen_types]
@@ -62,11 +70,13 @@ try:
     with open('test2.txt') as fp:
         api.testresult(new['id']).put(files={'yt_log': fp})
     api.testresult(new["id"]).put({"test_status": "dbg",
+                                   "dt_finish": "2016-03-11T09:11:11Z",
                                    "generator_types": gen_type_objects})
     new = api.testresult.get(test_id="2016-03-11_09-00-00.G2TESB")
     print "new.metrics: %s" % new[0]["metrics"]
     print "new.yt_log: %s" % new[0]["yt_log"]
     print "new.test_status: %s" % new[0]["test_status"]
+    print "new.dt_finish: %s" % new[0]["dt_finish"]
 except Exception as exc:
     print "Error sending results to salts: " + str(exc)
     if hasattr(exc, 'content'):

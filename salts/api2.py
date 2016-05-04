@@ -7,10 +7,11 @@ from django.contrib.auth.models import Permission
 from salts.models import (TestResult, GeneratorTypeList,
                           GeneratorType, Shooting, TestIni, Tank)
 from django.db import connection
+from logger import Logger
+from tankmanager import tank_manager
 
 
-from logging import getLogger
-log = getLogger("salts")
+log = Logger.get_logger()
 
 
 class GeneratorTypeSerializer(serializers.HyperlinkedModelSerializer):
@@ -74,9 +75,16 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
             raise ShootingHttpIssue(
                     status.HTTP_403_FORBIDDEN,
                     "Test %s disabled for '%s' user." % (ti.scenario_id, token.user.username))
+        if not tank_manager.book(tank.id):
+            raise ShootingHttpIssue(status.HTTP_403_FORBIDDEN,
+                                    "Tank is busy on host %s" % tank.host)
         sh_data = {"test_ini_id": ti.id, "tank_id": tank.id}
         shooting = Shooting.objects.create(**sh_data)
         return shooting
+
+    def update(self, instance, validated_data):
+        log.info("Shooting. Update: validated_data: %s" % validated_data)
+        return serializers.HyperlinkedModelSerializer.update(self, instance, validated_data)
 
 class ShootingViewSet(viewsets.ModelViewSet):
     serializer_class = ShootingSerializer
@@ -100,6 +108,16 @@ class ShootingViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer, **kwargs):
         serializer.save(**kwargs)
+
+    def update(self, instance, validated_data):
+        log.info("Shooting. Update. Validated Data: %s" % validated_data)
+        fields = []
+        for k in validated_data:
+            setattr(instance, k,
+                    validated_data.get(k, getattr(instance, k)))
+            fields.append(k)
+        instance.save(update_fields=fields)
+        return instance
 
 
 class TestIniSerializer(serializers.HyperlinkedModelSerializer):
