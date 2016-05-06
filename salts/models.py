@@ -6,7 +6,7 @@ from jsonfield import JSONCharField
 from _bsddb import version
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from tankmanager import tank_manager
 
@@ -213,40 +213,8 @@ class TestRun(models.Model):
         return "Id: %s (datetime: %s)." % (self.id, self.datetime)
 
 
-class GroupIni(models.Model):
-    name = models.CharField(u'Имя группы', max_length=256,
-                            help_text=u'Имя группы',
-                            null=True, blank=True)
-    codename = models.CharField(u'Короткий идентификатор группы', max_length=256,
-                            help_text=u'Имя группы на английском',
-                            null=True, blank=True)
-
-    def __unicode__(self):
-        return self.name
-
-@receiver(post_save, sender=GroupIni)
-def add_group_perm(instance, **kwargs):
-    content_type = ContentType.objects.get_for_model(GroupIni)
-    Permission.objects.create(
-        codename="can_edit_%s" % instance.codename,
-        name='Can edit test of group "%s"' % instance.name,
-        content_type=content_type
-    )
-    Permission.objects.create(
-        codename="can_run_%s" % instance.codename,
-        name='Can run test of group "%s"' % instance.name,
-        content_type=content_type
-    )
 
 
-@receiver(post_delete, sender=GroupIni)
-def delete_group_perm(instance, **kwargs):
-    actions = ["edit", "run"]
-    for act in actions:
-        perm = Permission.objects.get(
-                codename="can_%s_%s" % (act, instance.codename)
-               )
-        perm.delete()
 
 
 class TestIni(models.Model):
@@ -263,7 +231,7 @@ class TestIni(models.Model):
                               choices=STATUS_CHOICES,
                               default=STATUS_ACTIVE,
                               help_text=u'Статус сценария - Aктивный или Удаленный.')
-    group_ini = models.ForeignKey(GroupIni, null=False, blank=False)
+    group = models.ForeignKey(Group, null=False, blank=False)
 
     def __unicode__(self):
         return self.scenario_id
@@ -314,7 +282,8 @@ class Shooting(models.Model):
 @receiver(post_save, sender=Shooting)
 def start_shooting(instance, **kwargs):
     if kwargs["created"]:
-        tank_manager.start(instance)
+        if not instance.test_id:
+            tank_manager.start(instance)
     else:
         if instance.status in ['F', 'I']:
             tank_manager.free(instance.tank.id)

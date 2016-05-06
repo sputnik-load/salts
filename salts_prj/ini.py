@@ -6,7 +6,8 @@ import codecs
 from glob import glob
 from settings import LT_PATH, EXCLUDE_INI_FILES
 from django.db import connection
-from salts.models import TestIni, GroupIni
+from django.contrib.auth.models import Group
+from salts.models import TestIni
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 
@@ -41,7 +42,7 @@ class IniCtrl(object):
     def __init__(self, root, exclude):
         self.dir_path = root
         self.exclude_names = exclude
-        g = GroupIni.objects.get(codename="unknown")
+        g = Group.objects.get(name='Salts')
         self.default_group_id = g.id
 
     def _test_id_from_ini(self, scen_id):
@@ -132,7 +133,7 @@ class IniCtrl(object):
     def get_group_id(self, scen_id):
         try:
             t = TestIni.objects.get(scenario_id=scen_id)
-            return t.group_ini_id
+            return t.group_id
         except TestIni.DoesNotExist:
             return 0
 
@@ -157,7 +158,7 @@ class IniCtrl(object):
                             res[0].delete()
                     t = TestIni(id=ini_test_id,
                                 scenario_id=spath,
-                                group_ini_id=self.default_group_id,
+                                group_id=self.default_group_id,
                                 status='A')
                     t.save()
             else:
@@ -172,8 +173,8 @@ class IniCtrl(object):
                     rec = []
                     rec.append(str(id))
                     rec.append(spath)
-                    rec.append(str(self.default_group_id))
                     rec.append("A")
+                    rec.append(str(self.default_group_id))
                     f.write(";".join(rec) + "\n")
                     self._add_test_id(spath, id)
                     id += 1

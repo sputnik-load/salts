@@ -3,9 +3,10 @@ from rest_framework import routers, serializers, viewsets, generics, filters
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
 from salts.models import (TestResult, GeneratorTypeList,
-                          GeneratorType, Shooting, TestIni, Tank)
+                          GeneratorType, Shooting, TestIni,
+                          Tank)
 from django.db import connection
 from logger import Logger
 from tankmanager import tank_manager
@@ -38,7 +39,7 @@ class TankViewSet(viewsets.ModelViewSet):
     serializer_class = TankSerializer
     queryset = Tank.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ("id",)
+    filter_fields = ('host', 'port')
 
 
 class ShootingHttpIssue(Exception):
@@ -48,49 +49,88 @@ class ShootingHttpIssue(Exception):
         self.message = msg
 
 
+class TestIniSerializer(serializers.HyperlinkedModelSerializer):
+    # id = serializers.ReadOnlyField()
+    # group = GroupSerializer()
+    class Meta:
+        model = TestIni
+    '''
+    def create(self, validated_data):
+        log.info("TestIniSerializer.create: validated_data: %s" % validated_data)
+        test_ini = TestIni.objects.create(**validated_data)
+        test_ini.save()
+        return test_ini
+    '''
+
+class TestIniViewSet(viewsets.ModelViewSet):
+    serializer_class = TestIniSerializer
+    queryset = TestIni.objects.all()
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ("id", "scenario_id", "status")
+    '''
+    def create(self, request, *args, **kwargs):
+        log.info("TestIniViewSet.create: request.data: %s" % request.data)
+        # return viewsets.ModelViewSet.create(self, request, *args, **kwargs)
+        serializer = self.get_serializer(data=request.data)
+        log.info("TestIniViewSet.create: serializer: %s" % serializer)
+        serializer.is_valid(raise_exception=True)
+        log.info("TestIniViewSet.create: is_valid")
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    '''
+
+
 class ShootingSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
+    updated_fields = ['status', 'dt_start', 'dt_finish']
     class Meta:
         model = Shooting
 
     def create(self, validated_data):
-        if "test_ini" not in validated_data:
-            raise ShootingHttpIssue(status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                    "TestIni object cannot be obtained.")
-        ti = validated_data["test_ini"]
-        tank = validated_data["tank"]
+        log.info("ShootingSerializer.create. validated_data: %s" % validated_data)
+        test_ini = validated_data.get('test_ini')
+        tank = validated_data.get('tank')
         cursor = connection.cursor()
         cursor.execute(
             """
-                SELECT perm.id
-                FROM auth_permission perm
-                JOIN auth_user_user_permissions uup ON perm.id = uup.permission_id
-                JOIN authtoken_token tok ON tok.user_id = uup.user_id
-                WHERE perm.codename ~ ('can_run_' || '{codename}')
-                        AND tok.key = '{token}';
-            """.format(codename=ti.group_ini.codename,
-                       token=validated_data["token"]))
+                SELECT usr_gr.id FROM authtoken_token tok
+                JOIN auth_user_groups usr_gr USING(user_id)
+                JOIN salts_testini ti USING(group_id)
+                WHERE tok.key = '{token}' AND ti.id = {test_ini_id}
+            """.format(token=validated_data.get('token'),
+                       test_ini_id=test_ini.id))
         if not cursor.fetchone():
-            token = Token.objects.get(key=validated_data["token"])
+            token = Token.objects.get(key=validated_data.get('token'))
             raise ShootingHttpIssue(
                     status.HTTP_403_FORBIDDEN,
-                    "Test %s disabled for '%s' user." % (ti.scenario_id, token.user.username))
+                    "Test %s disabled for '%s' user." %
+                        (test_ini.scenario_id, token.user.username))
         if not tank_manager.book(tank.id):
-            raise ShootingHttpIssue(status.HTTP_403_FORBIDDEN,
+            raise ShootingHttpIssue(status.HTTP_451_UNAVAILABLE_FOR_LEGAL_REASONS,
                                     "Tank is busy on host %s" % tank.host)
-        sh_data = {"test_ini_id": ti.id, "tank_id": tank.id}
+        sh_data = {'test_ini_id': test_ini.id,
+                   'tank_id': tank.id,
+                   'status': validated_data.get('status'),
+                   'test_id': validated_data.get('test_id')}
         shooting = Shooting.objects.create(**sh_data)
         return shooting
 
     def update(self, instance, validated_data):
         log.info("Shooting. Update: validated_data: %s" % validated_data)
-        return serializers.HyperlinkedModelSerializer.update(self, instance, validated_data)
+        for k in validated_data:
+            if k in self.updated_fields:
+                setattr(instance, k,
+                        validated_data.get(k, getattr(instance, k)))
+        instance.save()
+        return instance
+
 
 class ShootingViewSet(viewsets.ModelViewSet):
     serializer_class = ShootingSerializer
     queryset = Shooting.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ("id",)
+    filter_fields = ('id', 'test_id', 'status', 'dt_start')
 
     def create(self, request, *args, **kwargs):
         ex_data = {}
@@ -109,28 +149,20 @@ class ShootingViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer, **kwargs):
         serializer.save(**kwargs)
 
-    def update(self, instance, validated_data):
-        log.info("Shooting. Update. Validated Data: %s" % validated_data)
-        fields = []
-        for k in validated_data:
-            setattr(instance, k,
-                    validated_data.get(k, getattr(instance, k)))
-            fields.append(k)
-        instance.save(update_fields=fields)
-        return instance
 
-
-class TestIniSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.ReadOnlyField()
+class GroupSerializer(serializers.HyperlinkedModelSerializer):
+    # id = serializers.ReadOnlyField()
     class Meta:
-        model = TestIni
+        model = Group
+        fields = ('url', 'name', 'id')
 
 
-class TestIniViewSet(viewsets.ModelViewSet):
-    serializer_class = TestIniSerializer
-    queryset = TestIni.objects.all()
+class GroupViewSet(viewsets.ModelViewSet):
+    serializer_class = GroupSerializer
+    queryset = Group.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ("id", "scenario_id", "status")
+    filter_fields = ('name',)
+
 
 # Serializers define the API representation.
 class TestResultSerializer(serializers.HyperlinkedModelSerializer):

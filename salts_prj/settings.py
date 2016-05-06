@@ -240,6 +240,6 @@ else:
     )
 
 
-from salts_prj.ini import IniCtrl
-ini_ctrl = IniCtrl(LT_PATH, EXCLUDE_INI_FILES)
-ini_ctrl.sync()
+# from salts_prj.ini import IniCtrl
+# ini_ctrl = IniCtrl(LT_PATH, EXCLUDE_INI_FILES)
+# ini_ctrl.sync()

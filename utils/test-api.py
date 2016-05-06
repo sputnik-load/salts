@@ -77,6 +77,10 @@ try:
     print "new.yt_log: %s" % new[0]["yt_log"]
     print "new.test_status: %s" % new[0]["test_status"]
     print "new.dt_finish: %s" % new[0]["dt_finish"]
+    sh = api.shooting.get(id=25)[0]
+    api.shooting(25).put({'status': 'R', 'tank': sh['tank'], 'test_ini': sh['test_ini']})
+    sh = api.shooting.get(id=25)
+    print "sh.status: %s" % sh[0]['status']
 except Exception as exc:
     print "Error sending results to salts: " + str(exc)
     if hasattr(exc, 'content'):
