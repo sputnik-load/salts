@@ -3,6 +3,7 @@
 import threading
 import time
 import os
+import json
 from logger import Logger
 from api_client import TankClient
 from salts_prj.settings import LT_PATH
@@ -75,6 +76,13 @@ class TankManager(object):
             time.sleep(TankManager.POLL_INTERVAL)
 
     def _wait_for_completed(self, client, tank_id, expected_retcode):
+        def format_resp(resp):
+            failures = resp.get('failures')
+            if failures:
+                for fail in failures:
+                    fail['reason'] = fail['reason'].split('\n')
+            return json.dumps(resp, indent=4)
+
         test_id = self.tanks[tank_id]["test_id"]
         while True:
             resp = client.status(test_id)
@@ -85,11 +93,11 @@ class TankManager(object):
                     if resp["retcode"] is None:
                         completed = False
                 if completed:
-                    log.info("Test %s. Response: %s" % (status, resp))
+                    log.info("Test %s. Response: %s" % (status, format_resp(resp)))
                     break
-                log.info("Test %s. Response: %s" % (status, resp))
+                log.info("Test %s. Response: %s" % (status, format_resp(resp)))
             else:
-                log.info("Response: %s" % resp)
+                log.info("Response: %s" % format_resp(resp))
             time.sleep(TankManager.POLL_INTERVAL)
 
     def shoot(self, **kwargs):
@@ -105,6 +113,8 @@ class TankManager(object):
         with open(config_path) as ini_file:
             resp = client.run(ini_file.read(), "start")
         test_id = resp["session"]
+        instance.test_id = test_id
+        instance.save()
         self.tanks[instance.tank.id]["test_id"] = test_id
         log.info("Test with id=%s started." % test_id)
         self._wait_for_completed(client, instance.tank.id, False)
