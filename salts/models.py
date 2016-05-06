@@ -281,9 +281,12 @@ class Shooting(models.Model):
 
 @receiver(post_save, sender=Shooting)
 def start_shooting(instance, **kwargs):
-    if kwargs["created"]:
+    if kwargs['created']:
         if not instance.test_id:
             tank_manager.start(instance)
     else:
-        if instance.status in ['F', 'I']:
-            tank_manager.free(instance.tank.id)
+        if 'status' in kwargs['update_fields']:
+            if instance.status == 'F':
+                tank_manager.free(instance.tank.id)
+            if instance.status == 'I':
+                tank_manager.interrupt(instance)

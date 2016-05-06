@@ -122,11 +122,13 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
     def update(self, instance, validated_data):
         log.info("Shooting. Update: validated_data: %s" % validated_data)
         self.check_permission(validated_data.get('token'), instance.test_ini.id)
+        fields = []
         for k in validated_data:
             if k in self.updated_fields:
                 setattr(instance, k,
                         validated_data.get(k, getattr(instance, k)))
-        instance.save()
+                fields.append(k)
+        instance.save(update_fields=fields)
         return instance
 
 

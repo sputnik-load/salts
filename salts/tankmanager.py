@@ -4,8 +4,8 @@ import threading
 import time
 import os
 import json
-from logger import Logger
-from api_client import TankClient
+from salts.logger import Logger
+from salts.api_client import TankClient
 from salts_prj.settings import LT_PATH
 
 
@@ -25,7 +25,9 @@ class TankManagerException(Exception):
 
 class TankManager(object):
 
-    POLL_INTERVAL = 5
+    CTRL_C_INTERVAL = 180  # seconds (TESTING-2586)
+    POLL_INTERVAL = 5  # seconds
+    WAIT_FOR_RESULT_SAVED = 60  # seconds
 
     def __init__(self):
         self.tanks = {}
@@ -125,5 +127,47 @@ class TankManager(object):
         instance.status = 'F'
         instance.save()
         log.info("Test with id=%s stopped." % test_id)
+
+    def _change_test_status(self, shooting):
+        from salts.models import TestResult
+        from datetime import timedelta
+
+        start_time = time.time()
+        ctrl_c_delta = timedelta(seconds=TankManager.CTRL_C_INTERVAL)
+        while time.time() - start_time <= TankManager.WAIT_FOR_RESULT_SAVED:
+            try:
+                test_result = TestResult.objects.get(test_id=shooting.test_id)
+            except TestResult.DoesNotExist:
+                log.info("The test id=%s isn't "
+                         "been saved yet." % shooting.test_id)
+                time.sleep(TankManager.POLL_INTERVAL)
+                continue
+            if test_result.dt_finish - test_result.dt_start >= ctrl_c_delta:
+                log.info("The test id=%s: "
+                         "test duration exceeds 3 minutes, "
+                         "the status remains Unknown." % shooting.test_id)
+                return
+            test_result.test_status = 'dbg'
+            test_result.save()
+            log.info("The test id=%s: "
+                     "test duration less than 3 minutes, "
+                     "the status is changed with Debug." % shooting.test_id)
+            return
+        log.warning("The test id=%s isn't saved into DB." % shooting.test_id)
+
+    def interrupt(self, shooting):
+        try:
+            client = TankClient(shooting.tank.host, shooting.tank.port)
+            resp = client.status(shooting.test_id)
+            client.stop(shooting.test_id)
+            log.info("The test id=%s is stopped." % shooting.test_id)
+            if resp.get('current_stage') == 'poll':
+                self._change_test_status(shooting)
+            else:
+                log.info("Test id=%s won't be saved into DB "
+                         "as it hasn't started yet." % shooting.test_id)
+        except Exception, exc:
+            log.warning("Exception when test "
+                        "has been interrupted: %s" % exc)
 
 tank_manager = TankManager()
