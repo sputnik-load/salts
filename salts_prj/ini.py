@@ -8,7 +8,11 @@ from settings import LT_PATH, EXCLUDE_INI_FILES
 from django.db import connection
 from django.contrib.auth.models import Group
 from salts.models import TestIni
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from ConfigParser import ConfigParser, NoSectionError, NoOptionError, Error
+from salts.logger import Logger
+
+
+log = Logger.get_logger()
 
 
 def ini_files(dir_path, exclude_names):
@@ -27,8 +31,15 @@ def ini_files(dir_path, exclude_names):
         for name in files:
             full_path = os.path.join(root, name)
             file_name, file_ext = os.path.splitext(full_path)
-            if file_ext == ".ini" and (not full_path in specific_names[root]):
-                ini.append(re.sub("%s/" % dir_path, "", full_path))
+            if file_ext == '.ini' and (not full_path in specific_names[root]):
+                config = ConfigParser()
+                try:
+                    config.read(full_path)
+                except Error, exc:
+                    log.warning("Config %s is not valid: %s" %
+                                (full_path, exc))
+                else:
+                    ini.append(re.sub("%s/" % dir_path, '', full_path))
     return ini
 
 

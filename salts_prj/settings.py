@@ -79,9 +79,12 @@ DATABASES = {
         'PORT': '',                      # Set to empty string for default.
     }
 }
-LT_PATH = "/data/qa/ltbot/loadtest"
-VERSION_FILE_NAME = "version"
-EXCLUDE_INI_FILES = ["common.ini", "user.ini", "graphite*.ini"]
+
+LT_PATH = '/data/qa/ltbot/loadtest'
+VERSION_FILE_NAME = 'version'
+EXCLUDE_INI_FILES = ['common.ini', 'user.ini',
+                     'graphite*.ini', 'run.sh.ini',
+                     '99*.ini', '98*.ini', 'influx*.ini']
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
