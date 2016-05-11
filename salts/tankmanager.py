@@ -30,32 +30,42 @@ class TankManager(object):
     WAIT_FOR_RESULT_SAVED = 60  # seconds
 
     def __init__(self):
+        log.info("TankManager.init: %s" % self)
         self.tanks = {}
         self.lock = threading.Lock()
 
     def book(self, tank_id):
         self.lock.acquire()
+        log.info("TankManager.book.1. Tanks: %s. TankManager: %s" % (self.tanks, self))
+        res = True
         if self.is_busy(tank_id):
-            return False
-        self.tanks[tank_id] = {"is_busy": True}
+            res = False
+        else:
+            self.tanks[tank_id] = {'is_busy': True}
+        log.info("TankManager.book.2. Tanks: %s. TankManager: %s" % (self.tanks, self))
         self.lock.release()
-        return True
+        return res
 
     def free(self, tank_id):
         self.lock.acquire()
-        if tank_id in self.tanks:
-            self.tanks[tank_id]["is_busy"] = False
+        log.info("TankManager.free.1. Tanks: %s. TankManager: %s." % (self.tanks, self))
+        res = True
+        if self.tanks.get(tank_id):
+            self.tanks[tank_id]['is_busy'] = False
+        else:
+            res = False
+        log.info("TankManager.free.2. Tanks: %s. TankManager: %s." % (self.tanks, self))
         self.lock.release()
-        return True
+        return res
 
     def test_id(self, tank_id):
-        if tank_id in self.tanks:
-            return self.tanks[tank_id]["test_id"]
-        return ""
+        if self.tanks.get(tank_id):
+            return self.tanks[tank_id]['test_id']
+        return ''
 
     def is_busy(self, tank_id):
-        if tank_id in self.tanks:
-            return self.tanks[tank_id]["is_busy"]
+        if self.tanks.get(tank_id):
+            return self.tanks[tank_id]['is_busy']
         return False
 
     def start(self, instance):
@@ -128,10 +138,11 @@ class TankManager(object):
         instance.save()
         log.info("Test with id=%s stopped." % test_id)
 
-    def _change_test_status(self, shooting):
+    def _change_test_status(self, **kwargs):
         from salts.models import TestResult
         from datetime import timedelta
 
+        shooting = kwargs.get('shooting')
         start_time = time.time()
         ctrl_c_delta = timedelta(seconds=TankManager.CTRL_C_INTERVAL)
         while time.time() - start_time <= TankManager.WAIT_FOR_RESULT_SAVED:
@@ -156,13 +167,23 @@ class TankManager(object):
         log.warning("The test id=%s isn't saved into DB." % shooting.test_id)
 
     def interrupt(self, shooting):
+        resp = None
         try:
             client = TankClient(shooting.tank.host, shooting.tank.port)
             resp = client.status(shooting.test_id)
             client.stop(shooting.test_id)
+        except Exception, exc:
+            log.info("Exception when test "
+                     "has been interrupted: %s" % exc)
+        try:
             log.info("The test id=%s is stopped." % shooting.test_id)
-            if resp.get('current_stage') == 'poll':
-                self._change_test_status(shooting)
+            self.free(shooting.tank.id)
+            if (resp and resp.get('current_stage') == 'poll') or not resp:
+                thread_data = {'shooting': shooting}
+                t = threading.Thread(name="Change Test Status",
+                                     target=self._change_test_status,
+                                     kwargs=thread_data)
+                t.start()
             else:
                 log.info("Test id=%s won't be saved into DB "
                          "as it hasn't started yet." % shooting.test_id)
