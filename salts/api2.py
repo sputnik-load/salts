@@ -110,7 +110,7 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
         tank = validated_data.get('tank')
         self.check_permission(validated_data.get('token'), test_ini.id)
         if not tank_manager.book(tank.id):
-            raise ShootingHttpIssue(status.HTTP_451_UNAVAILABLE_FOR_LEGAL_REASONS,
+            raise ShootingHttpIssue(status.HTTP_403_FORBIDDEN,
                                     "Tank is busy on host %s" % tank.host)
         sh_data = {'test_ini_id': test_ini.id,
                    'tank_id': tank.id,
