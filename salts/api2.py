@@ -83,7 +83,7 @@ class TestIniViewSet(viewsets.ModelViewSet):
 
 class ShootingSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
-    updated_fields = ['status', 'dt_start', 'dt_finish']
+    updated_fields = ['status', 'start', 'finish', 'planned_duration']
     class Meta:
         model = Shooting
 
@@ -136,7 +136,7 @@ class ShootingViewSet(viewsets.ModelViewSet):
     serializer_class = ShootingSerializer
     queryset = Shooting.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ('id', 'test_id', 'status', 'dt_start')
+    filter_fields = ('id', 'test_id', 'status')
 
     def create(self, request, *args, **kwargs):
         ex_data = {}

@@ -264,16 +264,24 @@ class Shooting(models.Model):
     test_id = models.CharField(u"ID теста",
                                max_length=32, help_text=u"ID теста",
                                null=True, blank=True, unique=True)
-    dt_start = models.DateTimeField(u'Дата и время начала стрельбы',
+    dt_start = models.DateTimeField(u"Дата и время начала стрельбы",
                                     null=True, blank=True)
-    dt_finish = models.DateTimeField(u'Дата и время завершения стрельбы',
+    dt_finish = models.DateTimeField(u"Дата и время завершения стрельбы",
                                      null=True, blank=True)
+    start = models.IntegerField(u"Отметка времени начала стрельбы",
+                                null=True, blank=True)
+    finish = models.IntegerField(u"Отметка времени окончания стрельбы",
+                                 null=True, blank=True)
+    planned_duration = models.IntegerField(u"Планируемая длительность теста",
+                                           null=True, blank=True)
     test_ini = models.ForeignKey(TestIni, null=False, blank=False)
     tank = models.ForeignKey(Tank, null=False, blank=False)
-    status = models.CharField(u'Статус стрельбы', max_length=1,
+    status = models.CharField(u"Статус стрельбы", max_length=1,
                               choices=STATUS_CHOICES,
                               default=STATUS_PREPARE,
-                              help_text=u'Статус стрельбы - Готовится, Выполняется, Закончен или Прерван.')
+                              help_text=u"Статус стрельбы - Готовится, "
+                                        u"Выполняется, Закончен "
+                                        u"или Прерван.")
 
     def __unicode__(self):
         return "Shooting %s" % self.id

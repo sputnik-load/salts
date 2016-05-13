@@ -17,7 +17,8 @@ from salts_prj.api_client import TankClient
 from django.forms.formsets import formset_factory
 from django.core.paginator import Paginator
 from django.views.generic.list import ListView
-from salts.models import TestSettings, RPS, Target, Generator, TestRun, TestResult
+from salts.models import (TestSettings, RPS, Target,
+                          Generator, TestRun, TestResult, Tank, Shooting)
 from salts.forms import SettingsEditForm, RPSEditForm
 from settings import LT_PATH, DATABASES, BASE_DIR, VERSION_FILE_NAME
 from requests import ConnectionError
@@ -500,15 +501,23 @@ def set_context(request):
 def generate_context(request):
     context = {}
     context.update(csrf(request))
-    context["host"] = DATABASES["default"]["HOST"]
-    context["name"] = DATABASES["default"]["NAME"]
+    context['host'] = DATABASES['default']['HOST']
+    context['name'] = DATABASES['default']['NAME']
     return context
 
 
 def show_results_page(request):
     context = generate_context(request)
-    context["title"] = u'Результаты теста'
-    response = render_to_response("testresult_list.html", context)
+    context['title'] = u"Результаты теста"
+    response = render_to_response('testresult_list.html', context)
+    set_version(response)
+    return response
+
+
+def tank_monitoring(request):
+    context = generate_context(request)
+    context['title'] = u'Танки'
+    response = render_to_response('tank_monitoring.html', context)
     set_version(response)
     return response
 
@@ -622,5 +631,36 @@ def get_results(request):
 
     response = HttpResponse(json.dumps(response_dict),
                             content_type="application/json")
+    set_version(response)
+    return response
+
+
+def get_remained_time(shooting):
+    remained = 0
+    if shooting.start and shooting.planned_duration:
+        remained = shooting.planned_duration - \
+                   (int(time.time() + 0.5) - shooting.start)
+    if remained < 0:
+        remained = 0
+
+    return time.strftime('%H:%M:%S', time.gmtime(remained))
+
+
+def get_tank_status(request):
+    tanks = Tank.objects.all()
+    results = []
+    for t in tanks:
+        shooting = Shooting.objects.filter(tank=t).last()
+        results.append({'id': t.id, 'host': t.host,
+                        'scenario': shooting.test_ini.scenario_id,
+                        'status': shooting.status,
+                        'countdown': get_remained_time(shooting),
+                        'shooting_id': shooting.id})
+
+    response_dict = {}
+    response_dict['total'] = len(results)
+    response_dict['rows'] = results
+    response = HttpResponse(json.dumps(response_dict),
+                            content_type='application/json')
     set_version(response)
     return response

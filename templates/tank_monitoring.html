@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block container %}
+  <h1>Мониторинг танков:</h1>
+  <p id="linker" align="right"></p>
+  <table id="table"
+         data-toggle="table"
+         data-url="/get_tank_status/"
+         data-height="800"
+         data-side-pagination="server"
+         data-pagination="true"
+         data-page-list="[10, 20, 50, All]"
+         data-row-style="row_style"
+         data-sort-name="name"
+         data-sort-order="desc"
+         data-show-columns="true"
+         data-resizable="true"
+         data-key-events="true"
+         data-ajax="ajax_request"
+         data-search="false">
+      <thead style="background-color: Bisque">
+        <tr>
+          <th data-field="id" title="ID">ID</th>
+          <th data-field="host" data-sortable="true" title="Имя">Имя</th>
+          <th data-field="scenario" title="Сценарий">Сценарий</th>
+          <th data-field="status" data-formatter="status_formatter" 
+              title="Статус">Статус</th>
+          <th data-field="countdown" title="Осталось">Осталось</th>
+      </tr>
+      </thead>
+  </table>
+{% endblock container %}
+{% block scripts_blk %}
+    function ajax_request(params) {
+      $.ajax(params);        
+    }
+
+    function status_formatter(st) {
+      var status_values = {
+        'P': 'Готовится к старту',
+        'R': 'Выполняется',
+        'I': 'Прерван',
+        'F': 'Закончен'
+      }
+      return status_values[st];
+    }
+{% endblock scripts_blk %}
