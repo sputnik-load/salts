@@ -24,23 +24,61 @@
           <th data-field="scenario" title="Сценарий">Сценарий</th>
           <th data-field="status" data-formatter="status_formatter" 
               title="Статус">Статус</th>
-          <th data-field="countdown" title="Осталось">Осталось</th>
-      </tr>
+            <th data-field="countdown"
+                data-formatter="countdown_formatter"
+                data-events="operateEvents" title="Осталось">Осталось</th>
+        </tr>
       </thead>
   </table>
 {% endblock container %}
 {% block scripts_blk %}
-    function ajax_request(params) {
-      $.ajax(params);        
-    }
+  function ajax_request(params) {
+    var resp = $.ajax(params);       
+  }
 
-    function status_formatter(st) {
-      var status_values = {
-        'P': 'Готовится к старту',
-        'R': 'Выполняется',
-        'I': 'Прерван',
-        'F': 'Закончен'
-      }
-      return status_values[st];
+  function status_formatter(st) {
+    var status_values = {
+      'P': 'Готовится к старту',
+      'R': 'Выполняется',
+      'I': 'Прерван',
+      'F': 'Закончен'
     }
+    return status_values[st];
+  }
+
+
+  function countdown_formatter(v, row, index) { 
+    return remainedTime(index, v);
+  }
+
+
+  function checkTime(i) {
+    if (i < 10) {
+      i = "0" + i;
+    }
+    return i;
+  }
+  
+  function remainedTime(index, sec_num) {
+    console.log("sec_num: " + sec_num);
+    var hours = Math.floor(sec_num / 3600);
+    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+    var seconds = Math.floor(sec_num - (hours * 3600) - (minutes * 60));
+    h = checkTime(hours);
+    m = checkTime(minutes);
+    s = checkTime(seconds);
+    var time_line = h + ':' + m + ':' + s;
+
+    var td = $("#table tbody tr:nth-child(" + (index+1) + ") td");
+    if ($(td).size() > 1) {
+      $($(td).get(4)).html(time_line);
+      sec_num -= 0.5;
+      if (sec_num < 0)
+        return '';
+    } 
+    setTimeout(function () {
+      remainedTime(index, sec_num)
+    }, 500);
+    return time_line;
+  }
 {% endblock scripts_blk %}

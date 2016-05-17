@@ -643,7 +643,7 @@ def get_remained_time(shooting):
     if remained < 0:
         remained = 0
 
-    return time.strftime('%H:%M:%S', time.gmtime(remained))
+    return remained
 
 
 def get_tank_status(request):
