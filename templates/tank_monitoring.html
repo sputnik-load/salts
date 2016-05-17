@@ -19,14 +19,14 @@
          data-search="false">
       <thead style="background-color: Bisque">
         <tr>
-          <th data-field="id" title="ID">ID</th>
-          <th data-field="host" data-sortable="true" title="Имя">Имя</th>
-          <th data-field="scenario" title="Сценарий">Сценарий</th>
-          <th data-field="status" data-formatter="status_formatter" 
+          <th class="col-sm-1" data-field="id" title="ID">ID</th>
+          <th class="col-sm-2" data-field="host" data-sortable="true" title="Имя">Имя</th>
+          <th class="col-sm-2" data-field="scenario" title="Сценарий">Сценарий</th>
+          <th class="col-sm-2" data-field="status" data-formatter="status_formatter" 
               title="Статус">Статус</th>
-            <th data-field="countdown"
-                data-formatter="countdown_formatter"
-                data-events="operateEvents" title="Осталось">Осталось</th>
+          <th class="col-sm-3" data-field="countdown"
+              data-formatter="countdown_formatter"
+              data-events="operateEvents" title="Осталось">Осталось</th>
         </tr>
       </thead>
   </table>
@@ -72,7 +72,8 @@
     if ($(td).size() > 1) {
       $($(td).get(3)).html(status_formatter(row['status']));
       $($(td).get(4)).html(time_line);
-      sec_num -= 0.5;
+      if (row['status'] == 'R')
+        sec_num -= 0.5;
       if (sec_num < 0 || row['status'] == 'I')
         return '';
     } 

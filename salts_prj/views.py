@@ -637,12 +637,18 @@ def get_results(request):
 
 def get_remained_time(shooting):
     remained = 0
-    if shooting.start and shooting.planned_duration:
-        if shooting.status == 'I':
-            ts = shooting.finish
+    if shooting.planned_duration:
+        if shooting.start:
+            if shooting.status == 'I':
+                ts = shooting.finish
+            else:
+                ts = int(time.time() + 0.5)
+            if shooting.status == 'P':
+                remained = shooting.planned_duration
+            else:
+                remained = shooting.planned_duration - (ts - shooting.start)
         else:
-            ts = int(time.time() + 0.5)
-        remained = shooting.planned_duration - (ts - shooting.start)
+            remained = shooting.planned_duration
     if remained < 0:
         remained = 0
 
