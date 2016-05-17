@@ -48,7 +48,7 @@
 
 
   function countdown_formatter(v, row, index) { 
-    return remainedTime(index, v);
+    return remainedTime(v, row, index);
   }
 
 
@@ -59,8 +59,7 @@
     return i;
   }
   
-  function remainedTime(index, sec_num) {
-    console.log("sec_num: " + sec_num);
+  function remainedTime(sec_num, row, index, n=0) {
     var hours = Math.floor(sec_num / 3600);
     var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
     var seconds = Math.floor(sec_num - (hours * 3600) - (minutes * 60));
@@ -71,14 +70,32 @@
 
     var td = $("#table tbody tr:nth-child(" + (index+1) + ") td");
     if ($(td).size() > 1) {
+      $($(td).get(3)).html(status_formatter(row['status']));
       $($(td).get(4)).html(time_line);
       sec_num -= 0.5;
-      if (sec_num < 0)
+      if (sec_num < 0 || row['status'] == 'I')
         return '';
     } 
-    setTimeout(function () {
-      remainedTime(index, sec_num)
-    }, 500);
+    if (n > 0 && !(n % 10)) {
+      $.ajax({
+        url: "/get_tank_status/?tank_id=" + row['id'],
+        type: "GET",
+        dataType: "json",
+        data: {},
+        error: function(json) {},
+        success: function(json) {
+          resp = json['rows'][0];
+          sec_num = resp['countdown'];
+          row['status'] = resp['status'];
+          remainedTime(sec_num, row, index, n+1)
+        }
+      });
+    }
+    else {
+      setTimeout(function () {
+        remainedTime(sec_num, row, index, n+1)
+      }, 500);
+    }
     return time_line;
   }
 {% endblock scripts_blk %}

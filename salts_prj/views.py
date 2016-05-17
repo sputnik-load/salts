@@ -638,8 +638,11 @@ def get_results(request):
 def get_remained_time(shooting):
     remained = 0
     if shooting.start and shooting.planned_duration:
-        remained = shooting.planned_duration - \
-                   (int(time.time() + 0.5) - shooting.start)
+        if shooting.status == 'I':
+            ts = shooting.finish
+        else:
+            ts = int(time.time() + 0.5)
+        remained = shooting.planned_duration - (ts - shooting.start)
     if remained < 0:
         remained = 0
 
@@ -647,7 +650,12 @@ def get_remained_time(shooting):
 
 
 def get_tank_status(request):
-    tanks = Tank.objects.all()
+    logger.info("get_tank_status: request.GET: %s" % request.GET)
+    tank_id = request.GET.get('tank_id')
+    if tank_id:
+        tanks = Tank.objects.filter(id=tank_id)
+    else:
+        tanks = Tank.objects.all()
     results = []
     for t in tanks:
         shooting = Shooting.objects.filter(tank=t).last()
