@@ -15,23 +15,13 @@ from salts.logger import Logger
 log = Logger.get_logger()
 
 
-def ini_files(dir_path, exclude_names):
+def ini_files(dir_path):
     ini = []
-    specific_names = {}
-    specific_names[dir_path] = []
-    for spec_name in exclude_names:
-        specific_names[dir_path] += glob(os.path.join(dir_path, spec_name))
-    for root, dirs, files in os.walk(dir_path, topdown=False):
-        for name in dirs:
-            full = os.path.join(root, name)
-            specific_names[full] = []
-            for spec_name in exclude_names:
-                specific_names[full] += glob(os.path.join(full, spec_name))
     for root, dirs, files in os.walk(dir_path, topdown=False):
         for name in files:
             full_path = os.path.join(root, name)
             file_name, file_ext = os.path.splitext(full_path)
-            if file_ext == '.ini' and (not full_path in specific_names[root]):
+            if file_ext == '.ini':
                 config = ConfigParser()
                 try:
                     config.read(full_path)
@@ -39,7 +29,20 @@ def ini_files(dir_path, exclude_names):
                     log.warning("Config %s is not valid: %s" %
                                 (full_path, exc))
                 else:
-                    ini.append(re.sub("%s/" % dir_path, '', full_path))
+                    try:
+                        test_name = config.get('sputnikreport', 'test_name')
+                    except (NoSectionError, NoOptionError):
+                        log.info("Config %s is not scenario: "
+                                 "there is not 'test_name' option "
+                                 "in the 'sputnikreport' section." %
+                                 full_path)
+                    else:
+                        if test_name:
+                            ini.append(re.sub("%s/" % dir_path, '', full_path))
+                        else:
+                            log.warning("Scenario %s contains "
+                                        "empty 'test_name' option." %
+                                        full_path)
     return ini
 
 
@@ -149,7 +152,7 @@ class IniCtrl(object):
             return 0
 
     def sync(self):
-        scenario_pathes = ini_files(self.dir_path, self.exclude_names)
+        scenario_pathes = ini_files(self.dir_path)
         absent_ini_pathes = []
         for spath in scenario_pathes:
             ini_test_id = self.get_test_id(spath, from_db=False)
