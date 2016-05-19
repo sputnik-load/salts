@@ -665,6 +665,8 @@ def get_tank_status(request):
     results = []
     for t in tanks:
         shooting = t.shooting_set.order_by('-start').first()
+        if not shooting:
+            continue
         results.append({'id': t.id, 'host': t.host,
                         'scenario': shooting.test_ini.scenario_id,
                         'status': shooting.status,
