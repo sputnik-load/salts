@@ -60,6 +60,8 @@
   }
   
   function remainedTime(sec_num, row, index, n=0) {
+    if (sec_num < 0)
+      sec_num = 0;
     var hours = Math.floor(sec_num / 3600);
     var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
     var seconds = Math.floor(sec_num - (hours * 3600) - (minutes * 60));
@@ -74,7 +76,7 @@
       $($(td).get(4)).html(time_line);
       if (row['status'] == 'R')
         sec_num -= 0.5;
-      if (sec_num < 0 || row['status'] == 'I')
+      if ($.inArray(row['status'], ['I', 'F']) >= 0)
         return '';
     } 
     if (n > 0 && !(n % 10)) {
