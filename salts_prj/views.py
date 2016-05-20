@@ -8,6 +8,7 @@ import ConfigParser
 import codecs
 import re
 import pickle
+import getpass
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -667,10 +668,17 @@ def get_tank_status(request):
         tanks = Tank.objects.all()
     results = []
     for t in tanks:
-        shooting = t.shooting_set.order_by('-start').first()
+        shooting = t.shooting_set.exclude(start__isnull=True).order_by('-start').first()
         if not shooting:
             continue
+        username = ''
+        if shooting.user:
+            if shooting.user.username == 'ltbot':
+                username = getpass.getuser()
+            else:
+                username = shooting.user.username
         results.append({'id': t.id, 'host': t.host,
+                        'username': username,
                         'scenario': shooting.test_ini.scenario_id,
                         'status': shooting.status,
                         'countdown': get_remained_time(shooting),

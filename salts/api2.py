@@ -3,7 +3,7 @@ from rest_framework import routers, serializers, viewsets, generics, filters
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import User, Group, Permission
 from salts.models import (TestResult, GeneratorTypeList,
                           GeneratorType, Shooting, TestIni,
                           Tank)
@@ -54,31 +54,12 @@ class TestIniSerializer(serializers.HyperlinkedModelSerializer):
     # group = GroupSerializer()
     class Meta:
         model = TestIni
-    '''
-    def create(self, validated_data):
-        log.info("TestIniSerializer.create: validated_data: %s" % validated_data)
-        test_ini = TestIni.objects.create(**validated_data)
-        test_ini.save()
-        return test_ini
-    '''
 
 class TestIniViewSet(viewsets.ModelViewSet):
     serializer_class = TestIniSerializer
     queryset = TestIni.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
     filter_fields = ("id", "scenario_id", "status")
-    '''
-    def create(self, request, *args, **kwargs):
-        log.info("TestIniViewSet.create: request.data: %s" % request.data)
-        # return viewsets.ModelViewSet.create(self, request, *args, **kwargs)
-        serializer = self.get_serializer(data=request.data)
-        log.info("TestIniViewSet.create: serializer: %s" % serializer)
-        serializer.is_valid(raise_exception=True)
-        log.info("TestIniViewSet.create: is_valid")
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-    '''
 
 
 class ShootingSerializer(serializers.HyperlinkedModelSerializer):
@@ -112,8 +93,10 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
         if not tank_manager.book(tank.id):
             raise ShootingHttpIssue(status.HTTP_403_FORBIDDEN,
                                     "Tank is busy on host %s" % tank.host)
+        token = Token.objects.get(key=validated_data.get('token'))
         sh_data = {'test_ini_id': test_ini.id,
                    'tank_id': tank.id,
+                   'user_id': token.user.id,
                    'status': validated_data.get('status'),
                    'test_id': validated_data.get('test_id')}
         shooting = Shooting.objects.create(**sh_data)
@@ -187,6 +170,19 @@ class GroupViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.DjangoFilterBackend,)
     filter_fields = ('name',)
 
+
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    # id = serializers.ReadOnlyField()
+    class Meta:
+        model = User
+        fields = ('url', 'username', 'id')
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ('username',)
 
 # Serializers define the API representation.
 class TestResultSerializer(serializers.HyperlinkedModelSerializer):
