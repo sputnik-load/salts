@@ -30,7 +30,6 @@ class TankManager(object):
     WAIT_FOR_RESULT_SAVED = 60  # seconds
 
     def __init__(self):
-        log.info("TankManager.init: %s" % self)
         self.tanks = {}
         self.lock = threading.Lock()
 
@@ -54,6 +53,10 @@ class TankManager(object):
             self.tanks[tank_id]['is_busy'] = False
         else:
             res = False
+        if res and self.tanks[tank_id]['is_busy']:
+            log.warning("TankManagerError.free: is_busy should be False. "
+                        "Tanks: %s. TankManager: %s." % (self.tanks, self))
+            self.tanks[tank_id]['is_busy'] = False
         log.info("TankManager.free.2. Tanks: %s. TankManager: %s." % (self.tanks, self))
         self.lock.release()
         return res
