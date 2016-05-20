@@ -6,7 +6,7 @@ from jsonfield import JSONCharField
 from _bsddb import version
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from tankmanager import tank_manager
 
@@ -264,10 +264,6 @@ class Shooting(models.Model):
     test_id = models.CharField(u"ID теста",
                                max_length=32, help_text=u"ID теста",
                                null=True, blank=True, unique=True)
-    dt_start = models.DateTimeField(u"Дата и время начала стрельбы",
-                                    null=True, blank=True)
-    dt_finish = models.DateTimeField(u"Дата и время завершения стрельбы",
-                                     null=True, blank=True)
     start = models.IntegerField(u"Отметка времени начала стрельбы",
                                 null=True, blank=True)
     finish = models.IntegerField(u"Отметка времени окончания стрельбы",
@@ -282,6 +278,7 @@ class Shooting(models.Model):
                               help_text=u"Статус стрельбы - Готовится, "
                                         u"Выполняется, Закончен "
                                         u"или Прерван.")
+    user = models.ForeignKey(User, null=True, blank=True)
 
     def __unicode__(self):
         return "Shooting %s" % self.id
