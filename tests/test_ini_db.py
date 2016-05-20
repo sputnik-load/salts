@@ -9,7 +9,7 @@ import StringIO
 from django.db import connection
 from django.db.utils import (DEFAULT_DB_ALIAS, ConnectionHandler)
 from salts_prj.ini import ini_files, IniCtrl, IniDuplicateError
-from salts.models import TestIni, GroupIni
+from salts.models import TestIni
 
 
 def join_files(tmpdir, files, sub):
