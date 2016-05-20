@@ -17,6 +17,7 @@ from salts_prj.api_client import TankClient
 from django.forms.formsets import formset_factory
 from django.core.paginator import Paginator
 from django.views.generic.list import ListView
+from django.views.decorators.cache import never_cache
 from salts.models import (TestSettings, RPS, Target,
                           Generator, TestRun, TestResult, Tank, Shooting)
 from salts.forms import SettingsEditForm, RPSEditForm
@@ -514,6 +515,7 @@ def show_results_page(request):
     return response
 
 
+@never_cache
 def tank_monitoring(request):
     context = generate_context(request)
     context['title'] = u'Танки'
@@ -655,6 +657,7 @@ def get_remained_time(shooting):
     return remained
 
 
+@never_cache
 def get_tank_status(request):
     logger.info("get_tank_status: request.GET: %s" % request.GET)
     tank_id = request.GET.get('tank_id')
@@ -680,3 +683,7 @@ def get_tank_status(request):
                             content_type='application/json')
     set_version(response)
     return response
+
+def gitsync(request):
+    logger.info("gitsync calling")
+    return HttpResponse(status=200)
