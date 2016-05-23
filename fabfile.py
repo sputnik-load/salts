@@ -159,7 +159,7 @@ def test_():
 def backup_files():
     with cd(_my_replace('#PROJECT_ROOT#')):
         archive = '/tmp/salts-{ts}.tar.gz'.format(ts=get_ts())
-        sudo('tar --exclude "./media/results/*" --exclude "*.bz2" -zcvf "{archive}" .'.format(archive=archive))
+        sudo('tar --exclude "./media/results/*" --exclude "*.bz2" --exclude "*.zip" --exclude "*.gz" -zcvf "{archive}" .'.format(archive=archive))
         get(archive)
         remote_rm(archive)
 
