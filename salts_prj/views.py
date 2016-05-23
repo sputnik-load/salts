@@ -674,7 +674,9 @@ def get_tank_status(request):
         username = ''
         if shooting.user:
             if shooting.user.username == 'ltbot':
-                username = getpass.getuser()
+                username = shooting.alt_name        # временно, для консольных
+                                                    # тестов, чтобы обойти
+                                                    # аутентификацию
             else:
                 username = shooting.user.username
         results.append({'id': t.id, 'host': t.host,
