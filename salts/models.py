@@ -279,6 +279,10 @@ class Shooting(models.Model):
                                         u"Выполняется, Закончен "
                                         u"или Прерван.")
     user = models.ForeignKey(User, null=True, blank=True)
+    alt_name = models.CharField(u"Имя пользователя", max_length=128,
+                                help_text=u"Нужно, если не указан токен "
+                                          u"и тест запускается в консоли",
+                                null=True, blank=True)
 
     def __unicode__(self):
         return "Shooting %s" % self.id

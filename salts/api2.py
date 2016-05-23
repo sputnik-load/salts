@@ -94,11 +94,15 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
             raise ShootingHttpIssue(status.HTTP_403_FORBIDDEN,
                                     "Tank is busy on host %s" % tank.host)
         token = Token.objects.get(key=validated_data.get('token'))
+        alt_name = validated_data.get('alt_name')
+        if not alt_name:
+            alt_name = token.user.username
         sh_data = {'test_ini_id': test_ini.id,
                    'tank_id': tank.id,
                    'user_id': token.user.id,
                    'status': validated_data.get('status'),
-                   'test_id': validated_data.get('test_id')}
+                   'test_id': validated_data.get('test_id'),
+                   'alt_name': alt_name}
         shooting = Shooting.objects.create(**sh_data)
         return shooting
 
