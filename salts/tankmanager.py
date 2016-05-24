@@ -3,6 +3,7 @@
 import threading
 import time
 import os
+import shutil
 import json
 from salts.logger import Logger
 from salts.api_client import TankClient
@@ -16,7 +17,7 @@ def stg_completed_to_bool(value):
     if type(value) is bool:
         return value
 
-    return value.lower() == "true"
+    return value.lower() == 'true'
 
 
 class TankManagerException(Exception):
@@ -30,46 +31,25 @@ class TankManager(object):
     WAIT_FOR_RESULT_SAVED = 60  # seconds
 
     def __init__(self):
-        self.tanks = {}
-        self.lock = threading.Lock()
+        self.lock_dir_path = os.path.join(LT_PATH, 'lock')
+        if os.path.exists(self.lock_dir_path):
+            shutil.rmtree(self.lock_dir_path)
+        os.mkdir(self.lock_dir_path)
 
     def book(self, tank_id):
-        self.lock.acquire()
-        log.info("TankManager.book.1. Tanks: %s. TankManager: %s" % (self.tanks, self))
-        res = True
-        if self.is_busy(tank_id):
-            res = False
-        else:
-            self.tanks[tank_id] = {'is_busy': True}
-        log.info("TankManager.book.2. Tanks: %s. TankManager: %s" % (self.tanks, self))
-        self.lock.release()
-        return res
+        lock_path = os.path.join(self.lock_dir_path, '%s.lock' % tank_id)
+        if os.path.exists(lock_path):
+            return False
+        open(lock_path, 'w').close()
+        return True
 
     def free(self, tank_id):
-        self.lock.acquire()
-        log.info("TankManager.free.1. Tanks: %s. TankManager: %s." % (self.tanks, self))
-        res = True
-        if self.tanks.get(tank_id):
-            self.tanks[tank_id]['is_busy'] = False
-        else:
-            res = False
-        if res and self.tanks[tank_id]['is_busy']:
-            log.warning("TankManagerError.free: is_busy should be False. "
-                        "Tanks: %s. TankManager: %s." % (self.tanks, self))
-            self.tanks[tank_id]['is_busy'] = False
-        log.info("TankManager.free.2. Tanks: %s. TankManager: %s." % (self.tanks, self))
-        self.lock.release()
-        return res
+        lock_path = os.path.join(self.lock_dir_path, '%s.lock' % tank_id)
+        if not os.path.exists(lock_path):
+            return False
+        os.unlink(lock_path)
+        return True
 
-    def test_id(self, tank_id):
-        if self.tanks.get(tank_id):
-            return self.tanks[tank_id]['test_id']
-        return ''
-
-    def is_busy(self, tank_id):
-        if self.tanks.get(tank_id):
-            return self.tanks[tank_id]['is_busy']
-        return False
 
     def start(self, instance):
         thread_data = {"instance": instance}
@@ -90,7 +70,7 @@ class TankManager(object):
                 break
             time.sleep(TankManager.POLL_INTERVAL)
 
-    def _wait_for_completed(self, client, tank_id, expected_retcode):
+    def _wait_for_completed(self, client, test_id, tank_id, expected_retcode):
         def format_resp(resp):
             failures = resp.get('failures')
             if failures:
@@ -98,7 +78,6 @@ class TankManager(object):
                     fail['reason'] = fail['reason'].split('\n')
             return json.dumps(resp, indent=4)
 
-        test_id = self.tanks[tank_id]["test_id"]
         while True:
             resp = client.status(test_id)
             if "stage_completed" in resp:
@@ -130,13 +109,12 @@ class TankManager(object):
         test_id = resp["session"]
         instance.test_id = test_id
         instance.save()
-        self.tanks[instance.tank.id]["test_id"] = test_id
         log.info("Test with id=%s started." % test_id)
-        self._wait_for_completed(client, instance.tank.id, False)
+        self._wait_for_completed(client, test_id, instance.tank.id, False)
         instance.status = 'R'
         instance.save()
         client.resume(test_id)
-        self._wait_for_completed(client, instance.tank.id, True)
+        self._wait_for_completed(client, test_id, instance.tank.id, True)
         instance.status = 'F'
         instance.save()
         log.info("Test with id=%s stopped." % test_id)
