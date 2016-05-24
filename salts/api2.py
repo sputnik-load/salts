@@ -68,7 +68,7 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Shooting
 
-    def check_permission(self, key, test_ini_id):
+    def check_permission(self, key, test_ini):
         cursor = connection.cursor()
         cursor.execute(
             """
@@ -76,7 +76,7 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
                 JOIN auth_user_groups usr_gr USING(user_id)
                 JOIN salts_testini ti USING(group_id)
                 WHERE tok.key = '{token}' AND ti.id = {test_ini_id}
-            """.format(token=key, test_ini_id=test_ini_id))
+            """.format(token=key, test_ini_id=test_ini.id))
         if not cursor.fetchone():
             token = Token.objects.get(key=key)
             raise ShootingHttpIssue(
@@ -89,7 +89,7 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
         log.info("ShootingSerializer.create. validated_data: %s" % validated_data)
         test_ini = validated_data.get('test_ini')
         tank = validated_data.get('tank')
-        self.check_permission(validated_data.get('token'), test_ini.id)
+        self.check_permission(validated_data.get('token'), test_ini)
         if not tank_manager.book(tank.id):
             raise ShootingHttpIssue(status.HTTP_403_FORBIDDEN,
                                     "Tank is busy on host %s" % tank.host)
@@ -136,8 +136,9 @@ class ShootingViewSet(viewsets.ModelViewSet):
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except ShootingHttpIssue, exc:
-            log.warning("Shooting HTTP Issue: %s" % exc.message)
-            return Response(status=exc.code)
+            msg = "Shooting HTTP Issue: %s" % exc.message
+            log.warning(msg)
+            return Response(msg, status=exc.code, content_type='text/html')
 
     def perform_create(self, serializer, **kwargs):
         serializer.save(**kwargs)
@@ -154,8 +155,9 @@ class ShootingViewSet(viewsets.ModelViewSet):
             self.perform_update(serializer, **ex_data)
             return Response(serializer.data)
         except ShootingHttpIssue, exc:
-            log.warning("Shooting HTTP Issue: %s" % exc.message)
-            return Response(status=exc.code)
+            msg = "Shooting HTTP Issue: %s" % exc.message
+            log.warning(msg)
+            return Response(msg, status=exc.code, content_type='text/html')
 
     def perform_update(self, serializer, **kwargs):
         serializer.save(**kwargs)
