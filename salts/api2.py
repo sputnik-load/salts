@@ -84,15 +84,21 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
                     "Test %s disabled for '%s' user." %
                         (test_ini.scenario_id, token.user.username))
 
+    def _get_force_run(self, v):
+        if not v:
+            v = 0
+        return int(v)
 
     def create(self, validated_data):
-        log.info("ShootingSerializer.create. validated_data: %s" % validated_data)
+        log.info("ShootingSerializer.create. "
+                 "validated_data: %s" % validated_data)
         test_ini = validated_data.get('test_ini')
         tank = validated_data.get('tank')
-        self.check_permission(validated_data.get('token'), test_ini)
-        if not tank_manager.book(tank.id):
-            raise ShootingHttpIssue(status.HTTP_403_FORBIDDEN,
-                                    "Tank is busy on host %s" % tank.host)
+        if not self._get_force_run(validated_data.get('force_run')):
+            self.check_permission(validated_data.get('token'), test_ini)
+            if not tank_manager.book(tank.id):
+                raise ShootingHttpIssue(status.HTTP_403_FORBIDDEN,
+                                        "Tank is busy on host %s" % tank.host)
         token = Token.objects.get(key=validated_data.get('token'))
         alt_name = validated_data.get('alt_name')
         if not alt_name:
@@ -108,7 +114,9 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
 
     def update(self, instance, validated_data):
         log.info("Shooting. Update: validated_data: %s" % validated_data)
-        self.check_permission(validated_data.get('token'), instance.test_ini)
+        if not self._get_force_run(validated_data.get('force_run')):
+            self.check_permission(validated_data.get('token'),
+                                  instance.test_ini)
         fields = []
         for k in validated_data:
             if k in self.updated_fields:
@@ -127,8 +135,12 @@ class ShootingViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         ex_data = {}
-        if "HTTP_AUTHORIZATION" in request.META:
-            ex_data["token"] = request.META["HTTP_AUTHORIZATION"].replace("Token ", "")
+        if request.META.get('HTTP_AUTHORIZATION'):
+            ex_data['token'] = \
+                request.META['HTTP_AUTHORIZATION'].replace('Token ', '')
+        force_run = request.data.get('force_run')
+        if force_run:
+            ex_data['force_run'] = force_run
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -145,8 +157,12 @@ class ShootingViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         ex_data = {}
-        if "HTTP_AUTHORIZATION" in request.META:
-            ex_data["token"] = request.META["HTTP_AUTHORIZATION"].replace("Token ", "")
+        if request.META.get('HTTP_AUTHORIZATION'):
+            ex_data['token'] = \
+                request.META['HTTP_AUTHORIZATION'].replace('Token ', '')
+        force_run = request.data.get('force_run')
+        if force_run:
+            ex_data['force_run'] = force_run
         try:
             partial = kwargs.pop('partial', False)
             instance = self.get_object()
