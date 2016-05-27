@@ -19,7 +19,7 @@
          data-search="false">
       <thead style="background-color: Bisque">
         <tr>
-          <th class="col-sm-1" data-field="id" title="ID">ID</th>
+          <th class="col-sm-1" data-field="id" data-visible="true" title="ID">ID</th>
           <th class="col-sm-2" data-field="host" data-sortable="true" title="Имя">Имя</th>
           <th class="col-sm-2" data-field="username" data-sortable="true" title="Имя пользователя">Пользователь</th>
           <th class="col-sm-2" data-field="scenario" title="Сценарий">Сценарий</th>
@@ -72,9 +72,14 @@
     var time_line = h + ':' + m + ':' + s;
 
     var td = $("#table tbody tr:nth-child(" + (index+1) + ") td");
+    var th = $("#table thead th");
     if ($(td).size() > 1) {
-      $($(td).get(4)).html(status_formatter(row['status']));
-      $($(td).get(5)).html(time_line);
+      var ix = $(th).filter("[data-field='status']").index();
+      if (ix != -1) 
+        $(td).eq(ix).html(status_formatter(row['status']));
+      ix = $(th).filter("[data-field='countdown']").index();
+      if (ix != -1) 
+        $(td).eq(ix).html(status_formatter(row['countdown']));
       if (row['status'] == 'R')
         sec_num -= 0.5;
       if ($.inArray(row['status'], ['I', 'F']) >= 0)
