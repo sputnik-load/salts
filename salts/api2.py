@@ -10,6 +10,7 @@ from salts.models import (TestResult, GeneratorTypeList,
 from django.db import connection
 from logger import Logger
 from tankmanager import tank_manager
+import socket
 
 
 log = Logger.get_logger()
@@ -29,6 +30,7 @@ class GeneratorTypeViewSet(viewsets.ModelViewSet):
     filter_fields = ('id', 'name')
 
 
+
 class TankSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
     class Meta:
@@ -37,9 +39,21 @@ class TankSerializer(serializers.HyperlinkedModelSerializer):
 
 class TankViewSet(viewsets.ModelViewSet):
     serializer_class = TankSerializer
-    queryset = Tank.objects.all()
-    filter_backends = (filters.DjangoFilterBackend,)
     filter_fields = ('host', 'port')
+    queryset = Tank.objects.all()
+
+    def get_queryset(self):
+        host = self.request.query_params.get('host', None)
+        if not host:
+            return super(TankViewSet, self).get_queryset()
+        try:
+            info = socket.gethostbyname_ex(host)
+        except:
+            info = None
+        if not info:
+            log.warning("Invalid '%s' host name is given." % host)
+            return Tank.objects.none()
+        return Tank.objects.filter(host=info[0])
 
 
 class ShootingHttpIssue(Exception):
