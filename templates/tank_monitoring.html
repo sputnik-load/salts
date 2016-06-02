@@ -12,7 +12,7 @@
          data-row-style="row_style"
          data-sort-name="name"
          data-sort-order="desc"
-         data-show-columns="false"
+         data-show-columns="true"
          data-resizable="true"
          data-key-events="true"
          data-ajax="ajax_request"
@@ -48,8 +48,10 @@
   }
 
 
-  function countdown_formatter(v, row, index) { 
-    return remainedTime(v, row, index);
+  function countdown_formatter(v, row, index) {
+    var rt = remainedTime(v, row, index);
+    console.log('Updated row[' + index + '] = ' + v + '. RT = ' + rt);
+    return rt;
   }
 
 
@@ -78,12 +80,13 @@
       if (ix != -1) 
         $(td).eq(ix).html(status_formatter(row['status']));
       ix = $(th).filter("[data-field='countdown']").index();
-      if (ix != -1) 
+      if (ix != -1) {
         $(td).eq(ix).html(time_line);
+      }
       if (row['status'] == 'R')
         sec_num -= 0.5;
       if ($.inArray(row['status'], ['I', 'F']) >= 0)
-        return '';
+        return time_line;
     } 
     if (n > 0 && !(n % 10)) {
       $.ajax({
