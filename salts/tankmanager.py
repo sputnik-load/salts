@@ -6,6 +6,7 @@ import os
 import shutil
 import json
 import re
+import pickle
 from salts.logger import Logger
 from salts.api_client import TankClient
 from salts_prj.settings import LT_PATH
@@ -175,5 +176,27 @@ class TankManager(object):
         except Exception, exc:
             log.warning("Exception when test "
                         "has been interrupted: %s" % exc)
+
+    def save_to_lock(self, tank_id, key, value):
+        lock_path = os.path.join(self.lock_dir_path, '%s.lock' % tank_id)
+        if os.path.exists(lock_path):
+            data = {}
+            with open(lock_path, 'rb') as f:
+                try:
+                    data = pickle.load(f)
+                except EOFError:
+                    data = {}
+            data[key] = value
+            with open(lock_path, 'wb') as f:
+                pickle.dump(data, f)
+
+    def read_from_lock(self, tank_id, key):
+        lock_path = os.path.join(self.lock_dir_path, '%s.lock' % tank_id)
+        if os.path.exists(lock_path):
+            with open(lock_path, 'rb') as f:
+                data = pickle.load(f)
+                return data.get(key)
+        return None
+
 
 tank_manager = TankManager()

@@ -22,7 +22,10 @@ from django.views.decorators.cache import never_cache
 from salts.models import (TestSettings, RPS, Target,
                           Generator, TestRun, TestResult, Tank, Shooting)
 from salts.forms import SettingsEditForm, RPSEditForm
-from settings import LT_PATH, DATABASES, BASE_DIR, VERSION_FILE_NAME
+from salts.tankmanager import tank_manager
+from salts_prj.ini import ini_manager
+from settings import (LT_PATH, LT_GITLAB, DATABASES,
+                      BASE_DIR, VERSION_FILE_NAME)
 from requests import ConnectionError
 
 
@@ -679,12 +682,19 @@ def get_tank_status(request):
                                                     # аутентификацию
             else:
                 username = shooting.user.username
-        results.append({'id': t.id, 'host': t.host,
-                        'username': username,
-                        'scenario': shooting.test_ini.scenario_id,
-                        'status': shooting.status,
-                        'countdown': get_remained_time(shooting),
-                        'shooting_id': shooting.id})
+        scen_id = shooting.test_ini.scenario_id
+        values = {'id': t.id, 'host': t.host,
+                  'username': username,
+                  'gitlab_url': '%s%s' % (LT_GITLAB,
+                                          shooting.test_ini.scenario_id),
+                  'scenario_name': ini_manager.get_scenario_name(scen_id),
+                  'status': shooting.status,
+                  'countdown': get_remained_time(shooting),
+                  'shooting_id': shooting.id}
+        port = tank_manager.read_from_lock(t.id, 'web_console_port')
+        if port:
+            values['webconsole'] = "%s:%s" % (t.host, port)
+        results.append(values)
 
     response_dict = {}
     response_dict['total'] = len(results)

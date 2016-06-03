@@ -131,6 +131,9 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
         if not self._get_force_run(validated_data.get('force_run')):
             self.check_permission(validated_data.get('token'),
                                   instance.test_ini)
+
+        tank_manager.save_to_lock(instance.tank.id, 'web_console_port',
+                                  validated_data.get('web_console_port'))
         fields = []
         for k in validated_data:
             if k in self.updated_fields:
@@ -147,14 +150,17 @@ class ShootingViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.DjangoFilterBackend,)
     filter_fields = ('id', 'test_id', 'status')
 
+    def _add_ex_data(self, ex_data, req_data, key):
+        value = req_data.get(key)
+        if value:
+            ex_data[key] = value
+
     def create(self, request, *args, **kwargs):
         ex_data = {}
         if request.META.get('HTTP_AUTHORIZATION'):
             ex_data['token'] = \
                 request.META['HTTP_AUTHORIZATION'].replace('Token ', '')
-        force_run = request.data.get('force_run')
-        if force_run:
-            ex_data['force_run'] = force_run
+        self._add_ex_data(ex_data, request.data, 'force_run')
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -174,9 +180,8 @@ class ShootingViewSet(viewsets.ModelViewSet):
         if request.META.get('HTTP_AUTHORIZATION'):
             ex_data['token'] = \
                 request.META['HTTP_AUTHORIZATION'].replace('Token ', '')
-        force_run = request.data.get('force_run')
-        if force_run:
-            ex_data['force_run'] = force_run
+        self._add_ex_data(ex_data, request.data, 'force_run')
+        self._add_ex_data(ex_data, request.data, 'web_console_port')
         try:
             partial = kwargs.pop('partial', False)
             instance = self.get_object()

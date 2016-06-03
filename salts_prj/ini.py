@@ -10,6 +10,7 @@ from django.contrib.auth.models import Group
 from salts.models import TestIni
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError, Error
 from salts.logger import Logger
+from salts_prj.settings import LT_PATH, EXCLUDE_INI_FILES
 
 
 log = Logger.get_logger()
@@ -151,6 +152,22 @@ class IniCtrl(object):
         except TestIni.DoesNotExist:
             return 0
 
+    def get_scenario_name(self, scen_id):
+        config = ConfigParser()
+        ini_path = os.path.join(self.dir_path, scen_id)
+        test_name = ''
+        if os.path.exists(ini_path):
+            config.read(ini_path)
+            try:
+                test_name = config.get(IniCtrl.SECTION, 'test_name')
+            except (NoSectionError, NoOptionError):
+                log.warning("Config %s is not scenario: "
+                            "there is not 'test_name' option "
+                            "in the 'sputnikreport' section." % ini_path)
+        else:
+            log.warning("Config %s is not found." % ini_path)
+        return test_name
+
     def sync(self):
         scenario_pathes = ini_files(self.dir_path)
         absent_ini_pathes = []
@@ -198,3 +215,7 @@ class IniCtrl(object):
         for spath in self.get_scenario_pathes("A"):
             if spath not in scenario_pathes:
                 self.set_scenario_status(spath, "D")
+
+
+
+ini_manager = IniCtrl(LT_PATH, EXCLUDE_INI_FILES)

@@ -19,15 +19,26 @@
          data-search="false">
       <thead style="background-color: Bisque">
         <tr>
-          <th class="col-sm-1" data-field="id" data-visible="true" title="ID">ID</th>
-          <th class="col-sm-2" data-field="host" data-sortable="true" title="Имя">Имя</th>
-          <th class="col-sm-2" data-field="username" data-sortable="true" title="Имя пользователя">Пользователь</th>
-          <th class="col-sm-2" data-field="scenario" title="Сценарий">Сценарий</th>
-          <th class="col-sm-2" data-field="status" data-formatter="status_formatter" 
+          <th class="col-sm-1" data-field="id"
+              data-visible="true" title="ID">ID</th>
+          <th class="col-sm-2" data-field="host"
+              data-sortable="true" title="Имя">Имя</th>
+          <th class="col-sm-2" data-field="username"
+              data-sortable="true" title="Имя пользователя">Пользователь</th>
+          <th class="col-sm-2" data-field="scenario_name"
+              data-formatter="scenario_name_formatter"
+              title="Сценарий">Сценарий</th>
+          <th class="col-sm-2" data-field="status"
+              data-formatter="status_formatter" 
               title="Статус">Статус</th>
           <th class="col-sm-3" data-field="countdown"
               data-formatter="countdown_formatter"
               title="Осталось">Осталось</th>
+          <th class="col-sm-3" data-field="webconsole"
+              data-formatter="webconsole_formatter"
+              title="Web-консоль танка">WEB-консоль</th>
+          <th class="col-sm-3" data-field="test_result"
+              title="Ссылка на результат теста">Результат теста</th>
         </tr>
       </thead>
   </table>
@@ -47,20 +58,29 @@
     return status_values[st];
   }
 
-
   function countdown_formatter(v, row, index) {
-    var rt = remainedTime(v, row, index);
-    console.log('Updated row[' + index + '] = ' + v + '. RT = ' + rt);
-    return rt;
+    return remainedTime(v, row, index);
   }
 
+  function webconsole_formatter(v, row, index) {
+    if (v === undefined) {
+      return "-";
+    }
+    return "<a href='http://" + v + "' target='_blank'>" + v + "</a>";
+  }
+
+  function scenario_name_formatter(v, row, index) {
+    if (v === undefined) {
+      return "-";
+    }
+    return "<a href='" + row['gitlab_url'] + "' target='_blank'>" + 
+            row['scenario_name'] + "</a>";
+  }
 
   function checkTime(i) {
     if (i < 10) {
       i = "0" + i;
-    }
-    return i;
-  }
+  } return i; }
   
   function remainedTime(sec_num, row, index, n=0) {
     if (sec_num < 0)
