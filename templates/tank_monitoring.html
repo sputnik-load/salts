@@ -38,6 +38,7 @@
               data-formatter="webconsole_formatter"
               title="Web-консоль танка">WEB-консоль</th>
           <th class="col-sm-3" data-field="test_result"
+              data-formatter="test_result_formatter"
               title="Ссылка на результат теста">Результат теста</th>
         </tr>
       </thead>
@@ -75,6 +76,18 @@
     }
     return "<a href='" + row['gitlab_url'] + "' target='_blank'>" + 
             row['scenario_name'] + "</a>";
+  }
+
+  function test_result_formatter(v, row, index) {
+    if (v === undefined) {
+      return "-";
+    }
+
+    var test_result_url = window.location.protocol + "//" +
+                          window.location.host +
+                          "/admin/salts/testresult/?id=" + v;
+    return "<a href='" + test_result_url + "' target='_blank'>" +
+           row['test_result'] + "</a>";
   }
 
   function checkTime(i) {

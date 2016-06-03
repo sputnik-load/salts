@@ -694,6 +694,10 @@ def get_tank_status(request):
         port = tank_manager.read_from_lock(t.id, 'web_console_port')
         if port:
             values['webconsole'] = "%s:%s" % (t.host, port)
+        if shooting.status in ['F', 'I']:
+            tr = TestResult.objects.filter(test_id=shooting.test_id)
+            if tr:
+                values['test_result'] = tr[0].id
         results.append(values)
 
     response_dict = {}
