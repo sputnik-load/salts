@@ -178,6 +178,8 @@ class TankManager(object):
                         "has been interrupted: %s" % exc)
 
     def save_to_lock(self, tank_id, key, value):
+        if value is None:
+            return
         lock_path = os.path.join(self.lock_dir_path, '%s.lock' % tank_id)
         if os.path.exists(lock_path):
             data = {}
