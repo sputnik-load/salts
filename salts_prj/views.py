@@ -690,10 +690,14 @@ def get_tank_status(request):
                   'scenario_name': ini_manager.get_scenario_name(scen_id),
                   'status': shooting.status,
                   'countdown': get_remained_time(shooting),
-                  'shooting_id': shooting.id}
+                  'shooting_id': shooting.id,
+                  'ticket_id': shooting.ticket_id}
         port = tank_manager.read_from_lock(t.id, 'web_console_port')
         if port:
             values['webconsole'] = "%s:%s" % (t.host, port)
+        base_ticket_url = tank_manager.read_from_lock(t.id, 'base_ticket_url')
+        if base_ticket_url and shooting.ticket_id:
+            values['ticket_url'] = base_ticket_url + shooting.ticket_id
         if shooting.status in ['F', 'I']:
             tr = TestResult.objects.filter(test_id=shooting.test_id)
             if tr:

@@ -34,6 +34,9 @@
           <th class="col-sm-3" data-field="countdown"
               data-formatter="countdown_formatter"
               title="Осталось">Осталось</th>
+          <th class="col-sm-3" data-field="ticket_url"
+              data-formatter="ticket_url_formatter"
+              title="Осталось">Тикет</th>
           <th class="col-sm-3" data-field="webconsole"
               data-formatter="webconsole_formatter"
               title="Web-консоль танка">WEB-консоль</th>
@@ -88,6 +91,14 @@
                           "/admin/salts/testresult/?id=" + v;
     return "<a href='" + test_result_url + "' target='_blank'>" +
            row['test_result'] + "</a>";
+  }
+
+  function ticket_url_formatter(v, row, index) {
+    if (v === undefined) {
+      return "-";
+    }
+    return "<a href='" + row['ticket_url'] + 
+            "' target='_blank'>" + row['ticket_id'] + "</a>";
   }
 
   function checkTime(i) {
