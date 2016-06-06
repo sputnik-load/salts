@@ -9,6 +9,7 @@ import codecs
 import re
 import pickle
 import getpass
+from operator import itemgetter
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -647,6 +648,8 @@ def get_remained_time(shooting):
         if shooting.start:
             if shooting.status == 'I':
                 ts = shooting.finish
+                if not ts:
+                    ts = shooting.start
             else:
                 ts = int(time.time() + 0.5)
             if shooting.status == 'P':
@@ -703,6 +706,13 @@ def get_tank_status(request):
             if tr:
                 values['test_result'] = tr[0].id
         results.append(values)
+    sort_param = request_get_value(request, 'sort')
+    if sort_param:
+        order = request_get_value(request, 'order')
+        if not order:
+            order = 'asc'
+        reverse = order == 'desc'
+        results = sorted(results, key=itemgetter('id'), reverse=reverse)
 
     response_dict = {}
     response_dict['total'] = len(results)
