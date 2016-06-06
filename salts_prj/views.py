@@ -25,7 +25,7 @@ from salts.models import (TestSettings, RPS, Target,
 from salts.forms import SettingsEditForm, RPSEditForm
 from salts.tankmanager import tank_manager
 from salts_prj.ini import ini_manager
-from settings import (LT_PATH, LT_GITLAB, DATABASES,
+from settings import (LT_PATH, LT_GITLAB, LT_JIRA, DATABASES,
                       BASE_DIR, VERSION_FILE_NAME)
 from requests import ConnectionError
 
@@ -698,9 +698,8 @@ def get_tank_status(request):
         port = tank_manager.read_from_lock(t.id, 'web_console_port')
         if port:
             values['webconsole'] = "%s:%s" % (t.host, port)
-        base_ticket_url = tank_manager.read_from_lock(t.id, 'base_ticket_url')
-        if base_ticket_url and shooting.ticket_id:
-            values['ticket_url'] = base_ticket_url + shooting.ticket_id
+        if shooting.ticket_id:
+            values['ticket_url'] = '%s%s' % (LT_JIRA, shooting.ticket_id)
         if shooting.status in ['F', 'I']:
             tr = TestResult.objects.filter(test_id=shooting.test_id)
             if tr:

@@ -113,8 +113,6 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
             if not tank_manager.book(tank.id):
                 raise ShootingHttpIssue(status.HTTP_403_FORBIDDEN,
                                         "Tank is busy on host %s" % tank.host)
-            tank_manager.save_to_lock(tank.id, 'base_ticket_url',
-                                      validated_data.get('base_ticket_url'))
         token = Token.objects.get(key=validated_data.get('token'))
         alt_name = validated_data.get('alt_name')
         if not alt_name:
@@ -164,7 +162,6 @@ class ShootingViewSet(viewsets.ModelViewSet):
             ex_data['token'] = \
                 request.META['HTTP_AUTHORIZATION'].replace('Token ', '')
         self._add_ex_data(ex_data, request.data, 'force_run')
-        self._add_ex_data(ex_data, request.data, 'base_ticket_url')
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
