@@ -283,6 +283,8 @@ class Shooting(models.Model):
                                 help_text=u"Нужно, если не указан токен "
                                           u"и тест запускается в консоли",
                                 null=True, blank=True)
+    ticket_id = models.CharField(u"Тикет ID", max_length=64, help_text='',
+                                 null=True, blank=True)
 
     def __unicode__(self):
         return "Shooting %s" % self.id
