@@ -52,12 +52,18 @@ class IniDuplicateError(Exception):
 
 class IniCtrl(object):
 
-    SECTION = "sputnikreport"
+    SECTION = 'sputnikreport'
+    DEFAULT_GROUP = 'Salts'
 
     def __init__(self, root, exclude):
         self.dir_path = root
         self.exclude_names = exclude
-        g = Group.objects.get(name='Salts')
+        try:
+            g = Group.objects.get(name=IniCtrl.DEFAULT_GROUP)
+        except Group.DoesNotExist:
+            g = Group(name=IniCtrl.DEFAULT_GROUP)
+            g.save()
+            log.info("Group '%s' has been added." % IniCtrl.DEFAULT_GROUP)
         self.default_group_id = g.id
 
     def _test_id_from_ini(self, scen_id):
