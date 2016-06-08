@@ -196,7 +196,10 @@ class TankManager(object):
         lock_path = os.path.join(self.lock_dir_path, '%s.lock' % tank_id)
         if os.path.exists(lock_path):
             with open(lock_path, 'rb') as f:
-                data = pickle.load(f)
+                try:
+                    data = pickle.load(f)
+                except EOFError:
+                    data = {}
                 return data.get(key)
         return None
 
