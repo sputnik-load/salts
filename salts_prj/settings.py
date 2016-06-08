@@ -207,8 +207,11 @@ if os.path.exists(debug_settings_path):
             cache_on = False
     if 'repo' in sections:
         options = cfg.options('repo')
-        if 'lt_path' in cfg.options('repo'):
+        if 'lt_path' in options:
             LT_PATH = cfg.get('repo', 'lt_path')
+        if 'lt_gitlab' in options:
+            LT_GITLAB = cfg.get('repo', 'lt_gitlab')
+
 if cache_on:
     MIDDLEWARE_CLASSES = (
         'django.middleware.cache.UpdateCacheMiddleware',
