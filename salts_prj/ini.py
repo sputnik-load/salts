@@ -52,7 +52,8 @@ class IniDuplicateError(Exception):
 
 class IniCtrl(object):
 
-    SECTION = 'sputnikreport'
+    SALTS_SECTION = 'salts'
+    REPORT_SECTION = 'sputnikreport'
     DEFAULT_GROUP = 'Salts'
 
     def __init__(self, root, exclude):
@@ -70,7 +71,7 @@ class IniCtrl(object):
         config = ConfigParser()
         config.read(os.path.join(self.dir_path, scen_id))
         try:
-            return int(config.get(IniCtrl.SECTION, "test_id"))
+            return int(config.get(IniCtrl.SALTS_SECTION, 'test_id'))
         except (NoOptionError, NoSectionError):
             return 0
 
@@ -79,12 +80,12 @@ class IniCtrl(object):
         if test_id == old_test_id:
             return
 
-        section_line = "[%s]" % IniCtrl.SECTION
+        section_line = "[%s]" % IniCtrl.SALTS_SECTION
         default_line = "[DEFAULT]"
         config = ConfigParser()
         ini_path = os.path.join(self.dir_path, scen_id)
         config.read(ini_path)
-        if IniCtrl.SECTION not in config.sections():
+        if IniCtrl.SALTS_SECTION not in config.sections():
             with open(ini_path, "a") as f:
                 f.write("\n%s\n" % section_line)
         content = []
@@ -165,7 +166,7 @@ class IniCtrl(object):
         if os.path.exists(ini_path):
             config.read(ini_path)
             try:
-                test_name = config.get(IniCtrl.SECTION, 'test_name')
+                test_name = config.get(IniCtrl.REPORT_SECTION, 'test_name')
             except (NoSectionError, NoOptionError):
                 log.warning("Config %s is not scenario: "
                             "there is not 'test_name' option "
