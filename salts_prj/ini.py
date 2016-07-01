@@ -55,6 +55,7 @@ class IniCtrl(object):
     SALTS_SECTION = 'salts'
     REPORT_SECTION = 'sputnikreport'
     DEFAULT_GROUP = 'Salts'
+    SCENARIO_ID_OPTION = 'test_ini_id'
 
     def __init__(self, root, exclude):
         self.dir_path = root
@@ -71,7 +72,8 @@ class IniCtrl(object):
         config = ConfigParser()
         config.read(os.path.join(self.dir_path, scen_id))
         try:
-            return int(config.get(IniCtrl.SALTS_SECTION, 'test_id'))
+            return int(config.get(IniCtrl.SALTS_SECTION,
+                                  IniCtrl.SCENARIO_ID_OPTION))
         except (NoOptionError, NoSectionError):
             return 0
 
@@ -99,14 +101,18 @@ class IniCtrl(object):
                 if re.match("^ *\[.*\]", line):
                     section_found = False
                     continue
-                if re.match("^ *test_id *=", strip_line):
+                pat = "^ *%s *=" % IniCtrl.SCENARIO_ID_OPTION
+                if re.match(pat, strip_line):
                     del(content[ix])
-                    content.insert(ix, "test_id = %s\n" % test_id)
+                    content.insert(ix, "%s = %s\n" \
+                                   % (IniCtrl.SCENARIO_ID_OPTION, test_id))
                     break
             if strip_line == section_line:
                 section_found = True
                 if not old_test_id:
-                    content.insert(ix + 1, "test_id = %s\n" % test_id)
+                    content.insert(ix + 1,
+                                   "%s = %s\n" \
+                                   % (IniCtrl.SCENARIO_ID_OPTION, test_id))
                     break
             ix += 1
         with open(ini_path, "w") as f:
@@ -114,7 +120,8 @@ class IniCtrl(object):
 
     def _last_test_id(self):
         cursor = connection.cursor()
-        cursor.execute("SELECT id FROM salts_testini ORDER BY id DESC LIMIT 1")
+        cursor.execute("SELECT id FROM salts_testini "
+                       "ORDER BY id DESC LIMIT 1")
         res = cursor.fetchall()
         if not res:
             return 0
