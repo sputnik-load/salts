@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load url from future %}
+
+{% block container %}
+
+{% if form.errors %}
+<p style="color:red;">Неверное имя пользователя или пароль. Проверьте правильность введенных данных.</p>
+{% endif %}
+
+<p>Вы успешно вышли.</p>
+
+{% endblock %}

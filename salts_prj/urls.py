@@ -9,7 +9,7 @@ from salts_prj.views import run_test_api, stop_test_api, status_test_api
 from salts_prj.views import show_test_settings, edit_test_parameters, poll_servers
 from salts_prj.views import show_results_page, get_results
 from salts_prj.views import show_trends_page, tank_monitoring, get_tank_status
-from salts_prj.views import gitsync
+from salts_prj.views import logout, gitsync
 
 
 admin.autodiscover()
@@ -23,6 +23,7 @@ urlpatterns = patterns('',
 
     url(r'^$', RedirectView.as_view(url='/results/')),
     url(r'^login/', views.login, name="login"),
+    url(r'^logout/', logout, name="logout"),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^favicon.ico/$', lambda x: HttpResponseRedirect(settings.STATIC_URL+'favicon.ico')), #google chrome favicon fix
     url(r'^tests/$', show_test_settings),

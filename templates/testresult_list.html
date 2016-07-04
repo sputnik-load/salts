@@ -54,8 +54,8 @@
       
     var $table = $('.table');
 
-      function edit_page_url(id) {
-        return window.location.protocol + "//" + window.location.host + "/admin/salts/testresult/?id=" + id;
+      function edit_page_url(edit_url, id) {
+        return window.location.protocol + "//" + window.location.host + edit_url + id;
       }
 
       function ajax_request(params) {
@@ -86,7 +86,7 @@
         if (value === "") {
           return "-";
         }
-        return "<a href='" + edit_page_url(row["id"]) + "' target='_blank'>" + value + "</a>";
+        return "<a href='" + edit_page_url(row["edit_url"], row["id"]) + "' target='_blank'>" + value + "</a>";
       }
 
       function test_status_formatter(value, row) {

@@ -12,6 +12,7 @@ import getpass
 from operator import itemgetter
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import views
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
@@ -588,6 +589,12 @@ def user_filter(request, results):
     return results
 
 
+def edit_page_url(request):
+    if request.user.is_staff or request.user.is_superuser:
+        return "/admin/salts/testresult/?id="
+    return "/edit/?id="
+
+
 def get_results(request):
     results = TestResult.objects.extra(select={"http_net": "http_errors_perc || '/' || net_errors_perc",
                                                "duration": "to_char(dt_finish - dt_start, 'HH24:MI:SS')",
@@ -627,6 +634,7 @@ def get_results(request):
         else:
             r["gen_type_list"] = ""
         r["generator"] = "%s / %s" % (r["generator"], r["gen_type_list"])
+        r['edit_url'] = edit_page_url(request)
 
     offset = request_get_value(request, "offset")
     limit = request_get_value(request, "limit")
@@ -723,6 +731,16 @@ def get_tank_status(request):
                             content_type='application/json')
     set_version(response)
     return response
+
+
+@never_cache
+def logout(request):
+    context = generate_context(request)
+    context['title'] = u"Результаты теста"
+    response = views.logout(request, extra_context=context)
+    set_version(response)
+    return response
+
 
 def gitsync(request):
     logger.info("gitsync calling")
