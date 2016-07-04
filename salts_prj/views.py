@@ -11,6 +11,7 @@ import pickle
 import getpass
 from operator import itemgetter
 
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
@@ -512,6 +513,7 @@ def generate_context(request):
     return context
 
 
+@login_required
 def show_results_page(request):
     context = generate_context(request)
     context['title'] = u"Результаты теста"
@@ -521,6 +523,7 @@ def show_results_page(request):
 
 
 @never_cache
+@login_required
 def tank_monitoring(request):
     context = generate_context(request)
     context['title'] = u'Танки'
