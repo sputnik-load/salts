@@ -9,7 +9,7 @@ from salts_prj.views import run_test_api, stop_test_api, status_test_api
 from salts_prj.views import show_test_settings, edit_test_parameters, poll_servers
 from salts_prj.views import show_results_page, get_results
 from salts_prj.views import show_trends_page, tank_monitoring, get_tank_status
-from salts_prj.views import logout, gitsync
+from salts_prj.views import logout, gitsync, edit_testresult, update_testresult
 
 
 admin.autodiscover()
@@ -37,7 +37,9 @@ urlpatterns = patterns('',
     url(r'^results/$', show_results_page, name='test_results'),
     url(r'^get_results/$', get_results),
     url(r'^results/graph/$', show_trends_page),
-    url(r'^gitsync/$', gitsync)
+    url(r'^gitsync/$', gitsync),
+    url(r'^edit/$', edit_testresult),
+    url(r'^update/$', update_testresult)
 )
 
 if settings.DEBUG:

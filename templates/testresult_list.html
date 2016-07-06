@@ -54,66 +54,72 @@
       
     var $table = $('.table');
 
-      function edit_page_url(edit_url, id) {
-        return window.location.protocol + "//" + window.location.host + edit_url + id;
-      }
+    function edit_page_url(edit_url, id) {
+      return window.location.protocol + "//" + window.location.host + edit_url + id;
+    }
 
-      function ajax_request(params) {
-        url_param = $.url().param();
-        for (name in url_param) {
-          if (!params.data.hasOwnProperty(name)) {
-            params.data[name] = url_param[name];
-          }
+    function ajax_request(params) {
+      var url_param = $.url().param();
+      for (name in url_param) {
+        if (!params.data.hasOwnProperty(name)) {
+          params.data[name] = url_param[name];
         }
-        $.ajax(params);        
       }
+      if ('cc' in url_param && url_param['cc'] === '0') {
+        params.cache = false;
+      }
+      $.ajax(params);        
+    }
 
-      function graph_url_formatter(value) {
-        if (value === "") {
-          return "-";
-        }
-        return "<a href='" + value + "'>График</a>";
+    function graph_url_formatter(value) {
+      if (value === "") {
+        return "-";
       }
+      return "<a href='" + value + "'>График</a>";
+    }
 
-      function ticket_id_formatter(value) {
-        if (value === "") {
-          return "-";
-        }
-        return "<a href='https://task.ptnik.su/browse/" + value + "' target='_blank'>" + value + "</a>";
+    function ticket_id_formatter(value) {
+      if (value === "") {
+        return "-";
       }
+      return "<a href='https://task.ptnik.su/browse/" + value + "' target='_blank'>" + value + "</a>";
+    }
 
-      function test_name_formatter(value, row) {
-        if (value === "") {
-          return "-";
-        }
-        return "<a href='" + edit_page_url(row["edit_url"], row["id"]) + "' target='_blank'>" + value + "</a>";
+    function test_name_formatter(value, row) {
+      if (value === '') {
+        return '-';
       }
+      if (row['edit_url'] === '') {
+        return value;
+      }
+      return "<a href='" + edit_page_url(row['edit_url'], row['id']) + "'>" + value + "</a>";
+    }
 
-      function test_status_formatter(value, row) {
-        var human_values = {
-          unk: "Unknown",
-          dbg: "Debug",
-          pass: "Pass",
-          fail: "Fail"
-        };
-        return human_values[value];
-      }
+    function test_status_formatter(value, row) {
+      var human_values = {
+        unk: "Unknown",
+        dbg: "Debug",
+        pass: "Pass",
+        fail: "Fail"
+      };
+      return human_values[value];
+    }
 
-      function row_style(row, index) {
-        var css_status_classes = { 
-          unk: "unk", 
-          dbg: "debug",
-          fail: "failed",
-          pass: "success"
-        };
-        if (index % 2 === 0) {
-          return {classes: css_status_classes[row["test_status"]] + "_even"};
-        }
-        return {classes: css_status_classes[row["test_status"]] + "_odd"};
+    function row_style(row, index) {
+      var css_status_classes = { 
+        unk: "unk", 
+        dbg: "debug",
+        fail: "failed",
+        pass: "success"
+      };
+      if (index % 2 === 0) {
+        return {classes: css_status_classes[row["test_status"]] + "_even"};
       }
-      $('#table').bootstrapTable({
-        onDblClickRow: function (row, $element) {
-          window.open(edit_page_url(row["id"]));
-        }
-      });
+      return {classes: css_status_classes[row["test_status"]] + "_odd"};
+    }
+    $('#table').bootstrapTable({
+      onDblClickRow: function (row, $element) {
+        window.open(edit_page_url(row["id"]));
+      }
+    });
 {% endblock scripts_blk %}

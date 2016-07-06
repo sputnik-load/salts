@@ -22,11 +22,13 @@ from django.forms.formsets import formset_factory
 from django.core.paginator import Paginator
 from django.views.generic.list import ListView
 from django.views.decorators.cache import never_cache
+from django.core.cache import caches
 from salts.models import (TestSettings, RPS, Target,
                           Generator, TestRun, TestResult, Tank, Shooting)
 from salts.forms import SettingsEditForm, RPSEditForm
 from salts.tankmanager import tank_manager
 from salts_prj.ini import ini_manager
+from salts_prj.forms import TestResultEditForm
 from settings import (LT_PATH, LT_GITLAB, LT_JIRA, DATABASES,
                       BASE_DIR, VERSION_FILE_NAME)
 from requests import ConnectionError
@@ -589,10 +591,12 @@ def user_filter(request, results):
     return results
 
 
-def edit_page_url(request):
+def edit_page_url(request, test_result_user):
     if request.user.is_staff or request.user.is_superuser:
         return "/admin/salts/testresult/?id="
-    return "/edit/?id="
+    if request.user.username == test_result_user:
+        return "/edit/?id="
+    return ''
 
 
 def get_results(request):
@@ -634,7 +638,7 @@ def get_results(request):
         else:
             r["gen_type_list"] = ""
         r["generator"] = "%s / %s" % (r["generator"], r["gen_type_list"])
-        r['edit_url'] = edit_page_url(request)
+        r['edit_url'] = edit_page_url(request, r['user'])
 
     offset = request_get_value(request, "offset")
     limit = request_get_value(request, "limit")
@@ -740,6 +744,44 @@ def logout(request):
     response = views.logout(request, extra_context=context)
     set_version(response)
     return response
+
+
+@never_cache
+def edit_testresult(request):
+    id = request.GET['id']
+    tr = TestResult.objects.get(id=id)
+    context = {}
+    context.update(csrf(request))
+    context['test_name'] = tr.test_name
+    context['form'] = TestResultEditForm(instance=tr)
+    context['next'] = request.META.get('HTTP_REFERER')
+    context['id'] = id
+    return render_to_response("testresult_edit.html", context)
+
+
+def add_get_parameters(url, params):
+    import urlparse
+    from urllib import urlencode
+
+    url_parts = list(urlparse.urlparse(url))
+    query = dict(urlparse.parse_qsl(url_parts[4]))
+    query.update(params)
+
+    url_parts[4] = urlencode(query)
+    return urlparse.urlunparse(url_parts)
+
+
+@never_cache
+def update_testresult(request):
+    redirect_url = request.POST.get('next')
+    if request.POST.get('save'):
+        tr = TestResult.objects.get(id=request.POST.get('id'))
+        tr.test_status = request.POST.get('test_status')
+        tr.comments = request.POST.get('comments')
+        tr.save()
+        caches['default'].clear()
+        redirect_url = add_get_parameters(redirect_url, {'cc': 0})
+    return HttpResponseRedirect(redirect_url)
 
 
 def gitsync(request):
