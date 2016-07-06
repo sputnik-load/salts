@@ -10,6 +10,10 @@ from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from tankmanager import tank_manager
 
+
+logger = logging.getLogger(__name__)
+
+
 # Create your models here.
 class GeneratorTypeList(models.Model):
     name_list = models.CharField(u'Список имен генераторов', max_length=255,
@@ -33,7 +37,6 @@ class TestResult(models.Model):
     """
     Результаты теста
     """
-    logger = logging.getLogger(__name__)
     TEST_STATUS_PASS = 'pass'
     TEST_STATUS_FAIL = 'fail'
     TEST_STATUS_DEBUG = 'dbg'
@@ -301,3 +304,13 @@ def start_shooting(instance, **kwargs):
                 tank_manager.free(instance.tank.id)
             if instance.status == 'I':
                 tank_manager.interrupt(instance)
+
+
+
+@receiver(post_save, sender=Group)
+def add_perm(instance, **kwargs):
+    perm_codenames = ['add_shooting', 'change_shooting',
+                      'add_testresult', 'change_testresult']
+    for codename in perm_codenames:
+        perm = Permission.objects.get(codename=codename)
+        instance.permissions.add(perm)
