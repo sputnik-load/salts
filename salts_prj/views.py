@@ -513,6 +513,7 @@ def generate_context(request):
     context.update(csrf(request))
     context['host'] = DATABASES['default']['HOST']
     context['name'] = DATABASES['default']['NAME']
+    context['username'] = request.user.username
     return context
 
 
@@ -738,10 +739,16 @@ def get_tank_status(request):
 
 
 @never_cache
-def logout(request):
-    context = generate_context(request)
-    context['title'] = u"Результаты теста"
-    response = views.logout(request, extra_context=context)
+def salts_logout(request):
+    context = {}
+    context['title'] = u"SALTS: нагрузочные тесты, результаты, графики"
+    context['info'] = u"Вы успешно вышли"
+    response = views.logout(request,
+                            template_name="registration/login.html",
+                            extra_context=context)
+    response = views.login(request,
+                           template_name="registration/login.html",
+                           extra_context=context)
     set_version(response)
     return response
 

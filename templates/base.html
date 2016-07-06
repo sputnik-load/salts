@@ -34,7 +34,13 @@
             <a href="{% url 'tank_monitoring' %}">Танки</a>
           </li>
         </ul>  
-        <p align="right">Хост: {{ host }}. БД: {{ name }}.</p>
+        <!-- <p align="right">Хост: {{ host }}. БД: {{ name }}.</p> -->
+        {% if username %}
+          <div align="right">
+            <p style="color:white">Пользователь: {{ username }}</p>
+            <a style="color:grey" href="{% url 'logout' %}">Выйти</a>
+          </div>
+        {% endif %}
       </nav>
   </header>
 
