@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% block title_content %}
+  <title>SALTS: график динамики результатов</title>
+{% endblock title_content %}
 {% block ext_static_files %}
     {% load staticfiles %}
     <script type="text/javascript" src="{% static "dygraphs/dygraph.js" %}"></script>

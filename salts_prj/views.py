@@ -520,7 +520,6 @@ def generate_context(request):
 @login_required
 def show_results_page(request):
     context = generate_context(request)
-    context['title'] = u"Результаты теста"
     response = render_to_response('testresult_list.html', context)
     set_version(response)
     return response
@@ -530,7 +529,6 @@ def show_results_page(request):
 @login_required
 def tank_monitoring(request):
     context = generate_context(request)
-    context['title'] = u'Танки'
     response = render_to_response('tank_monitoring.html', context)
     set_version(response)
     return response
@@ -538,7 +536,6 @@ def tank_monitoring(request):
 
 def show_trends_page(request):
     context = generate_context(request)
-    context["title"] = u'Динамика по результатам тестов'
     response = render_to_response("graph_trends.html", context)
     set_version(response)
     return response
@@ -741,7 +738,6 @@ def get_tank_status(request):
 @never_cache
 def salts_logout(request):
     context = {}
-    context['title'] = u"SALTS: нагрузочные тесты, результаты, графики"
     context['info'] = u"Вы успешно вышли"
     response = views.logout(request,
                             template_name="registration/login.html",

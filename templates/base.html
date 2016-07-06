@@ -1,5 +1,6 @@
 <html>
-  <head><title>{{ title }}</title>
+  <head>
+    {% block title_content %}{% endblock %}
     {% load staticfiles %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link href="{% static "bootstrap/dist/css/bootstrap.min.css" %}" rel="stylesheet" />
