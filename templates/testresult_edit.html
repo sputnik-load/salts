@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% block title_content %}
+  <title>SALTS: редактирование параметров результатов теста</title>
+{% endblock title_content %}
+
+{% block container %}
+
+<form method="post" action="{% url 'salts_prj.views.update_testresult' %}">
+  {% csrf_token %}
+  <p>Тест: "{{ test_name }}"</p>
+  <table>
+    <tr>
+      <td>Статус: </td>
+      <td>{{ form.test_status }}</td>
+    </tr>
+    <tr>
+      <td>Комментарий: </td>
+      <td>{{ form.comments }}</td>
+    </tr>
+  </table>
+
+  <input type="submit" name="save" value="Сохранить"/>
+  <input type="submit" name="cancel" value="Вернуться без сохранения"/>
+  <input type="hidden" name="next" value="{{ next }}" />
+  <input type="hidden" name="id" value="{{ id }}" />
+</form>
+{% endblock %}
