@@ -65,6 +65,9 @@
   }
 
   function countdown_formatter(v, row, index) {
+    if (v === -1) {
+      return "Не определено"
+    }
     return remainedTime(v, row, index);
   }
 
