@@ -592,9 +592,8 @@ def user_filter(request, results):
 
 
 def edit_page_url(request, test_result_user):
-    if request.user.is_staff or request.user.is_superuser:
-        return "/admin/salts/testresult/?id="
-    if request.user.username == test_result_user:
+    if request.user.is_staff or request.user.is_superuser \
+       or request.user.username == test_result_user:
         return "/edit/?id="
     return ''
 
