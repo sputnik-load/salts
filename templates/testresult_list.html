@@ -123,7 +123,10 @@
     }
     $('#table').bootstrapTable({
       onDblClickRow: function (row, $element) {
-        window.open(edit_page_url(row["id"]));
+        if (row['edit_url'] === '') {
+          return;
+        }
+        window.open(edit_page_url(row['edit_url'], row['id']));
       }
     });
 {% endblock scripts_blk %}
