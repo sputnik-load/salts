@@ -514,6 +514,8 @@ def generate_context(request):
     context['host'] = DATABASES['default']['HOST']
     context['name'] = DATABASES['default']['NAME']
     context['username'] = request.user.username
+    context['is_superuser'] = request.user.is_superuser
+    context['is_staff'] = request.user.is_staff
     return context
 
 

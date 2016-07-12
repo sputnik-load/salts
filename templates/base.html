@@ -34,6 +34,11 @@
           <li>
             <a href="{% url 'tank_monitoring' %}">Танки</a>
           </li>
+          <li>
+            {% if is_superuser or is_staff %}
+              <a href="{% url 'admin:index' %}">CMS</a>
+            {% endif %}
+          </li>
         </ul>  
         <!-- <p align="right">Хост: {{ host }}. БД: {{ name }}.</p> -->
         {% if username %}
