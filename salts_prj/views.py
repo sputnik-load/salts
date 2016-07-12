@@ -461,9 +461,9 @@ def poll_servers(request):
             continue
         sessions = data.keys()
         for sess in sessions:
-            test_id = sess.replace("_0000000000", "")
+            session_id = sess.replace("_0000000000", "")
             try:
-                tr = TestRun.objects.get(id=test_id)
+                tr = TestRun.objects.get(id=session_id)
             except TestRun.DoesNotExist:
                 continue
             ts = TestSettings.objects.get(id=tr.test_settings_id)
@@ -605,7 +605,7 @@ def get_results(request):
                                                "comment": "comments"})
     results = results.values("id", "test_name", "target", "version", "rps", "q99",
                              "q90", "q50", "graph_url", "generator",
-                             "dt_finish", "test_id", "scenario_id", "group",
+                             "dt_finish", "session_id", "scenario_id", "group",
                              "test_status", "ticket_id", "user", "duration",
                              "http_net", "comment")
     results = user_filter(request, results)
@@ -717,7 +717,7 @@ def get_tank_status(request):
         if shooting.ticket_id:
             values['ticket_url'] = '%s%s' % (LT_JIRA, shooting.ticket_id)
         if shooting.status in ['F', 'I']:
-            tr = TestResult.objects.filter(test_id=shooting.test_id)
+            tr = TestResult.objects.filter(session_id=shooting.session_id)
             if tr:
                 values['test_result'] = tr[0].id
         results.append(values)

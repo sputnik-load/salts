@@ -121,7 +121,7 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
                    'tank_id': tank.id,
                    'user_id': token.user.id,
                    'status': validated_data.get('status'),
-                   'test_id': validated_data.get('test_id'),
+                   'session_id': validated_data.get('session_id'),
                    'ticket_id': validated_data.get('ticket_id'),
                    'alt_name': alt_name}
         shooting = Shooting.objects.create(**sh_data)
@@ -149,7 +149,7 @@ class ShootingViewSet(viewsets.ModelViewSet):
     serializer_class = ShootingSerializer
     queryset = Shooting.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ('id', 'test_id', 'status')
+    filter_fields = ('id', 'session_id', 'status')
 
     def _add_ex_data(self, ex_data, req_data, key):
         value = req_data.get(key)
@@ -262,7 +262,7 @@ class TestResultViewSet(viewsets.ModelViewSet):
     serializer_class = TestResultSerializer
     queryset = TestResult.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ('test_id',)
+    filter_fields = ('session_id',)
 
 
 class GeneratorTypeListSerializer(serializers.HyperlinkedModelSerializer):

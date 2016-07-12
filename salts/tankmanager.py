@@ -65,14 +65,16 @@ class TankManager(object):
             running = False
             for sess_id in resp:
                 if resp[sess_id]["status"] == "running":
-                    log.info("Test can't start because other test with id=%s is running now." % sess_id)
+                    log.info("Test can't start because other "
+                             "test with id=%s is running now." % sess_id)
                     running = True
                     break
             if not running:
                 break
             time.sleep(TankManager.POLL_INTERVAL)
 
-    def _wait_for_completed(self, client, test_id, tank_id, expected_retcode):
+    def _wait_for_completed(self, client, session_id,
+                            tank_id, expected_retcode):
         def format_resp(resp):
             failures = resp.get('failures')
             if failures:
@@ -81,7 +83,7 @@ class TankManager(object):
             return json.dumps(resp, indent=4)
 
         while True:
-            resp = client.status(test_id)
+            resp = client.status(session_id)
             if "stage_completed" in resp:
                 status = resp["status"]
                 completed = stg_completed_to_bool(resp["stage_completed"])
@@ -89,9 +91,11 @@ class TankManager(object):
                     if resp["retcode"] is None:
                         completed = False
                 if completed:
-                    log.info("Test %s. Response: %s" % (status, format_resp(resp)))
+                    log.info("Test %s. Response: %s" \
+                             % (status, format_resp(resp)))
                     break
-                log.info("Test %s. Response: %s" % (status, format_resp(resp)))
+                log.info("Test %s. Response: %s" \
+                         % (status, format_resp(resp)))
             else:
                 log.info("Response: %s" % format_resp(resp))
             time.sleep(TankManager.POLL_INTERVAL)
@@ -108,18 +112,18 @@ class TankManager(object):
         resp = None
         with open(config_path) as ini_file:
             resp = client.run(ini_file.read(), "start")
-        test_id = resp["session"]
-        instance.test_id = test_id
+        session_id = resp["session"]
+        instance.session_id = session_id
         instance.save()
-        log.info("Test with id=%s started." % test_id)
-        self._wait_for_completed(client, test_id, instance.tank.id, False)
+        log.info("Test with id=%s started." % session_id)
+        self._wait_for_completed(client, session_id, instance.tank.id, False)
         instance.status = 'R'
         instance.save()
-        client.resume(test_id)
-        self._wait_for_completed(client, test_id, instance.tank.id, True)
+        client.resume(session_id)
+        self._wait_for_completed(client, session_id, instance.tank.id, True)
         instance.status = 'F'
         instance.save()
-        log.info("Test with id=%s stopped." % test_id)
+        log.info("Test with id=%s stopped." % session_id)
 
     def _change_test_status(self, **kwargs):
         from salts.models import TestResult
@@ -130,38 +134,42 @@ class TankManager(object):
         ctrl_c_delta = timedelta(seconds=TankManager.CTRL_C_INTERVAL)
         while time.time() - start_time <= TankManager.WAIT_FOR_RESULT_SAVED:
             try:
-                test_result = TestResult.objects.get(test_id=shooting.test_id)
+                test_result = \
+                    TestResult.objects.get(session_id=shooting.session_id)
             except TestResult.DoesNotExist:
                 log.info("The test id=%s isn't "
-                         "been saved yet." % shooting.test_id)
+                         "been saved yet." % shooting.session_id)
                 time.sleep(TankManager.POLL_INTERVAL)
                 continue
             if test_result.dt_finish - test_result.dt_start >= ctrl_c_delta:
                 log.info("The test id=%s: "
                          "test duration exceeds 3 minutes, "
-                         "the status remains Unknown." % shooting.test_id)
+                         "the status remains Unknown." % shooting.session_id)
                 return
             test_result.test_status = 'dbg'
             test_result.save()
             log.info("The test id=%s: "
                      "test duration less than 3 minutes, "
-                     "the status is changed with Debug." % shooting.test_id)
+                     "the status is changed with Debug." \
+                     % shooting.session_id)
             return
-        log.warning("The test id=%s isn't saved into DB." % shooting.test_id)
+        log.warning("The test id=%s isn't saved into DB." \
+                    % shooting.session_id)
 
     def interrupt(self, shooting):
         resp = None
-        if re.match('\d+_0+', shooting.test_id):
+        if re.match('\d+_0+', shooting.session_id):
             try:
                 client = TankClient(shooting.tank.host, shooting.tank.port)
-                resp = client.status(shooting.test_id)
-                client.stop(shooting.test_id)
+                resp = client.status(shooting.session_id)
+                client.stop(shooting.session_id)
             except Exception, exc:
                 log.info("Exception when test "
                         "has been interrupted: %s" % exc)
-        log.info("TankManager.interrupt. Shooting.test_id: %s" % shooting.test_id)
+        log.info("TankManager.interrupt. Shooting.session_id: %s" \
+                 % shooting.session_id)
         try:
-            log.info("The test id=%s is stopped." % shooting.test_id)
+            log.info("The test id=%s is stopped." % shooting.session_id)
             self.free(shooting.tank.id)
             if (resp and resp.get('current_stage') == 'poll') \
                or (not resp and shooting.status != 'P'):
@@ -172,7 +180,7 @@ class TankManager(object):
                 t.start()
             else:
                 log.info("Test id=%s won't be saved into DB "
-                         "as it hasn't started yet." % shooting.test_id)
+                         "as it hasn't started yet." % shooting.session_id)
         except Exception, exc:
             log.warning("Exception when test "
                         "has been interrupted: %s" % exc)

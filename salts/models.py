@@ -64,7 +64,9 @@ class TestResult(models.Model):
         (STATUS_DONE, 'Done'),
         (STATUS_UNKNOWN, 'Unknown'),
     )
-    test_id = models.CharField(u'ID теста', max_length=32, help_text=u'ID теста', null=True, blank=True, unique=True)
+    session_id = models.CharField(u"ID сессии", max_length=32,
+                                  help_text=u"ID теста", null=True,
+                                  blank=True, unique=True)
     scenario_id = models.CharField(u'ID сценария', max_length=256, help_text=u'Путь к файлу в репозитории', null=False, default='unknown')
     dt_start = models.DateTimeField(u'Дата и время начала теста', null=True, blank=True)
     dt_finish = models.DateTimeField(u'Дата и время завершения теста', null=True, blank=True)
@@ -118,10 +120,11 @@ class TestResult(models.Model):
     meta = JSONCharField(max_length=1024, null=True, blank=True, help_text=u'Служебная информация - не изменять.')
 
     def __unicode__(self):  # Python 3: def __str__(self):
-        return self.group + '.' + self.test_name + ' ' + self.version + ' ' + self.test_id
+        return self.group + '.' + self.test_name + ' ' \
+                + self.version + ' ' + self.session_id
 
     def get_name(self):  # Python 3: def __str__(self):
-        return self.group + '.' + self.test_name #+ ' ' + self.version + ' ' + self.test_id
+        return self.group + '.' + self.test_name
 
 
 class Generator(models.Model):
@@ -264,9 +267,9 @@ class Shooting(models.Model):
         (STATUS_INTERRUPTED, 'Interrupted'),
     )
 
-    test_id = models.CharField(u"ID теста",
-                               max_length=32, help_text=u"ID теста",
-                               null=True, blank=True, unique=True)
+    session_id = models.CharField(u"ID сессии", max_length=32,
+                                  help_text=u"ID теста", null=True,
+                                  blank=True, unique=True)
     start = models.IntegerField(u"Отметка времени начала стрельбы",
                                 null=True, blank=True)
     finish = models.IntegerField(u"Отметка времени окончания стрельбы",
@@ -296,7 +299,7 @@ class Shooting(models.Model):
 @receiver(post_save, sender=Shooting)
 def start_shooting(instance, **kwargs):
     if kwargs['created']:
-        if not instance.test_id:
+        if not instance.session_id:
             tank_manager.start(instance)
     else:
         if 'status' in kwargs['update_fields']:

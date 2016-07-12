@@ -35,14 +35,14 @@ class TankClient(object):
                                 api_port=self.api_port))
                 sleep(TankClient.REQ_INTERVAL)
 
-    def run(self, config, breakpoint="finished", test_id=None):
+    def run(self, config, breakpoint="finished", session_id=None):
         req = "http://{api_address}:{api_port}/run?break={breakpoint}".format(
             api_address=self.api_address,
             api_port=self.api_port,
             breakpoint=breakpoint,
         )
-        if test_id:
-            req += "&test=%s" % test_id
+        if session_id:
+            req += "&test=%s" % session_id
         resp = requests.post(req, data=config)
         if resp.status_code == 200:
             data = json.loads(resp.text)
@@ -77,7 +77,7 @@ class TankClient(object):
         else:
             raise TankClientError("Test Stop Error: %s" % resp.text)
 
-    def test_id(self, session_id):
+    def session_id(self, session_id):
         req = "http://{api_address}:{api_port}/artifact?session={session}".format(
             api_address=self.api_address,
             api_port=self.api_port,
@@ -90,11 +90,11 @@ class TankClient(object):
         else:
             raise TankClientError("Test ID Error: %s" % resp.text)
 
-    def list_artifacts(self, test_id):
+    def list_artifacts(self, session_id):
         req = "http://{api_address}:{api_port}/artifact?test={test}".format(
             api_address=self.api_address,
             api_port=self.api_port,
-            test=test_id
+            test=session_id
         )
         resp = requests.get(req)
         if resp.status_code == 200:
@@ -103,11 +103,11 @@ class TankClient(object):
         else:
             raise TankClientError("Test List Artifact Error: %s" % resp.text)
 
-    def get_artifact(self, test_id, filename):
+    def get_artifact(self, session_id, filename):
         req = "http://{api_address}:{api_port}/artifact?test={test}&filename={filename}".format(
             api_address=self.api_address,
             api_port=self.api_port,
-            test=test_id,
+            test=session_id,
             filename=filename,
         )
         resp = requests.get(req)

@@ -17,7 +17,7 @@ class TastypieApikeyAuth(AuthBase):
 
 #api_url = "http://salt-dev.dev.ix.km/api/v1/"
 #api = slumber.API(api_url, auth=TastypieApikeyAuth("ltbot", "5793922b4b5cc7ff42a6b348c1011f133abb25fc"))
-#new = api.testresult.post({"test_id": "2016-03-11_09-00-00.G2TESB", "dt_start": "2016-03-11T08:00:00", "dt_finish": "2016-03-11T09:00:00", "group": "Тест", "test_name": "Тест CONST", "target": "127.0.0.1:80", "version": "0.0.1", "rps": "5", "q99": "99", "q90": "90", "q50": "50", "http_errors_perc": "0.01", "net_errors_perc": "0.02", "graph_url": "http://grafana-test.ix.km/#/dashboard/db/tankresultstpl?var-system=search&var-collector=index-113&from=20150204T122254&to=20150204T125434", "generator": "localhost", "user": "@user", "ticket_id": "TESTING-001", "mnt_url": "https://wiki.amalama.ru/pages/viewpage.action?pageId=12353589", "comments": ""})
+#new = api.testresult.post({"session_id": "2016-03-11_09-00-00.G2TESB", "dt_start": "2016-03-11T08:00:00", "dt_finish": "2016-03-11T09:00:00", "group": "Тест", "test_name": "Тест CONST", "target": "127.0.0.1:80", "version": "0.0.1", "rps": "5", "q99": "99", "q90": "90", "q50": "50", "http_errors_perc": "0.01", "net_errors_perc": "0.02", "graph_url": "http://grafana-test.ix.km/#/dashboard/db/tankresultstpl?var-system=search&var-collector=index-113&from=20150204T122254&to=20150204T125434", "generator": "localhost", "user": "@user", "ticket_id": "TESTING-001", "mnt_url": "https://wiki.amalama.ru/pages/viewpage.action?pageId=12353589", "comments": ""})
 #print "new=" + new
 
 
@@ -41,7 +41,7 @@ try:
     print "api: %s" % api
     old = api.get()
     print "old: %s" % old
-    old = api.testresult.get(test_id="2016-03-11_09-00-00.G2TESB")
+    old = api.testresult.get(session_id="2016-03-11_09-00-00.G2TESB")
     print "old: %s" % old
     gen_types = ["jmeter", "phantom"]
     gen_type_objects = [api.generatortype.get(name=gt)[0]
@@ -49,7 +49,7 @@ try:
     if old:
         print "OLD: %s" % old
         api.testresult(old[0]['id']).delete()
-    new = api.testresult.post({"test_id": "2016-03-11_09-00-00.G2TESB",
+    new = api.testresult.post({"session_id": "2016-03-11_09-00-00.G2TESB",
                                "dt_start": "2016-03-11T08:00:00",
                                "dt_finish": "2016-03-11T09:00:00",
                                "group": "Тест",
@@ -72,7 +72,7 @@ try:
     api.testresult(new["id"]).put({"test_status": "dbg",
                                    "dt_finish": "2016-03-11T09:11:11Z",
                                    "generator_types": gen_type_objects})
-    new = api.testresult.get(test_id="2016-03-11_09-00-00.G2TESB")
+    new = api.testresult.get(session_id="2016-03-11_09-00-00.G2TESB")
     print "new.metrics: %s" % new[0]["metrics"]
     print "new.yt_log: %s" % new[0]["yt_log"]
     print "new.test_status: %s" % new[0]["test_status"]
