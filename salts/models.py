@@ -67,7 +67,10 @@ class TestResult(models.Model):
     session_id = models.CharField(u"ID сессии", max_length=32,
                                   help_text=u"ID теста", null=True,
                                   blank=True, unique=True)
-    scenario_id = models.CharField(u'ID сценария', max_length=256, help_text=u'Путь к файлу в репозитории', null=False, default='unknown')
+    scenario_path = models.CharField(u"Путь к сценарию", max_length=256,
+                                     help_text=u"Путь к ini-файлу "
+                                               u"в репозитории",
+                                     null=False, default='unknown')
     dt_start = models.DateTimeField(u'Дата и время начала теста', null=True, blank=True)
     dt_finish = models.DateTimeField(u'Дата и время завершения теста', null=True, blank=True)
     group = models.CharField(u'Продукт', max_length=32, help_text=u'Продукт к которому относится тест', null=True, blank=True)
@@ -230,9 +233,10 @@ class TestIni(models.Model):
         (STATUS_ACTIVE, 'Active'),
         (STATUS_DELETE, 'Deleled'),
     )
-    scenario_id = models.CharField(u'Id сценария', max_length=256,
-                                   help_text=u'Относительный путь к сценарию внутри репозитория',
-                                   null=True, blank=True)
+    scenario_path = models.CharField(u"Путь к сценарию", max_length=256,
+                                     help_text=u"Путь к ini-файлу "
+                                               u"в репозитории",
+                                     null=False, blank=True)
     status = models.CharField(u'Статус', max_length=1,
                               choices=STATUS_CHOICES,
                               default=STATUS_ACTIVE,
@@ -240,7 +244,7 @@ class TestIni(models.Model):
     group = models.ForeignKey(Group, null=False, blank=False)
 
     def __unicode__(self):
-        return self.scenario_id
+        return self.scenario_path
 
 
 class Tank(models.Model):

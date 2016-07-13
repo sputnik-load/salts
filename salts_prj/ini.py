@@ -68,24 +68,24 @@ class IniCtrl(object):
             log.info("Group '%s' has been added." % IniCtrl.DEFAULT_GROUP)
         self.default_group_id = g.id
 
-    def _test_id_from_ini(self, scen_id):
+    def _test_id_from_ini(self, scenario_path):
         config = ConfigParser()
-        config.read(os.path.join(self.dir_path, scen_id))
+        config.read(os.path.join(self.dir_path, scenario_path))
         try:
             return int(config.get(IniCtrl.SALTS_SECTION,
                                   IniCtrl.SCENARIO_ID_OPTION))
         except (NoOptionError, NoSectionError):
             return 0
 
-    def _add_test_id(self, scen_id, test_id):
-        old_test_id = self._test_id_from_ini(scen_id)
+    def _add_test_id(self, scenario_path, test_id):
+        old_test_id = self._test_id_from_ini(scenario_path)
         if test_id == old_test_id:
             return
 
         section_line = "[%s]" % IniCtrl.SALTS_SECTION
         default_line = "[DEFAULT]"
         config = ConfigParser()
-        ini_path = os.path.join(self.dir_path, scen_id)
+        ini_path = os.path.join(self.dir_path, scenario_path)
         config.read(ini_path)
         if IniCtrl.SALTS_SECTION not in config.sections():
             with open(ini_path, "a") as f:
@@ -127,13 +127,13 @@ class IniCtrl(object):
             return 0
         return res[0][0]
 
-    def set_scenario_status(self, scen_id, status_value):
+    def set_scenario_status(self, scenario_path, status_value):
         try:
-            t = TestIni.objects.get(scenario_id=scen_id)
+            t = TestIni.objects.get(scenario_path=scenario_path)
             t.status = status_value
             t.save()
             if status_value == 'D':
-                del_path = os.path.join(self.dir_path, scen_id)
+                del_path = os.path.join(self.dir_path, scenario_path)
                 if os.path.exists(del_path):
                     os.remove(del_path)
             return True
@@ -145,30 +145,30 @@ class IniCtrl(object):
 
     def get_scenario_pathes(self, status_value):
         res = TestIni.objects.filter(status=status_value)
-        return [r.scenario_id for r in res]
+        return [r.scenario_path for r in res]
 
-    def get_test_id(self, scen_id, from_db=False):
+    def get_test_id(self, scenario_path, from_db=False):
         if from_db:
             try:
-                t = TestIni.objects.get(scenario_id=scen_id)
+                t = TestIni.objects.get(scenario_path=scenario_path)
                 return t.id
             except TestIni.DoesNotExist:
                 return 0
         else:
             if not self.dir_path:
                 return 0
-            return self._test_id_from_ini(scen_id)
+            return self._test_id_from_ini(scenario_path)
 
-    def get_group_id(self, scen_id):
+    def get_group_id(self, scenario_path):
         try:
-            t = TestIni.objects.get(scenario_id=scen_id)
+            t = TestIni.objects.get(scenario_path=scenario_path)
             return t.group_id
         except TestIni.DoesNotExist:
             return 0
 
-    def get_scenario_name(self, scen_id):
+    def get_scenario_name(self, scenario_path):
         config = ConfigParser()
-        ini_path = os.path.join(self.dir_path, scen_id)
+        ini_path = os.path.join(self.dir_path, scenario_path)
         test_name = ''
         if os.path.exists(ini_path):
             config.read(ini_path)
@@ -197,12 +197,16 @@ class IniCtrl(object):
                 else:
                     res = TestIni.objects.filter(id=ini_test_id)
                     if res:
-                        if os.path.exists(os.path.join(self.dir_path, res[0].scenario_id)):
-                            raise IniDuplicateError("Two ini files %s and %s have same test id." % (spath, res[0].scenario_id))
+                        if os.path.exists(os.path.join(self.dir_path,
+                                                       res[0].scenario_path)):
+                            raise IniDuplicateError("Two ini files %s and %s "
+                                                    "have same test id." \
+                                                    % (spath,
+                                                       res[0].scenario_path))
                         else:
                             res[0].delete()
                     t = TestIni(id=ini_test_id,
-                                scenario_id=spath,
+                                scenario_path=spath,
                                 group_id=self.default_group_id,
                                 status='A')
                     t.save()

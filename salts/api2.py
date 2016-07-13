@@ -73,7 +73,7 @@ class TestIniViewSet(viewsets.ModelViewSet):
     serializer_class = TestIniSerializer
     queryset = TestIni.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ("id", "scenario_id", "status")
+    filter_fields = ("id", "scenario_path", "status")
 
 
 class ShootingSerializer(serializers.HyperlinkedModelSerializer):
@@ -96,7 +96,7 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
             raise ShootingHttpIssue(
                     status.HTTP_403_FORBIDDEN,
                     "Test %s disabled for '%s' user." %
-                        (test_ini.scenario_id, token.user.username))
+                        (test_ini.scenario_path, token.user.username))
 
     def _get_force_run(self, v):
         if not v:

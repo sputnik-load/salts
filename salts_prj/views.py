@@ -544,7 +544,7 @@ def show_trends_page(request):
 
 
 def user_filter(request, results):
-    scen_id = request_get_value(request, "scid")
+    scenario_path = request_get_value(request, "scpath")
     target = request_get_value(request, "trg")
     gen_type = request_get_value(request, "gt")
     generator = request_get_value(request, "gen")
@@ -556,8 +556,8 @@ def user_filter(request, results):
     from_time = request_get_value(request, "from")
     to_time = request_get_value(request, "to")
     rps_value = request_get_value(request, "rps")
-    if scen_id:
-        results = results.filter(scenario_id=scen_id)
+    if scenario_path:
+        results = results.filter(scenario_path=scenario_path)
     if target:
         results = results.filter(target__contains=target)
     if test_group:
@@ -605,7 +605,7 @@ def get_results(request):
                                                "comment": "comments"})
     results = results.values("id", "test_name", "target", "version", "rps", "q99",
                              "q90", "q50", "graph_url", "generator",
-                             "dt_finish", "session_id", "scenario_id", "group",
+                             "dt_finish", "session_id", "scenario_path", "group",
                              "test_status", "ticket_id", "user", "duration",
                              "http_net", "comment")
     results = user_filter(request, results)
@@ -701,12 +701,13 @@ def get_tank_status(request):
                                                     # аутентификацию
             else:
                 username = shooting.user.username
-        scen_id = shooting.test_ini.scenario_id
+        scenario_path = shooting.test_ini.scenario_path
         values = {'id': t.id, 'host': t.host,
                   'username': username,
                   'gitlab_url': '%s%s' % (LT_GITLAB,
-                                          shooting.test_ini.scenario_id),
-                  'scenario_name': ini_manager.get_scenario_name(scen_id),
+                                          shooting.test_ini.scenario_path),
+                  'scenario_name': \
+                    ini_manager.get_scenario_name(scenario_path),
                   'status': shooting.status,
                   'countdown': get_remained_time(shooting),
                   'shooting_id': shooting.id,
