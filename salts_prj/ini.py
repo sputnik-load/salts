@@ -120,7 +120,7 @@ class IniCtrl(object):
 
     def _last_test_id(self):
         cursor = connection.cursor()
-        cursor.execute("SELECT id FROM salts_testini "
+        cursor.execute("SELECT id FROM salts_scenario "
                        "ORDER BY id DESC LIMIT 1")
         res = cursor.fetchall()
         if not res:
@@ -229,7 +229,7 @@ class IniCtrl(object):
                     id += 1
             with open("/tmp/1.csv", "r") as f:
                 cursor = connection.cursor()
-                cursor.copy_from(f, "salts_testini", sep=";")
+                cursor.copy_from(f, "salts_scenario", sep=";")
         for spath in self.get_scenario_pathes("A"):
             if spath not in scenario_pathes:
                 self.set_scenario_status(spath, "D")
