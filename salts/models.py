@@ -2,7 +2,6 @@
 from django.db import models
 import logging
 from jsonfield import JSONCharField
-#from test.test_threading_local import target
 from _bsddb import version
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -226,7 +225,7 @@ class TestRun(models.Model):
 
 
 
-class TestIni(models.Model):
+class Scenario(models.Model):
     STATUS_ACTIVE = 'A'
     STATUS_DELETE = 'D'
     STATUS_CHOICES = (
@@ -280,7 +279,7 @@ class Shooting(models.Model):
                                  null=True, blank=True)
     planned_duration = models.IntegerField(u"Планируемая длительность теста",
                                            null=True, blank=True)
-    test_ini = models.ForeignKey(TestIni, null=False, blank=False)
+    scenario = models.ForeignKey(Scenario, null=False, blank=False)
     tank = models.ForeignKey(Tank, null=False, blank=False)
     status = models.CharField(u"Статус стрельбы", max_length=1,
                               choices=STATUS_CHOICES,

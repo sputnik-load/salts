@@ -701,11 +701,11 @@ def get_tank_status(request):
                                                     # аутентификацию
             else:
                 username = shooting.user.username
-        scenario_path = shooting.test_ini.scenario_path
+        scenario_path = shooting.scenario.scenario_path
         values = {'id': t.id, 'host': t.host,
                   'username': username,
                   'gitlab_url': '%s%s' % (LT_GITLAB,
-                                          shooting.test_ini.scenario_path),
+                                          shooting.scenario.scenario_path),
                   'scenario_name': \
                     ini_manager.get_scenario_name(scenario_path),
                   'status': shooting.status,

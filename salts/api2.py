@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User, Group, Permission
 from salts.models import (TestResult, GeneratorTypeList,
-                          GeneratorType, Shooting, TestIni,
+                          GeneratorType, Shooting, Scenario,
                           Tank)
 from django.db import connection
 from logger import Logger
@@ -63,15 +63,15 @@ class ShootingHttpIssue(Exception):
         self.message = msg
 
 
-class TestIniSerializer(serializers.HyperlinkedModelSerializer):
+class ScenarioSerializer(serializers.HyperlinkedModelSerializer):
     # id = serializers.ReadOnlyField()
     # group = GroupSerializer()
     class Meta:
-        model = TestIni
+        model = Scenario
 
-class TestIniViewSet(viewsets.ModelViewSet):
-    serializer_class = TestIniSerializer
-    queryset = TestIni.objects.all()
+class ScenarioViewSet(viewsets.ModelViewSet):
+    serializer_class = ScenarioSerializer
+    queryset = Scenario.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
     filter_fields = ("id", "scenario_path", "status")
 
@@ -82,21 +82,21 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Shooting
 
-    def check_permission(self, key, test_ini):
+    def check_permission(self, key, scenario):
         cursor = connection.cursor()
         cursor.execute(
             """
                 SELECT usr_gr.id FROM authtoken_token tok
                 JOIN auth_user_groups usr_gr USING(user_id)
-                JOIN salts_testini ti USING(group_id)
-                WHERE tok.key = '{token}' AND ti.id = {test_ini_id}
-            """.format(token=key, test_ini_id=test_ini.id))
+                JOIN salts_scenario ti USING(group_id)
+                WHERE tok.key = '{token}' AND ti.id = {scenario_id}
+            """.format(token=key, scenario_id=scenario.id))
         if not cursor.fetchone():
             token = Token.objects.get(key=key)
             raise ShootingHttpIssue(
                     status.HTTP_403_FORBIDDEN,
                     "Test %s disabled for '%s' user." %
-                        (test_ini.scenario_path, token.user.username))
+                        (scenario.scenario_path, token.user.username))
 
     def _get_force_run(self, v):
         if not v:
@@ -106,10 +106,10 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         log.info("ShootingSerializer.create. "
                  "validated_data: %s" % validated_data)
-        test_ini = validated_data.get('test_ini')
+        scenario = validated_data.get('scenario')
         tank = validated_data.get('tank')
         if not self._get_force_run(validated_data.get('force_run')):
-            self.check_permission(validated_data.get('token'), test_ini)
+            self.check_permission(validated_data.get('token'), scenario)
             if not tank_manager.book(tank.id):
                 raise ShootingHttpIssue(status.HTTP_403_FORBIDDEN,
                                         "Tank is busy on host %s" % tank.host)
@@ -117,7 +117,7 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
         alt_name = validated_data.get('alt_name')
         if not alt_name:
             alt_name = token.user.username
-        sh_data = {'test_ini_id': test_ini.id,
+        sh_data = {'scenario_id': scenario.id,
                    'tank_id': tank.id,
                    'user_id': token.user.id,
                    'status': validated_data.get('status'),
@@ -131,7 +131,7 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
         log.info("Shooting. Update: validated_data: %s" % validated_data)
         if not self._get_force_run(validated_data.get('force_run')):
             self.check_permission(validated_data.get('token'),
-                                  instance.test_ini)
+                                  instance.scenario)
 
         tank_manager.save_to_lock(instance.tank.id, 'web_console_port',
                                   validated_data.get('web_console_port'))

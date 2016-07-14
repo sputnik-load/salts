@@ -7,7 +7,7 @@ from glob import glob
 from settings import LT_PATH, EXCLUDE_INI_FILES
 from django.db import connection
 from django.contrib.auth.models import Group
-from salts.models import TestIni
+from salts.models import Scenario
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError, Error
 from salts.logger import Logger
 from salts_prj.settings import LT_PATH, EXCLUDE_INI_FILES
@@ -129,7 +129,7 @@ class IniCtrl(object):
 
     def set_scenario_status(self, scenario_path, status_value):
         try:
-            t = TestIni.objects.get(scenario_path=scenario_path)
+            t = Scenario.objects.get(scenario_path=scenario_path)
             t.status = status_value
             t.save()
             if status_value == 'D':
@@ -137,22 +137,22 @@ class IniCtrl(object):
                 if os.path.exists(del_path):
                     os.remove(del_path)
             return True
-        except TestIni.DoesNotExist:
+        except Scenario.DoesNotExist:
             return False
 
     def get_root(self):
         return self.dir_path
 
     def get_scenario_pathes(self, status_value):
-        res = TestIni.objects.filter(status=status_value)
+        res = Scenario.objects.filter(status=status_value)
         return [r.scenario_path for r in res]
 
     def get_test_id(self, scenario_path, from_db=False):
         if from_db:
             try:
-                t = TestIni.objects.get(scenario_path=scenario_path)
+                t = Scenario.objects.get(scenario_path=scenario_path)
                 return t.id
-            except TestIni.DoesNotExist:
+            except Scenario.DoesNotExist:
                 return 0
         else:
             if not self.dir_path:
@@ -161,9 +161,9 @@ class IniCtrl(object):
 
     def get_group_id(self, scenario_path):
         try:
-            t = TestIni.objects.get(scenario_path=scenario_path)
+            t = Scenario.objects.get(scenario_path=scenario_path)
             return t.group_id
-        except TestIni.DoesNotExist:
+        except Scenario.DoesNotExist:
             return 0
 
     def get_scenario_name(self, scenario_path):
@@ -195,7 +195,7 @@ class IniCtrl(object):
                     else:
                         self._add_test_id(spath, db_test_id)
                 else:
-                    res = TestIni.objects.filter(id=ini_test_id)
+                    res = Scenario.objects.filter(id=ini_test_id)
                     if res:
                         if os.path.exists(os.path.join(self.dir_path,
                                                        res[0].scenario_path)):
@@ -205,7 +205,7 @@ class IniCtrl(object):
                                                        res[0].scenario_path))
                         else:
                             res[0].delete()
-                    t = TestIni(id=ini_test_id,
+                    t = Scenario(id=ini_test_id,
                                 scenario_path=spath,
                                 group_id=self.default_group_id,
                                 status='A')
