@@ -55,7 +55,7 @@ class IniCtrl(object):
     SALTS_SECTION = 'salts'
     REPORT_SECTION = 'sputnikreport'
     DEFAULT_GROUP = 'Salts'
-    SCENARIO_ID_OPTION = 'test_ini_id'
+    SCENARIO_ID_OPTION = 'scenario_id'
 
     def __init__(self, root, exclude):
         self.dir_path = root
