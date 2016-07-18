@@ -14,6 +14,7 @@ from operator import itemgetter
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import views
 from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseNotFound
 from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
 from salts_prj.api_client import TankClient
@@ -41,14 +42,28 @@ def request_get_value(request, param):
     return value
 
 
-def set_version(response):
+def read_version():
     version_path = "%s/%s" % (BASE_DIR, VERSION_FILE_NAME)
-    if os.path.exists(version_path):
-        with open(version_path, "r") as ver_file:
-            v = ver_file.readlines()[0]
-            v = v.rstrip("\n")
-        if v:
-            response["X-Version"] = v
+    if not os.path.exists(version_path):
+        return ''
+    with open(version_path, 'r') as ver_file:
+        v = ver_file.readlines()[0]
+        v = v.rstrip('\n')
+        return v
+
+
+def add_version(response):
+    v = read_version()
+    if v:
+        response["X-Version"] = v
+
+
+@never_cache
+def get_version(request):
+    v = read_version()
+    if not v:
+        return HttpResponseNotFound()
+    return HttpResponse(v)
 
 
 class TestSettingsPaginator(Paginator):
@@ -523,7 +538,7 @@ def generate_context(request):
 def show_results_page(request):
     context = generate_context(request)
     response = render_to_response('testresult_list.html', context)
-    set_version(response)
+    add_version(response)
     return response
 
 
@@ -532,14 +547,14 @@ def show_results_page(request):
 def tank_monitoring(request):
     context = generate_context(request)
     response = render_to_response('tank_monitoring.html', context)
-    set_version(response)
+    add_version(response)
     return response
 
 
 def show_trends_page(request):
     context = generate_context(request)
     response = render_to_response("graph_trends.html", context)
-    set_version(response)
+    add_version(response)
     return response
 
 
@@ -652,7 +667,7 @@ def get_results(request):
 
     response = HttpResponse(json.dumps(response_dict),
                             content_type="application/json")
-    set_version(response)
+    add_version(response)
     return response
 
 
@@ -735,7 +750,7 @@ def get_tank_status(request):
     response_dict['rows'] = results
     response = HttpResponse(json.dumps(response_dict),
                             content_type='application/json')
-    set_version(response)
+    add_version(response)
     return response
 
 
@@ -749,7 +764,7 @@ def salts_logout(request):
     response = views.login(request,
                            template_name="registration/login.html",
                            extra_context=context)
-    set_version(response)
+    add_version(response)
     return response
 
 
