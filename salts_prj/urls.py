@@ -76,7 +76,7 @@ router.register(r'generatortype', GeneratorTypeViewSet)
 router.register(r'generatortypelist', GeneratorTypeListViewSet)
 router.register(r'shooting', ShootingViewSet)
 router.register(r'group', GroupViewSet)
-router.register(r'testini', ScenarioViewSet)
+router.register(r'scenario', ScenarioViewSet)
 router.register(r'tank', TankViewSet)
 router.register(r'user', UserViewSet)
 
