@@ -300,17 +300,15 @@ class Shooting(models.Model):
 
 
 @receiver(post_save, sender=Shooting)
-def start_shooting(instance, **kwargs):
-    if kwargs['created']:
-        if not instance.session_id:
-            tank_manager.start(instance)
-    else:
-        if 'status' in kwargs['update_fields']:
-            if instance.status == 'F':
-                tank_manager.free(instance.tank.id)
-            if instance.status == 'I':
-                tank_manager.interrupt(instance)
-
+def post_save_shooting(instance, **kwargs):
+    status_updated = kwargs.get('update_fields') and \
+                     'status' in kwargs['update_fields']
+    if instance.status == 'I' and (kwargs.get('created') or status_updated):
+        tank_manager.interrupt(instance)
+    elif instance.status == 'F' and status_updated:
+        tank_manager.free(instance.tank.id)
+    elif not instance.session_id and kwargs.get('created'):
+        tank_manager.start(instance)
 
 
 @receiver(post_save, sender=Group)
