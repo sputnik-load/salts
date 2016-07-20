@@ -71,11 +71,21 @@ class IniCtrl(object):
     def _scenario_id_from_ini(self, scenario_path):
         config = ConfigParser()
         config.read(os.path.join(self.dir_path, scenario_path))
-        try:
+        if not config.has_section(IniCtrl.SALTS_SECTION):
+            return 0
+        if config.has_option(IniCtrl.SALTS_SECTION,
+                                 IniCtrl.SCENARIO_ID_OPTION):
             return int(config.get(IniCtrl.SALTS_SECTION,
                                   IniCtrl.SCENARIO_ID_OPTION))
-        except (NoOptionError, NoSectionError):
-            return 0
+        if config.has_option(IniCtrl.SALTS_SECTION, 'test_ini_id'):
+            log.info("Scenario %s: "
+                     "'test_ini_id' option is deprecated. "
+                     "It won't be supported in future versions. "
+                     "Please use 'scenario_id' option "
+                     "instead of it." % os.path.join(self.dir_path,
+                                                     scenario_path))
+            return int(config.get(IniCtrl.SALTS_SECTION, 'test_ini_id'))
+        return 0
 
     def _add_scenario_id(self, scenario_path, scenario_id):
         old_scenario_id = self._scenario_id_from_ini(scenario_path)
