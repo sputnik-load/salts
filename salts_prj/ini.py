@@ -206,6 +206,7 @@ class IniCtrl(object):
                         self._add_scenario_id(spath, db_scenario_id)
                 else:
                     res = Scenario.objects.filter(id=ini_scenario_id)
+                    group_id = self.default_group_id
                     if res:
                         if os.path.exists(os.path.join(self.dir_path,
                                                        res[0].scenario_path)):
@@ -214,10 +215,11 @@ class IniCtrl(object):
                                                     % (spath,
                                                        res[0].scenario_path))
                         else:
+                            group_id = res[0].group_id
                             res[0].delete()
                     t = Scenario(id=ini_scenario_id,
                                 scenario_path=spath,
-                                group_id=self.default_group_id,
+                                group_id=group_id,
                                 status='A')
                     t.save()
             else:
