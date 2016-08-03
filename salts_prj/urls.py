@@ -11,6 +11,7 @@ from salts_prj.views import show_results_page, get_results
 from salts_prj.views import show_trends_page, tank_monitoring, get_tank_status
 from salts_prj.views import salts_logout, get_version
 from salts_prj.views import gitsync, edit_testresult, update_testresult
+from salts_prj.views import start_shooting
 
 
 admin.autodiscover()
@@ -41,7 +42,8 @@ urlpatterns = patterns('',
     url(r'^gitsync/$', gitsync),
     url(r'^edit/$', edit_testresult),
     url(r'^version/$', get_version),
-    url(r'^update/$', update_testresult)
+    url(r'^update/$', update_testresult),
+    url(r'^shoot/$', start_shooting),
 )
 
 if settings.DEBUG:

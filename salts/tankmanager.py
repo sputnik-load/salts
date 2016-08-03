@@ -1,18 +1,47 @@
 # -*- coding: utf-8 -*-
 
 import threading
+from multiprocessing import Process
 import time
 import os
 import shutil
 import json
 import re
 import pickle
+import codecs
+import ConfigParser
+import StringIO
 from salts.logger import Logger
 from salts.api_client import TankClient
 from salts_prj.settings import LT_PATH
 
 
 log = Logger.get_logger()
+
+
+class UnicodeConfigParser(ConfigParser.RawConfigParser):
+    def __init__(self, *args, **kwargs):
+        ConfigParser.RawConfigParser.__init__(self, *args, **kwargs)
+
+    def write(self, fp):
+        """Fixed for Unicode output"""
+        if self._defaults:
+            fp.write("[%s]\n" % "DEFAULT")
+            for (key, value) in self._defaults.items():
+                fp.write("%s = %s\n" % (key, unicode(value).replace('\n', '\n\t')))
+            fp.write("\n")
+
+        for section in self._sections:
+            fp.write("[%s]\n" % section)
+            for (key, value) in self._sections[section].items():
+                if key != "__name__":
+                    fp.write("%s = %s\n" % (key, unicode(value).replace('\n','\n\t')))
+            fp.write("\n")
+
+    # This function is needed to override default lower-case conversion
+    # of the parameter's names. They will be saved 'as is'.
+    def optionxform(self, strOut):
+        return strOut
 
 
 def stg_completed_to_bool(value):
@@ -53,11 +82,13 @@ class TankManager(object):
         return True
 
 
-    def start(self, instance):
-        thread_data = {"instance": instance}
-        t = threading.Thread(name="Shooting Id", target=self.shoot,
-                             kwargs=thread_data)
-        t.start()
+    def start(self, scenario, tank, custom_data):
+        process_data = {'scenario': scenario, 'tank': tank,
+                       'custom_data': custom_data}
+        p = Process(name="Shooting Id", target=self.shoot,
+                    kwargs=process_data)
+        p.start()
+        p.join()
 
     def _check_for_running(self, client):
         while True:
@@ -101,28 +132,30 @@ class TankManager(object):
             time.sleep(TankManager.POLL_INTERVAL)
 
     def shoot(self, **kwargs):
-        log.info("Run Shooting: kwargs=%s" % kwargs)
-        instance = kwargs["instance"]
-        log.info("Shoot: host: %s, port: %s" % (instance.tank.host,
-                                                instance.tank.port))
-        client = TankClient(instance.tank.host, instance.tank.port)
-        config_path = os.path.join(LT_PATH, instance.test_ini.scenario_id)
-        log.info("Config Path: %s" % config_path)
-        # self._check_for_running(client)
+        custom_data = kwargs.get('custom_data')
+        scenario = kwargs.get('scenario')
+        tank = kwargs.get('tank')
+        client = TankClient(tank.host, tank.port)
+        config_path = os.path.join(LT_PATH, scenario.scenario_path)
+        config = UnicodeConfigParser()
+        config.readfp(codecs.open(config_path, 'r', 'utf-8'))
+        custom = json.loads(custom_data)
+        for sec in custom:
+            if not config.has_section(sec):
+                config.add_section(sec)
+            param = custom[sec]
+            for k in param:
+                config.set(sec, k, param[k])
+        final_config = StringIO.StringIO()
+        config.write(final_config)
+        content = final_config.getvalue().encode('utf-8')
         resp = None
-        with open(config_path) as ini_file:
-            resp = client.run(ini_file.read(), "start")
-        session_id = resp["session"]
-        instance.session_id = session_id
-        instance.save()
+        resp = client.run(content, 'start')
+        session_id = resp['session']
         log.info("Test with id=%s started." % session_id)
-        self._wait_for_completed(client, session_id, instance.tank.id, False)
-        instance.status = 'R'
-        instance.save()
+        self._wait_for_completed(client, session_id, tank.id, False)
         client.resume(session_id)
-        self._wait_for_completed(client, session_id, instance.tank.id, True)
-        instance.status = 'F'
-        instance.save()
+        self._wait_for_completed(client, session_id, tank.id, True)
         log.info("Test with id=%s stopped." % session_id)
 
     def _change_test_status(self, **kwargs):

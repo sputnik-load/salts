@@ -18,13 +18,15 @@ from django.http import HttpResponseNotFound
 from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
 from salts_prj.api_client import TankClient
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import User
 
 from django.forms.formsets import formset_factory
 from django.core.paginator import Paginator
 from django.views.generic.list import ListView
 from django.views.decorators.cache import never_cache
 from django.core.cache import caches
-from salts.models import (TestSettings, RPS, Target,
+from salts.models import (TestSettings, RPS, Target, Scenario,
                           Generator, TestRun, TestResult, Tank, Shooting)
 from salts.forms import SettingsEditForm, RPSEditForm
 from salts.tankmanager import tank_manager
@@ -809,3 +811,19 @@ def update_testresult(request):
 def gitsync(request):
     logger.info("gitsync calling")
     return HttpResponse(status=200)
+
+@never_cache
+def start_shooting(request):
+    import time, datetime
+    user = User.objects.get(username=request.user)
+    tokens = Token.objects.filter(user_id=user.id)
+    json_str = '{"salts": {"api_user": "%s", "api_key": "%s"}}' \
+                % (request.user, tokens[0])
+    msg = "Current time: %s. Shooting is starting." \
+          % datetime.datetime.fromtimestamp(time.time() + 0.5)
+    tank_host = request_get_value(request, 'tank_host')
+    scenario_id = request_get_value(request, 'scid')
+    scenario = Scenario.objects.get(id=scenario_id)
+    tank = Tank.objects.get(host=tank_host)
+    tank_manager.start(scenario, tank, json_str)
+    return HttpResponse(msg, status=200)
