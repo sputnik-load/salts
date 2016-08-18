@@ -111,7 +111,10 @@
       i = "0" + i;
   } return i; }
   
-  function remainedTime(sec_num, row, index, n=0) {
+  function remainedTime(sec_num, row, index, n) {
+    if (n === undefined) {
+      n = 0;
+    }
     if (sec_num < 0)
       sec_num = 0;
     var hours = Math.floor(sec_num / 3600);
