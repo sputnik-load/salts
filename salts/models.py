@@ -7,6 +7,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
+from django_pgjsonb import JSONField
 from tankmanager import tank_manager
 
 
@@ -294,6 +295,9 @@ class Shooting(models.Model):
                                 null=True, blank=True)
     ticket_id = models.CharField(u"Тикет ID", max_length=64, help_text='',
                                  null=True, blank=True)
+    custom_data = JSONField(null=True, default={}, decode_kwargs={},
+                            encode_kwargs={}, db_index=False,
+                            db_index_options={})
 
     def __unicode__(self):
         return "Shooting %s" % self.id
