@@ -11,3 +11,4 @@ markdown
 django-filter
 simplejson
 django-bower
+django-pgjsonb==0.0.23
