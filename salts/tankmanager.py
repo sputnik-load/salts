@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import threading
-from multiprocessing import Process
 import time
 import os
 import shutil
@@ -12,8 +11,8 @@ import codecs
 import ConfigParser
 import StringIO
 from salts.logger import Logger
-from salts.api_client import TankClient
 from salts_prj.settings import LT_PATH
+from tank_api_client import TankClient
 
 
 log = Logger.get_logger()
@@ -81,15 +80,6 @@ class TankManager(object):
         os.unlink(lock_path)
         return True
 
-
-    def start(self, scenario, tank, custom_data):
-        process_data = {'scenario': scenario, 'tank': tank,
-                       'custom_data': custom_data}
-        p = Process(name="Shooting Id", target=self.shoot,
-                    kwargs=process_data)
-        p.start()
-        p.join()
-
     def _check_for_running(self, client):
         while True:
             resp = client.status()
@@ -129,7 +119,6 @@ class TankManager(object):
                          % (status, format_resp(resp)))
             else:
                 log.info("Response: %s" % format_resp(resp))
-            time.sleep(TankManager.POLL_INTERVAL)
 
     def shoot(self, **kwargs):
         custom_data = kwargs.get('custom_data')

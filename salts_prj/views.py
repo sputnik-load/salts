@@ -17,7 +17,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.http import HttpResponseNotFound
 from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
-from salts_prj.api_client import TankClient
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 
@@ -26,6 +25,7 @@ from django.core.paginator import Paginator
 from django.views.generic.list import ListView
 from django.views.decorators.cache import never_cache
 from django.core.cache import caches
+from tasks import postpone
 from salts.models import (TestSettings, RPS, Target, Scenario,
                           Generator, TestRun, TestResult, Tank, Shooting)
 from salts.forms import SettingsEditForm, RPSEditForm
@@ -35,6 +35,7 @@ from salts_prj.forms import TestResultEditForm
 from settings import (LT_PATH, LT_GITLAB, LT_JIRA, DATABASES,
                       BASE_DIR, VERSION_FILE_NAME)
 from requests import ConnectionError
+from tank_api_client import TankClient
 
 
 def request_get_value(request, param):
@@ -825,5 +826,11 @@ def start_shooting(request):
     scenario_id = request_get_value(request, 'scid')
     scenario = Scenario.objects.get(id=scenario_id)
     tank = Tank.objects.get(host=tank_host)
-    tank_manager.start(scenario, tank, json_str)
+    start_shooting_process(scenario=scenario, tank=tank, custom_data=json_str)
+    time.sleep(1)
     return HttpResponse(msg, status=200)
+
+
+@postpone
+def start_shooting_process(**kwargs):
+    tank_manager.shoot(**kwargs)
