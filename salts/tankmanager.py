@@ -71,6 +71,7 @@ class TankManager(object):
         if os.path.exists(lock_path):
             return False
         open(lock_path, 'w').close()
+        log.info("Tank with id=%s was busy." % tank_id)
         return True
 
     def free(self, tank_id):
@@ -78,6 +79,7 @@ class TankManager(object):
         if not os.path.exists(lock_path):
             return False
         os.unlink(lock_path)
+        log.info("Tank with id=%s became free." % tank_id)
         return True
 
     def _check_for_running(self, client):
@@ -154,7 +156,8 @@ class TankManager(object):
         shooting = kwargs.get('shooting')
         start_time = time.time()
         ctrl_c_delta = timedelta(seconds=TankManager.CTRL_C_INTERVAL)
-        while time.time() - start_time <= TankManager.WAIT_FOR_RESULT_SAVED:
+        curr_time = time.time()
+        while curr_time - start_time <= TankManager.WAIT_FOR_RESULT_SAVED:
             try:
                 test_result = \
                     TestResult.objects.get(session_id=shooting.session_id)
@@ -175,7 +178,7 @@ class TankManager(object):
                      "the status is changed with Debug." \
                      % shooting.session_id)
             return
-        log.warning("The test id=%s isn't saved into DB." \
+        log.warning("The test id=%s wasn't saved into DB." \
                     % shooting.session_id)
 
     def interrupt(self, shooting):
