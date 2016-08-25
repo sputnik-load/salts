@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-import simplejson as json
+import json
 import logging
 import time
 import ConfigParser
@@ -816,19 +816,40 @@ def gitsync(request):
 @never_cache
 def start_shooting(request):
     import time, datetime
-    user = User.objects.get(username=request.user)
-    tokens = Token.objects.filter(user_id=user.id)
-    json_str = '{"salts": {"api_user": "%s", "api_key": "%s"}}' \
-                % (request.user, tokens[0])
-    msg = "Current time: %s. Shooting is starting." \
-          % datetime.datetime.fromtimestamp(time.time() + 0.5)
+    from urllib import unquote_plus
+    custom_data = request_get_value(request, 'custom_data')
+    json_str = '{}'
+    if custom_data:
+        b64line = unquote_plus(custom_data)
+        json_str = b64line.decode('base64', 'strict')
+    config = json.loads(json_str)
+    if 'salts' not in config:
+        config['salts'] = {}
+    if 'api_user' not in config['salts']:
+        config['salts']['api_user'] = request.user.username
+    if 'api_key' not in config['salts']:
+        user = User.objects.get(username=config['salts']['api_user'])
+        tokens = Token.objects.filter(user_id=user.id)
+        config['salts']['api_key'] = tokens[0].key
     tank_host = request_get_value(request, 'tank_host')
     scenario_id = request_get_value(request, 'scid')
+    logger.info("Scenario ID: %s" % scenario_id)
     scenario = Scenario.objects.get(id=scenario_id)
     tank = Tank.objects.get(host=tank_host)
-    start_shooting_process(scenario=scenario, tank=tank, custom_data=json_str)
-    time.sleep(1)
-    return HttpResponse(msg, status=200)
+    start_shooting_process(scenario=scenario, tank=tank,
+                           custom_data=json.dumps(config))
+    response_dict = {}
+    while True:
+        time.sleep(1)
+        shootings = Shooting.objects.order_by('-id')
+        if shootings:
+            sh = shootings[0]
+            if sh.status == 'R':
+                response_dict['start_time'] = sh.start
+                response_dict['id'] = sh.id
+                break
+    return HttpResponse(json.dumps(response_dict),
+                        content_type="application/json")
 
 
 @postpone

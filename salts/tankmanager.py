@@ -13,35 +13,10 @@ import StringIO
 from salts.logger import Logger
 from salts_prj.settings import LT_PATH
 from tank_api_client import TankClient
+from tank_api_client.confighelper import CustomConfig
 
 
 log = Logger.get_logger()
-
-
-class UnicodeConfigParser(ConfigParser.RawConfigParser):
-    def __init__(self, *args, **kwargs):
-        ConfigParser.RawConfigParser.__init__(self, *args, **kwargs)
-
-    def write(self, fp):
-        """Fixed for Unicode output"""
-        if self._defaults:
-            fp.write("[%s]\n" % "DEFAULT")
-            for (key, value) in self._defaults.items():
-                fp.write("%s = %s\n" % (key, unicode(value).replace('\n', '\n\t')))
-            fp.write("\n")
-
-        for section in self._sections:
-            fp.write("[%s]\n" % section)
-            for (key, value) in self._sections[section].items():
-                if key != "__name__":
-                    fp.write("%s = %s\n" % (key, unicode(value).replace('\n','\n\t')))
-            fp.write("\n")
-
-    # This function is needed to override default lower-case conversion
-    # of the parameter's names. They will be saved 'as is'.
-    def optionxform(self, strOut):
-        return strOut
-
 
 def stg_completed_to_bool(value):
     if type(value) is bool:
@@ -127,21 +102,10 @@ class TankManager(object):
         scenario = kwargs.get('scenario')
         tank = kwargs.get('tank')
         client = TankClient(tank.host, tank.port)
-        config_path = os.path.join(LT_PATH, scenario.scenario_path)
-        config = UnicodeConfigParser()
-        config.readfp(codecs.open(config_path, 'r', 'utf-8'))
-        custom = json.loads(custom_data)
-        for sec in custom:
-            if not config.has_section(sec):
-                config.add_section(sec)
-            param = custom[sec]
-            for k in param:
-                config.set(sec, k, param[k])
-        final_config = StringIO.StringIO()
-        config.write(final_config)
-        content = final_config.getvalue().encode('utf-8')
+        config = CustomConfig(os.path.join(LT_PATH, scenario.scenario_path))
+        config.mergejson(custom_data)
         resp = None
-        resp = client.run(content, 'start')
+        resp = client.run(config.textcontent(), 'start')
         session_id = resp['session']
         log.info("Test with id=%s started." % session_id)
         self._wait_for_completed(client, session_id, tank.id, False)

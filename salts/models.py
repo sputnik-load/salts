@@ -311,8 +311,6 @@ def post_save_shooting(instance, **kwargs):
         tank_manager.interrupt(instance)
     elif instance.status == 'F' and status_updated:
         tank_manager.free(instance.tank.id)
-    elif not instance.session_id and kwargs.get('created'):
-        tank_manager.start(instance)
 
 
 @receiver(post_save, sender=Group)
