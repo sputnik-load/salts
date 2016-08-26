@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import ConfigParser
 from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 
+import logging
+log = logging.getLogger('salts')
+
 TEMPLATE_CONTEXT_PROCESSORS += (
     'django.core.context_processors.request',
 )

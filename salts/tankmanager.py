@@ -10,13 +10,11 @@ import pickle
 import codecs
 import ConfigParser
 import StringIO
-from salts.logger import Logger
 from salts_prj.settings import LT_PATH
+from salts_prj.settings import log
 from tank_api_client import TankClient
 from tank_api_client.confighelper import CustomConfig
 
-
-log = Logger.get_logger()
 
 def stg_completed_to_bool(value):
     if type(value) is bool:
