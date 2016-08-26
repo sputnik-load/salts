@@ -25,7 +25,6 @@ from django.core.paginator import Paginator
 from django.views.generic.list import ListView
 from django.views.decorators.cache import never_cache
 from django.core.cache import caches
-from tasks import postpone
 from salts.models import (TestSettings, RPS, Target, Scenario,
                           Generator, TestRun, TestResult, Tank, Shooting)
 from salts.forms import SettingsEditForm, RPSEditForm
@@ -812,46 +811,3 @@ def update_testresult(request):
 def gitsync(request):
     logger.info("gitsync calling")
     return HttpResponse(status=200)
-
-@never_cache
-def start_shooting(request):
-    import time, datetime
-    from urllib import unquote_plus
-    custom_data = request_get_value(request, 'custom_data')
-    json_str = '{}'
-    if custom_data:
-        b64line = unquote_plus(custom_data)
-        json_str = b64line.decode('base64', 'strict')
-    config = json.loads(json_str)
-    if 'salts' not in config:
-        config['salts'] = {}
-    if 'api_user' not in config['salts']:
-        config['salts']['api_user'] = request.user.username
-    if 'api_key' not in config['salts']:
-        user = User.objects.get(username=config['salts']['api_user'])
-        tokens = Token.objects.filter(user_id=user.id)
-        config['salts']['api_key'] = tokens[0].key
-    tank_host = request_get_value(request, 'tank_host')
-    scenario_id = request_get_value(request, 'scid')
-    logger.info("Scenario ID: %s" % scenario_id)
-    scenario = Scenario.objects.get(id=scenario_id)
-    tank = Tank.objects.get(host=tank_host)
-    start_shooting_process(scenario=scenario, tank=tank,
-                           custom_data=json.dumps(config))
-    response_dict = {}
-    while True:
-        time.sleep(1)
-        shootings = Shooting.objects.order_by('-id')
-        if shootings:
-            sh = shootings[0]
-            if sh.status == 'R':
-                response_dict['start_time'] = sh.start
-                response_dict['id'] = sh.id
-                break
-    return HttpResponse(json.dumps(response_dict),
-                        content_type="application/json")
-
-
-@postpone
-def start_shooting_process(**kwargs):
-    tank_manager.shoot(**kwargs)
