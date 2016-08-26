@@ -2,7 +2,6 @@
 
 import os
 import json
-import logging
 import time
 import ConfigParser
 import codecs
@@ -32,6 +31,7 @@ from salts.tankmanager import tank_manager
 from salts_prj.ini import ini_manager
 from salts_prj.forms import TestResultEditForm
 from salts_prj.settings import LT_PATH, LT_GITLAB, LT_JIRA, DATABASES
+from salts_prj.settings import log
 from requests import ConnectionError
 from tank_api_client import TankClient
 from requesthelper import request_get_value, read_version, add_version
@@ -65,7 +65,7 @@ ORDER BY g.tool, ts.test_name")
 
     def get_context_data(self, **kwargs):
         context = super(TestSettingsList, self).get_context_data(**kwargs)
-        # logger.warning("Context: %s" % context)
+        # log.warning("Context: %s" % context)
         return context
 
 
@@ -98,9 +98,6 @@ class TankConfigError(Exception):
     pass
 
 
-logger = logging.getLogger("salts")
-
-
 def ini_files():
     ini = []
     for root, dirs, files in os.walk(LT_PATH, topdown=False):
@@ -115,7 +112,7 @@ def ini_files():
 def is_valid_request(request, keys):
     for k in keys:
         if not request.POST.has_key(k):
-            logger.warning("Request hasn't '%s' key." % k)
+            log.warning("Request hasn't '%s' key." % k)
             return False
     return True
 
@@ -130,7 +127,7 @@ def run_test_api(request):
     tsid = request.POST["tsid"]
     if tsid in sess:
         msg = "FUNC run_test_api: client with id=%s exist already." % tsid
-        logger.warning(msg)
+        log.warning(msg)
         return HttpResponse(msg)
 
     ts_record = TestSettings.objects.get(id=tsid)
@@ -140,7 +137,7 @@ FROM salts_generator g \
 JOIN salts_testsettings ts ON g.id = ts.generator_id WHERE ts.id = %s" % tsid)
 
     (gen_id, host, port) = (qs[0].id, qs[0].host, qs[0].port)
-    client = TankClient(host, port, logger)
+    client = TankClient(host, port, log)
     sess[tsid] = {}
     sess[tsid]["host"] = host
     sess[tsid]["port"] = port
@@ -150,7 +147,7 @@ JOIN salts_testsettings ts ON g.id = ts.generator_id WHERE ts.id = %s" % tsid)
         resp = client.run(ini_file.read(), "start", tr.id)
         if not resp:
             msg = "No server response when test tried to start."
-            logger.warning(msg)
+            log.warning(msg)
             return HttpResponse(msg)
         else:
             sess[tsid]["trid"] = tr.id
@@ -182,7 +179,7 @@ def stop_test_api(request):
 
     host = sess[tsid]["host"]
     port = sess[tsid]["port"]
-    client = TankClient(host, port, logger)
+    client = TankClient(host, port, log)
     client.stop(sess[tsid]["session"])
     request.session["test_run"] = str(pickle.dumps(sess))
     response_dict = {}
@@ -193,7 +190,7 @@ def stop_test_api(request):
 def status_info(tsid_info):
     host = tsid_info["host"]
     port = tsid_info["port"]
-    client = TankClient(host, port, logger)
+    client = TankClient(host, port, log)
     session_id = tsid_info["session"]
     status = client.status(session_id)
     resp = None
@@ -246,12 +243,12 @@ def edit_test_parameters(request, settings_id):
     settings_form = SettingsEditForm(instance=ts_record)
     rps_record = RPS.objects.filter(test_settings_id=settings_id)
     RpsFormSet = formset_factory(RPSEditForm, extra=0)
-    # logger.info("rps_record: %s" % rps_record)
+    # log.info("rps_record: %s" % rps_record)
     data = []
     rps_id = []
     for record in rps_record:
         rps_id.append(str(record.id))
-        logger.info("RPS Edit Form: %s" % record.rps_name)
+        log.info("RPS Edit Form: %s" % record.rps_name)
         data.append({"target": record.target, "rps_name": record.rps_name,
                      "schedule": record.schedule})
         # rps_form = RPSEditForm(instance=record)
@@ -313,8 +310,8 @@ def check_changes(full_path):
                 lt_tool = "jmeter"
                 tool_sections.append(sec)
         if not lt_tool:
-            logger.info("%s ini-file isn't config for tank test." % full_path)
-            logger.warning("FUNC check_changes: %s ini-file isn't config for tank test." % full_path)
+            log.info("%s ini-file isn't config for tank test." % full_path)
+            log.warning("FUNC check_changes: %s ini-file isn't config for tank test." % full_path)
             return
         file_name = full_path.replace("%s/" % LT_PATH, "")
         try:
@@ -360,16 +357,16 @@ def check_changes(full_path):
         qs = RPS.objects.filter(test_settings_id=ts_record.id).exclude(rps_name__in=tool_sections).delete()
         return
     except ConfigParser.NoOptionError as e:
-        logger.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
+        log.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
                                                                    full_path))
     except ConfigParser.NoSectionError as e:
-        logger.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
+        log.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
                                                                    full_path))
     except ConfigParser.MissingSectionHeaderError as e:
-        logger.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
+        log.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
                                                                    full_path))
     except TankConfigError as e:
-        logger.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
+        log.warning("Config Parse Issue: %s. Ini-file: %s." %  (e,
                                                                    full_path))
     for tool_ent in entity["tool"]:
         if "target" in tool_ent:
@@ -387,7 +384,7 @@ def sync_config(file_path, *args, **kwargs):
         ts_record = kwargs["test_settings"]
         sp_sec = "sputnikreport"
         config.set(sp_sec, "test_name", ts_record.test_name)
-        logger.info("INFO: %s" % ts_record.test_name)
+        log.info("INFO: %s" % ts_record.test_name)
         config.set(sp_sec, "ticket_url", ts_record.ticket)
         config.set(sp_sec, "version", ts_record.version)
         is_changed = True
@@ -418,10 +415,10 @@ def show_test_settings(request):
     if request.method == "POST":
         if "cancel-button" in request.POST:
             return HttpResponseRedirect("/tests/")
-        logger.info("Request.POST: %s" % request.POST)
+        log.info("Request.POST: %s" % request.POST)
         ts_record = TestSettings.objects.get(id=request.POST["settings"])
         config_path = os.path.join(LT_PATH, ts_record.file_path)
-        logger.info("ts_record: %s" % ts_record)
+        log.info("ts_record: %s" % ts_record)
         ts_record.test_name = request.POST["test_name"]
         ts_record.ticket = request.POST["ticket"]
         ts_record.version = request.POST["version"]
@@ -448,7 +445,7 @@ def poll_servers(request):
     tr_session = {}
     generators = Generator.objects.all().values("host", "port").distinct()
     for gen in generators:
-        client = TankClient(gen["host"], gen["port"], logger)
+        client = TankClient(gen["host"], gen["port"], log)
         try:
             data = client.status()
         except ConnectionError as e:
@@ -676,7 +673,7 @@ def get_remained_time(shooting):
 
 @never_cache
 def get_tank_status(request):
-    logger.info("get_tank_status: request.GET: %s" % request.GET)
+    log.info("get_tank_status: request.GET: %s" % request.GET)
     tank_id = request.GET.get('tank_id')
     if tank_id:
         tanks = Tank.objects.filter(id=tank_id)
@@ -786,5 +783,5 @@ def update_testresult(request):
 
 
 def gitsync(request):
-    logger.info("gitsync calling")
+    log.info("gitsync calling")
     return HttpResponse(status=200)
