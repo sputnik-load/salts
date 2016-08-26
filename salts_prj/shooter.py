@@ -13,13 +13,7 @@ from salts.tankmanager import tank_manager
 from salts_prj.settings import log
 from rest_framework.authtoken.models import Token
 from salts_prj.tasks import postpone
-
-
-def request_get_value(request, param):
-    value = None
-    if param in request.GET:
-        value = request.GET[param]
-    return value
+from requesthelper import request_get_value
 
 
 @postpone
