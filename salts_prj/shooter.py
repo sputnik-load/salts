@@ -33,10 +33,10 @@ class ShooterView(View):
         if shooting_id:
             return self.stop_shooting(shooting_id, request.user.username)
 
-        scenario_id = request_get_value(request, 'scid')
-        tank_host = request_get_value(request, 'tank_host')
-        custom_data = request_get_value(request, 'custom_data')
-        return self.start_shooting(scenario_id, tank_host, custom_data,
+        scenario_id = request_get_value(request, 's')
+        tank_id = request_get_value(request, 't')
+        custom_data = request_get_value(request, 'j')
+        return self.start_shooting(scenario_id, tank_id, custom_data,
                                    request.user.username)
 
     def have_perm_start(self, username, scenario_id):
@@ -64,15 +64,33 @@ class ShooterView(View):
         return bool(cursor.fetchone())
 
 
-    def start_shooting(self, scenario_id, tank_host, custom_data, username):
-        scenario = Scenario.objects.get(id=scenario_id)
-        tank = Tank.objects.get(host=tank_host)
+    def start_shooting(self, scenario_id, tank_id, custom_data, username):
+        response_dict = {'message': ''}
+        try:
+            scenario = Scenario.objects.get(id=scenario_id)
+        except Scenario.DoesNotExist:
+            response_dict['status'] = 'failed'
+            response_dict['message'] = "Given scenario_id=%s isn't valid." \
+                                       % scenario_id
+            log.warning(response_dict['message'])
+            return HttpResponse(json.dumps(response_dict),
+                                content_type="application/json",
+                                status=401)
+        try:
+            tank = Tank.objects.get(id=tank_id)
+        except Tank.DoesNotExist:
+            response_dict['status'] = 'failed'
+            response_dict['message'] = "Given tank_id=%s isn't valid." \
+                                       % tank_id
+            log.warning(response_dict['message'])
+            return HttpResponse(json.dumps(response_dict),
+                                content_type="application/json",
+                                status=401)
         json_str = '{}'
         if custom_data:
             b64line = unquote_plus(custom_data)
             json_str = b64line.decode('base64', 'strict')
         config = json.loads(json_str)
-        response_dict = {'message': ''}
         if 'salts' not in config:
             config['salts'] = {}
         if 'api_user' not in config['salts']:
