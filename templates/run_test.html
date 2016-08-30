@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title_content %}
+  <title>SALTS: запуск тестов</title>
+{% endblock title_content %}
+{% block container %}
+  <h1>Запуск тестов:</h1>
+  <p id="linker" align="right"></p>
+  <table id="table"
+         data-toggle="table"
+         data-url="/run?a=1"
+         data-height="800"
+         data-side-pagination="server"
+         data-pagination="true"
+         data-page-list="[10, 20, 50, All]"
+         data-row-style="row_style"
+         data-sort-name="id"
+         data-sort-order="asc"
+         data-show-columns="true"
+         data-resizable="true"
+         data-key-events="true"
+         data-ajax="ajax_request"
+         data-search="false">
+      <thead style="background-color: Bisque">
+        <tr>
+          <th class="col-sm-1" data-field="id" data-sortable="true"
+              data-visible="true" title="ID">ID</th>
+          <th class="col-sm-2" data-field="test_name" title="Имя теста">Имя теста</th>
+          <th class="col-sm-2" data-field="tank_host"
+              title="Имя хоста">Имя хоста</th>
+          <th class="col-sm-2" data-field="action"
+              title="Действие">Действие</th>
+          <th class="col-sm-2" data-field="status"
+              title="Статус">Статус</th>
+        </tr>
+      </thead>
+  </table>
+{% endblock container %}
+{% block scripts_blk %}
+  function ajax_request(params) {
+    var resp = $.ajax(params);       
+  }
+{% endblock scripts_blk %}

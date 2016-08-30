@@ -12,6 +12,7 @@ from salts_prj.views import show_trends_page, tank_monitoring, get_tank_status
 from salts_prj.views import salts_logout, get_version
 from salts_prj.views import gitsync, edit_testresult, update_testresult
 from salts_prj.shooter import ShooterView
+from salts_prj.scenariorun import ScenarioRunView
 
 
 admin.autodiscover()
@@ -44,6 +45,7 @@ urlpatterns = patterns('',
     url(r'^version/$', get_version),
     url(r'^update/$', update_testresult),
     url(r'^shoot/$', ShooterView.as_view()),
+    url(r'^run/$', ScenarioRunView.as_view(), name='run_test'),
 )
 
 if settings.DEBUG:
