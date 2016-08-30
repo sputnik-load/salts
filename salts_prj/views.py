@@ -34,7 +34,8 @@ from salts_prj.settings import LT_PATH, LT_GITLAB, LT_JIRA, DATABASES
 from salts_prj.settings import log
 from requests import ConnectionError
 from tank_api_client import TankClient
-from requesthelper import request_get_value, read_version, add_version
+from salts_prj.requesthelper import (request_get_value, read_version,
+                                     add_version, generate_context)
 
 
 @never_cache
@@ -489,25 +490,6 @@ def poll_servers(request):
     request.session["test_run"] = str(pickle.dumps(tr_session))
     return HttpResponse(json.dumps(response_dict),
                         content_type="application/json")
-
-
-def set_context(request):
-    context = {}
-    context.update(csrf(request))
-    context["host"] = DATABASES["default"]["HOST"]
-    context["name"] = DATABASES["default"]["NAME"]
-    return context
-
-
-def generate_context(request):
-    context = {}
-    context.update(csrf(request))
-    context['host'] = DATABASES['default']['HOST']
-    context['name'] = DATABASES['default']['NAME']
-    context['username'] = request.user.username
-    context['is_superuser'] = request.user.is_superuser
-    context['is_staff'] = request.user.is_staff
-    return context
 
 
 @login_required
