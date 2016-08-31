@@ -128,6 +128,7 @@ STATICFILES_FINDERS = (
 
 BOWER_INSTALLED_APPS = (
     'bootstrap-table#1.9.1',
+    'x-editable#1.5.1',
     'purl#2.3.1',
     'bootstrap#3.3.6',
     'jquery#2.2.0',

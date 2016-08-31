@@ -24,9 +24,10 @@
         <tr>
           <th class="col-sm-1" data-field="id" data-sortable="true"
               data-visible="true" title="ID">ID</th>
-          <th class="col-sm-2" data-field="test_name" title="Имя теста">Имя теста</th>
-          <th class="col-sm-2" data-field="tank_host"
-              title="Имя хоста">Имя хоста</th>
+          <th class="col-sm-2" data-field="test_name" title="Имя теста"
+              data-formatter="test_name_formatter">Имя теста</th>
+            <th class="col-sm-2" data-field="tank_host" title="Имя хоста"
+              data-formatter="tank_host_formatter">Имя хоста</th>
           <th class="col-sm-2" data-field="action"
               title="Действие">Действие</th>
           <th class="col-sm-2" data-field="status"
@@ -36,7 +37,47 @@
   </table>
 {% endblock container %}
 {% block scripts_blk %}
+  var targetNodes         = $("#table");
+  var MutationObserver    = window.MutationObserver || 
+                            window.WebKitMutationObserver;
+  var myObserver          = new MutationObserver (mutationHandler);
+  var obsConfig           = {childList: true, characterData: true,
+                             attributes: true, subtree: true };
+
+  function mutationHandler(mutationRecords) {
+    mutationRecords.forEach(function(mutation) {
+      if (mutation.type == "childList") {
+        $(mutation.addedNodes).each(function() {
+          $(this).find('td a').each(function() {
+            $(this).editable();
+          });
+        });
+      }
+    });
+  }
+
   function ajax_request(params) {
     var resp = $.ajax(params);       
+  }
+ 
+  $(document).ready(function() {
+    targetNodes.each(function() {
+        myObserver.observe(this, obsConfig);
+    });
+    $.fn.editable.defaults.mode = 'popup';
+  });
+
+  function test_name_formatter(v, row, index) {
+    return "<a href='#' id='test_name' data-type='text' " +
+           "data-placement='right' data-title='Имя теста'>" + 
+           row['test_name'] + "</a>";
+  }
+
+  function tank_host_formatter(v, row, index) {
+    return "<a href='#' id='tank_host'" + 
+           "data-source='[{\"value\": \"1\", \"text\": \"111\"}]' " +
+           "data-type='select' " +
+           "data-placement='right' data-title='Имя хоста с танком'>" + 
+           row['tank_host'] + "</a>";
   }
 {% endblock scripts_blk %}
