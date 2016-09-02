@@ -26,9 +26,10 @@
               data-visible="true" title="ID">ID</th>
           <th class="col-sm-2" data-field="test_name" title="Имя теста"
               data-formatter="test_name_formatter">Имя теста</th>
-            <th class="col-sm-2" data-field="tank_host" title="Имя хоста"
+          <th class="col-sm-2" data-field="tank_host" title="Имя хоста"
               data-formatter="tank_host_formatter">Имя хоста</th>
           <th class="col-sm-2" data-field="action"
+              data-formatter="action_formatter" 
               title="Действие">Действие</th>
           <th class="col-sm-2" data-field="status"
               title="Статус">Статус</th>
@@ -49,7 +50,11 @@
       if (mutation.type == "childList") {
         $(mutation.addedNodes).each(function() {
           $(this).find('td a').each(function() {
-            $(this).editable();
+            $(this).editable({
+              success: function() {
+                console.log("EDITABLE SUCCESS");
+              }
+            });
           });
         });
       }
@@ -78,5 +83,28 @@
            "data-source='" + row['tank_host'] + "' " + 
            "data-type='select' data-value=''" +
            "data-placement='right' data-title='Имя хоста с танком'></a>";
+  }
+
+  function runTest(scenario_id, tank_id, b64line) {
+    var data_url = "/shoot/?s=" + scenario_id +
+                   "&t=" + tank_id;
+    console.log("DATA URL: " + data_url);
+    var resp = $.ajax({
+      url: data_url,
+      type: 'GET',
+      dataType: 'json',
+      success: function(json) {
+        console.log("Response: " + JSON.stringify(json));
+      },
+      error: function(json) {
+        console.log("Response: " + JSON.stringify(json));
+      }
+    });
+  }
+
+  function action_formatter(v, row, index) {
+    var func_name = '';
+    return "<button type='button' class='btn btn-primary' " +
+           "onclick='runTest(7,9)'>Запустить</button>";
   }
 {% endblock scripts_blk %}
