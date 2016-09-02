@@ -2,6 +2,7 @@
 
 import json
 import time
+import copy
 from operator import itemgetter
 from django.http import HttpResponse
 from django.views.generic import View
@@ -82,11 +83,11 @@ class ScenarioRunView(View):
                 WHERE usr_gr.user_id = '{user_id}'
             """.format(user_id=request.user.id))
         shootings = self.active_shootings()
-        log.info("Active Shootings Len: %s" % len(shootings))
         results = []
-        tanks_list = json.loads(serializers.serialize('json',
-                                                      Tank.objects.all()))
+        tanks = json.loads(serializers.serialize('json',
+                                                 Tank.objects.all()))
         for record in cursor.fetchall():
+            tanks_list = copy.copy(tanks)
             values = {}
             (scenario_id, scenario_path) = record
             values['id'] = scenario_id
@@ -95,7 +96,7 @@ class ScenarioRunView(View):
                 scenario_shootings = shootings.filter(scenario_id=scenario_id)
                 if scenario_shootings:
                     for sh in scenario_shootings:
-                        ex_values = values
+                        ex_values = copy.copy(values)
                         for i in xrange(0, len(tanks_list)):
                             if tanks_list[i]['pk'] == sh.tank_id:
                                 ex_values['tank_host'] = \
