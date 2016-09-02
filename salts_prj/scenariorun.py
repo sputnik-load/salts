@@ -10,14 +10,13 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.shortcuts import render_to_response
 from django.db import connection
+from django.core import serializers
 from salts.models import Scenario, Shooting, Tank
 from django.contrib.auth.models import User
 from salts_prj.settings import log
 from salts_prj.requesthelper import (request_get_value, generate_context,
                                      add_version)
 from salts_prj.ini import ini_manager
-
-
 
 
 class ScenarioRunView(View):
@@ -64,6 +63,16 @@ class ScenarioRunView(View):
                 invalid.append(s.id)
         return shootings.exclude(id__in=invalid)
 
+    def obtain_tanks_json(self, tanks_list):
+        records = []
+        for tank in tanks_list:
+            records.append({
+                'value': tank['pk'],
+                'text': tank['fields']['host']})
+        return json.dumps(records)
+
+
+
     def get_test_status(self, request):
         cursor = connection.cursor()
         cursor.execute(
@@ -72,14 +81,28 @@ class ScenarioRunView(View):
                 JOIN auth_user_groups usr_gr USING(group_id)
                 WHERE usr_gr.user_id = '{user_id}'
             """.format(user_id=request.user.id))
-        tanks = Tank.objects.all()
         shootings = self.active_shootings()
         log.info("Active Shootings Len: %s" % len(shootings))
         results = []
+        tanks_list = json.loads(serializers.serialize('json',
+                                                      Tank.objects.all()))
         for record in cursor.fetchall():
             values = {}
-            (values['id'], scenario_path) = record
+            (scenario_id, scenario_path) = record
+            values['id'] = scenario_id
             values['test_name'] = ini_manager.get_scenario_name(scenario_path)
+            if shootings:
+                scenario_shootings = shootings.filter(scenario_id=scenario_id)
+                if scenario_shootings:
+                    for sh in scenario_shootings:
+                        ex_values = values
+                        for i in xrange(0, len(tanks_list)):
+                            if tanks_list[i]['pk'] == sh.tank_id:
+                                ex_values['tank_host'] = \
+                                    self.obtain_tanks_json([tanks_list.pop(i)])
+                                break
+                        results.append(ex_values)
+            values['tank_host'] = self.obtain_tanks_json(tanks_list)
             results.append(values)
         sort = request_get_value(request, 'sort')
         if sort:

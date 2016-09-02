@@ -75,9 +75,8 @@
 
   function tank_host_formatter(v, row, index) {
     return "<a href='#' id='tank_host'" + 
-           "data-source='[{\"value\": \"1\", \"text\": \"111\"}]' " +
-           "data-type='select' " +
-           "data-placement='right' data-title='Имя хоста с танком'>" + 
-           row['tank_host'] + "</a>";
+           "data-source='" + row['tank_host'] + "' " + 
+           "data-type='select' data-value=''" +
+           "data-placement='right' data-title='Имя хоста с танком'></a>";
   }
 {% endblock scripts_blk %}
