@@ -115,6 +115,8 @@
       dataType: 'json',
       success: function(json) {
         console.log("Response: " + JSON.stringify(json));
+        var action_btn1 = $("#table #action_btn[scid=" + scenario_id + "]")[0];
+        $(action_btn1).prop('disabled', true);
       },
       error: function(json) {
         console.log("Response: " + JSON.stringify(json));
