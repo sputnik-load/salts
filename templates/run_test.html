@@ -51,8 +51,26 @@
         $(mutation.addedNodes).each(function() {
           $(this).find('td a').each(function() {
             $(this).editable({
-              success: function() {
-                console.log("EDITABLE SUCCESS");
+              success: function(response, newValue) {
+              },
+              display: function(value, sourceData) {
+                if ($(this).attr('name') === 'tank_host') {
+                  var content = $.fn.editableutils.itemsByValue(value,
+                                                                sourceData);
+                  $(this).html(content[0]['text']);
+                  var action_btns = $('#table #action_btn');
+                  var cur_ix = $(this).attr('index');
+                  var action_btn = $(action_btns[cur_ix]);
+                  if (value == 0) {
+                    action_btn.prop('disabled', true);
+                  }
+                  else {
+                    action_btn.prop('disabled', false);
+                    var func_name = "runTest(" + action_btn.attr('scid') +
+                                    ", " + value + ")";
+                    action_btn.attr('onclick', func_name);
+                  }
+                }
               }
             });
           });
@@ -73,15 +91,17 @@
   });
 
   function test_name_formatter(v, row, index) {
-    return "<a href='#' id='test_name' data-type='text' " +
+    return "<a href='#' name='test_name' data-type='text' " +
            "data-placement='right' data-title='Имя теста'>" + 
            row['test_name'] + "</a>";
   }
 
   function tank_host_formatter(v, row, index) {
-    return "<a href='#' id='tank_host'" + 
-           "data-source='" + row['tank_host'] + "' " + 
-           "data-type='select' data-value=''" +
+    var json_obj = JSON.parse(row['tank_host']);
+    json_obj.push({text: "Не выбран", value: "0"});
+    return "<a href='#' name='tank_host' index='" + index + "' " +
+           "data-source='" + JSON.stringify(json_obj) + "' " +
+           "data-type='select' data-value='0'" +
            "data-placement='right' data-title='Имя хоста с танком'></a>";
   }
 
@@ -103,8 +123,8 @@
   }
 
   function action_formatter(v, row, index) {
-    var func_name = '';
     return "<button type='button' class='btn btn-primary' " +
-           "onclick='runTest(7,9)'>Запустить</button>";
+           "id='action_btn' scid='" + row['id'] + "' " +
+           "onclick=''>Запустить</button>";
   }
 {% endblock scripts_blk %}
