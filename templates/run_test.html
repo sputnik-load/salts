@@ -108,15 +108,38 @@
   function runTest(scenario_id, tank_id, b64line) {
     var data_url = "/shoot/?s=" + scenario_id +
                    "&t=" + tank_id;
-    console.log("DATA URL: " + data_url);
     var resp = $.ajax({
       url: data_url,
       type: 'GET',
       dataType: 'json',
       success: function(json) {
         console.log("Response: " + JSON.stringify(json));
-        var action_btn1 = $("#table #action_btn[scid=" + scenario_id + "]")[0];
-        $(action_btn1).prop('disabled', true);
+        var action_btn = $("#table #action_btn[scid=" + scenario_id + "]")[0];
+        var func_name = "stopTest(" + scenario_id + ", " + tank_id + ", " +
+                        json['id'] + ")";
+        $(action_btn).attr('onclick', func_name);
+        $(action_btn).text('Остановить');
+      },
+      error: function(json) {
+        console.log("Response: " + JSON.stringify(json));
+      }
+    });
+  }
+
+  function stopTest(scenario_id, tank_id, shooting_id) {
+    var data_url = "/shoot/?stop=" + shooting_id;
+    var resp = $.ajax({
+      url: data_url,
+      type: 'GET',
+      dataType: 'json',
+      success: function(json) {
+        console.log("Response: " + JSON.stringify(json));
+        var action_btn = $("#table #action_btn[scid=" + scenario_id + "]")[0];
+        var func_name = "stopTest(" + scenario_id + ", " + json['id'] + ")";
+                    var func_name = "runTest(" + scenario_id +
+                                    ", " + tank_id + ")";
+        $(action_btn).attr('onclick', func_name);
+        $(action_btn).text('Запустить');
       },
       error: function(json) {
         console.log("Response: " + JSON.stringify(json));
