@@ -98,9 +98,12 @@
 
   function tank_host_formatter(v, row, index) {
     var json_obj = JSON.parse(row['tank_host']);
-    json_obj.push({text: "Не выбран", value: "0"});
+    if (json_obj['active']) {
+      return "<p>" + json_obj['variants'][0]['text'] + "</p>";
+    }
+    json_obj['variants'].push({text: "Не выбран", value: "0"});
     return "<a href='#' name='tank_host' index='" + index + "' " +
-           "data-source='" + JSON.stringify(json_obj) + "' " +
+           "data-source='" + JSON.stringify(json_obj['variants']) + "' " +
            "data-type='select' data-value='0'" +
            "data-placement='right' data-title='Имя хоста с танком'></a>";
   }
@@ -115,8 +118,8 @@
       success: function(json) {
         console.log("Response: " + JSON.stringify(json));
         var action_btn = $("#table #action_btn[scid=" + scenario_id + "]")[0];
-        var func_name = "stopTest(" + scenario_id + ", " + tank_id + ", " +
-                        json['id'] + ")";
+        var func_name = "'stopTest(" + scenario_id + ", " + tank_id + ", " +
+                        json['id'] + ")'";
         $(action_btn).attr('onclick', func_name);
         $(action_btn).text('Остановить');
       },
@@ -135,9 +138,7 @@
       success: function(json) {
         console.log("Response: " + JSON.stringify(json));
         var action_btn = $("#table #action_btn[scid=" + scenario_id + "]")[0];
-        var func_name = "stopTest(" + scenario_id + ", " + json['id'] + ")";
-                    var func_name = "runTest(" + scenario_id +
-                                    ", " + tank_id + ")";
+        var func_name = "'runTest(" + scenario_id + ", " + tank_id + ")'";
         $(action_btn).attr('onclick', func_name);
         $(action_btn).text('Запустить');
       },
@@ -148,8 +149,17 @@
   }
 
   function action_formatter(v, row, index) {
+    var json_obj = JSON.parse(row['tank_host']);
+    var btn_text = "Запустить";
+    var onclick_fn = "''";
+    if (json_obj['active']) {
+      btn_text = "Остановить";
+      onclick_fn = "'stopTest(" + row['id'] + ', ' +
+                   json_obj['variants'][0]['value'] + ", " +
+                   json_obj['active'] + ")'";
+    }
     return "<button type='button' class='btn btn-primary' " +
            "id='action_btn' scid='" + row['id'] + "' " +
-           "onclick=''>Запустить</button>";
+           "onclick=" + onclick_fn + ">" + btn_text + "</button>";
   }
 {% endblock scripts_blk %}

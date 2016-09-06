@@ -64,15 +64,14 @@ class ScenarioRunView(View):
                 invalid.append(s.id)
         return shootings.exclude(id__in=invalid)
 
-    def obtain_tanks_json(self, tanks_list):
+    def obtain_tanks_json(self, tanks_list, active_shooting_id=0):
         records = []
         for tank in tanks_list:
             records.append({
                 'value': tank['pk'],
                 'text': tank['fields']['host']})
-        return json.dumps(records)
-
-
+        return json.dumps({'active': active_shooting_id,
+                           'variants': records})
 
     def get_test_status(self, request):
         cursor = connection.cursor()
@@ -100,7 +99,8 @@ class ScenarioRunView(View):
                         for i in xrange(0, len(tanks_list)):
                             if tanks_list[i]['pk'] == sh.tank_id:
                                 ex_values['tank_host'] = \
-                                    self.obtain_tanks_json([tanks_list.pop(i)])
+                                    self.obtain_tanks_json(
+                                        [tanks_list.pop(i)], sh.id)
                                 break
                         results.append(ex_values)
             values['tank_host'] = self.obtain_tanks_json(tanks_list)
