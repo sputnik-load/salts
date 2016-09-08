@@ -32,7 +32,7 @@
               data-formatter="action_formatter"
               title="Действие">Действие</th>
           <th class="col-sm-2" data-field="status"
-              title="Статус">Статус</th>
+              data-formatter="statusFormatter" title="Статус">Статус</th>
         </tr>
       </thead>
   </table>
@@ -154,7 +154,7 @@
         console.log("Tanks: " + JSON.stringify(tanks));
       });
   }
- 
+
   $(document).ready(function() {
     targetNodes.each(function() {
         myObserver.observe(this, obsConfig);
@@ -179,8 +179,8 @@
   }
 
   function runTest(scenario_id, tank_id, b64line) {
-    var trItem = $("div[id='scenario_" + scenario_id + "']").parents('tr');
-    trItem.find('button').attr('disabled', true);
+    $("div[id='scenario_" + scenario_id + "']").parents('tr')
+      .find('button').attr('disabled', true);
     var data_url = "/shoot/?s=" + scenario_id +
                    "&t=" + tank_id;
     console.log("RunTestURL: " + data_url);
@@ -204,6 +204,8 @@
           displayTankHostCell($(this));
         });
         updateRowIndexes();
+        $("div[id='shooting_" + json['id'] + "']").parents('tr')
+          .find('div[name=status]').html("Тест выполняется.");
         console.log("Tanks: " + JSON.stringify(tanks));
       },
       error: function(json) {
@@ -238,6 +240,8 @@
           displayTankHostCell($(this));
         });
         updateRowIndexes();
+        $("div[id='scenario_" + scenario_id + "']").parents('tr')
+          .find('div[name=status]').html("Тест прерван.");
         console.log("Tanks: " + JSON.stringify(tanks));
       },
       error: function(json) {
@@ -247,17 +251,11 @@
   }
 
   function action_formatter(v, row, index) {
-    var json_obj = JSON.parse(row['tank_host']);
-    var btn_text = "Запустить";
-    var onclick_fn = "''";
-    if (json_obj['active']) {
-      btn_text = "Остановить";
-      onclick_fn = "'stopTest(" + row['id'] + ', ' +
-                   json_obj['variants'][0]['value'] + ", " +
-                   json_obj['active'] + ")'";
-    }
     return "<button type='button' class='btn btn-primary' " +
-           "id='action_btn' scid='" + row['id'] + "' " +
-           "onclick=" + onclick_fn + ">" + btn_text + "</button>";
+           "id='action_btn' " + "onclick=''></button>";
+  }
+
+  function statusFormatter(v, row, index) {
+    return "<div name='status'></div>";
   }
 {% endblock scripts_blk %}
