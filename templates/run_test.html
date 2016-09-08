@@ -29,7 +29,7 @@
           <th class="col-sm-2" data-field="tank_host" title="Имя хоста"
               data-formatter="tank_host_formatter">Имя хоста</th>
           <th class="col-sm-2" data-field="action"
-              data-formatter="action_formatter" 
+              data-formatter="action_formatter"
               title="Действие">Действие</th>
           <th class="col-sm-2" data-field="status"
               title="Статус">Статус</th>
@@ -39,40 +39,97 @@
 {% endblock container %}
 {% block scripts_blk %}
   var targetNodes         = $("#table");
-  var MutationObserver    = window.MutationObserver || 
+  var MutationObserver    = window.MutationObserver ||
                             window.WebKitMutationObserver;
   var myObserver          = new MutationObserver (mutationHandler);
   var obsConfig           = {childList: true, characterData: true,
                              attributes: true, subtree: true };
+  var tanks;
+
+
+  function updateTankHostEditable(divItem) {
+    var aItem = divItem.find('a');
+    aItem.editable({
+      display: function(value, sourceData) {
+        var content = $.fn.editableutils.itemsByValue(value, sourceData);
+        aItem.html(content[0]['text']);
+        aItem.attr('data-value', value);
+        displayActionButton(divItem);
+      }
+    });
+    aItem.editable('option', 'source', JSON.stringify(tanks['na']));
+    aItem.editable('setValue', '-1', true);
+    aItem.removeClass('editable-unsaved');
+  }
+
+  function updateRowIndexes() {
+    var index = 0;
+    $("#table tr[data-index]").each(function() {
+      $(this).attr("data-index", index);
+      index += 1;
+    });
+  }
+
+  function displayTankHostCell(divItem) {
+    var idValue = divItem.attr('id').replace(/_\d+/, '');
+    if (idValue == "shooting") {
+      displayActionButton(divItem);
+      return;
+    }
+    updateTankHostEditable(divItem);
+    if (tanks['active']) {
+      var scenarioId = parseInt(divItem.attr('id').replace(/scenario_/, ''),
+                                10);
+      $.each(tanks['active'], function(key, tank) {
+        if (scenarioId == tank['scid']) {
+          var trItem = divItem.parents('tr');
+          var newItem = trItem.clone();
+          var newDiv = newItem.find("div[id='scenario_" + scenarioId + "']");
+          newDiv.attr('id', "shooting_" + tank['shid']);
+          newDiv.html("<p value='" + tank['value'] +
+                      "'>" + tank['text'] + "</p>");
+          newItem.insertBefore(trItem);
+        }
+      });
+    }
+  }
+
+  function displayActionButton(divItem) {
+    var trItem = divItem.parents('tr');
+    var scenarioId = trItem.find('td:eq(0)').text();
+    var shootingId = parseInt(divItem.attr('id').replace(/shooting_/, ''),
+                              10);
+    var onclickHandler = '';
+    var butItem = trItem.find('button');
+    var butName = "Запустить";
+    var disabled = true;
+    if (shootingId) {
+      disabled = false;
+      var tankId = trItem.find('p[value]').attr('value');
+      onclickHandler = "stopTest(" + scenarioId + ", " + tankId +
+                       ", " + shootingId + ")";
+      butName = "Остановить";
+    }
+    else {
+      var tankId = trItem.find('a[data-value]').attr('data-value');
+      if (tankId > 0) {
+        disabled = false;
+        onclickHandler = "runTest(" + scenarioId + ", " + tankId + ")";
+      }
+    }
+    butItem.prop('disabled', disabled);
+    butItem.attr('onclick', onclickHandler);
+    butItem.text(butName);
+  }
 
   function mutationHandler(mutationRecords) {
     mutationRecords.forEach(function(mutation) {
       if (mutation.type == "childList") {
         $(mutation.addedNodes).each(function() {
-          $(this).find('td a').each(function() {
-            $(this).editable({
-              success: function(response, newValue) {
-              },
-              display: function(value, sourceData) {
-                if ($(this).attr('name') === 'tank_host') {
-                  var content = $.fn.editableutils.itemsByValue(value,
-                                                                sourceData);
-                  $(this).html(content[0]['text']);
-                  var action_btns = $('#table #action_btn');
-                  var cur_ix = $(this).attr('index');
-                  var action_btn = $(action_btns[cur_ix]);
-                  if (value == 0) {
-                    action_btn.prop('disabled', true);
-                  }
-                  else {
-                    action_btn.prop('disabled', false);
-                    var func_name = "runTest(" + action_btn.attr('scid') +
-                                    ", " + value + ")";
-                    action_btn.attr('onclick', func_name);
-                  }
-                }
-              }
-            });
+          $(this).find("div[name='tank_host']").each(function() {
+            var id = $(this).attr('id');
+            console.log("Tank Host Cell '" + id + "' will be displayed");
+            displayTankHostCell($(this));
           });
         });
       }
@@ -80,7 +137,22 @@
   }
 
   function ajax_request(params) {
-    var resp = $.ajax(params);       
+    $.ajax(params)
+      .done(function(jsonObj) {
+        tanks = {na: [{value: "-1", text: "Не выбран"}],
+                 active: []};
+        $.each(jsonObj['tanks'], function(ix, js_str) {
+          var tank = JSON.parse(js_str);
+          if (tank['shid']) {
+            tanks['active'].push(tank);
+          }
+          else {
+            tanks['na'].push({value: tank['value'],
+                              text: tank['text']});
+          }
+        });
+        console.log("Tanks: " + JSON.stringify(tanks));
+      });
   }
  
   $(document).ready(function() {
@@ -92,36 +164,47 @@
 
   function test_name_formatter(v, row, index) {
     return "<a href='#' name='test_name' data-type='text' " +
-           "data-placement='right' data-title='Имя теста'>" + 
+           "data-placement='right' data-title='Имя теста'>" +
            row['test_name'] + "</a>";
   }
 
   function tank_host_formatter(v, row, index) {
-    var json_obj = JSON.parse(row['tank_host']);
-    if (json_obj['active']) {
-      return "<p>" + json_obj['variants'][0]['text'] + "</p>";
-    }
-    json_obj['variants'].push({text: "Не выбран", value: "0"});
-    return "<a href='#' name='tank_host' index='" + index + "' " +
-           "data-source='" + JSON.stringify(json_obj['variants']) + "' " +
-           "data-type='select' data-value='0'" +
-           "data-placement='right' data-title='Имя хоста с танком'></a>";
+    var codeSelect = "<a href='#' name='tank_host'" +
+                     "data-source='' " +
+                     "data-type='select' data-value='' " +
+                     "data-placement='right' " +
+                     "data-title='Имя хоста с танком'></a>";
+    return "<div name='tank_host' id='scenario_" + row['id'] + "'>" +
+           codeSelect + "</div>";
   }
 
   function runTest(scenario_id, tank_id, b64line) {
+    var trItem = $("div[id='scenario_" + scenario_id + "']").parents('tr');
+    trItem.find('button').attr('disabled', true);
     var data_url = "/shoot/?s=" + scenario_id +
                    "&t=" + tank_id;
+    console.log("RunTestURL: " + data_url);
     var resp = $.ajax({
       url: data_url,
       type: 'GET',
       dataType: 'json',
       success: function(json) {
         console.log("Response: " + JSON.stringify(json));
-        var action_btn = $("#table #action_btn[scid=" + scenario_id + "]")[0];
-        var func_name = "'stopTest(" + scenario_id + ", " + tank_id + ", " +
-                        json['id'] + ")'";
-        $(action_btn).attr('onclick', func_name);
-        $(action_btn).text('Остановить');
+        $.each(tanks['na'], function(key, tank) {
+          if (tank['value'] == tank_id) {
+            tanks['active'].push({value: tank['value'],
+                                  text: tank['text'],
+                                  scid: scenario_id,
+                                  shid: json['id']});
+            tanks['na'].splice(key, 1);
+            return false;
+          }
+        });
+        $("#table div[name='tank_host']").each(function() {
+          displayTankHostCell($(this));
+        });
+        updateRowIndexes();
+        console.log("Tanks: " + JSON.stringify(tanks));
       },
       error: function(json) {
         console.log("Response: " + JSON.stringify(json));
@@ -130,17 +213,32 @@
   }
 
   function stopTest(scenario_id, tank_id, shooting_id) {
+    var trItem = $("div[id='shooting_" + shooting_id + "']").parents('tr');
+    trItem.find('button').attr('disabled', true);
     var data_url = "/shoot/?stop=" + shooting_id;
+    console.log("StopTestURL: " + data_url);
     var resp = $.ajax({
       url: data_url,
       type: 'GET',
       dataType: 'json',
       success: function(json) {
         console.log("Response: " + JSON.stringify(json));
-        var action_btn = $("#table #action_btn[scid=" + scenario_id + "]")[0];
-        var func_name = "'runTest(" + scenario_id + ", " + tank_id + ")'";
-        $(action_btn).attr('onclick', func_name);
-        $(action_btn).text('Запустить');
+        $.each(tanks['active'], function(key, tank) {
+          if (tank['value'] == tank_id) {
+            tanks['na'].push({value: tank['value'],
+                              text: tank['text'],
+                              scid: 0,
+                              shid: 0});
+            tanks['active'].splice(key, 1);
+            return false;
+          }
+        });
+        trItem.remove();
+        $("#table div[name='tank_host']").each(function() {
+          displayTankHostCell($(this));
+        });
+        updateRowIndexes();
+        console.log("Tanks: " + JSON.stringify(tanks));
       },
       error: function(json) {
         console.log("Response: " + JSON.stringify(json));

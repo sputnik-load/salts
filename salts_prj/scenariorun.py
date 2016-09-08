@@ -73,6 +73,22 @@ class ScenarioRunView(View):
         return json.dumps({'active': active_shooting_id,
                            'variants': records})
 
+    def adapt_tanks_list(self, tanks_list, active_shootings):
+        records = []
+        for tank in tanks_list:
+            rec = {'value': tank['pk'],
+                   'text': tank['fields']['host'],
+                   'shid': 0, 'scid': 0}
+            sh = active_shootings.filter(tank_id=tank['pk'])
+            if sh:
+                if len(sh) > 1:
+                    log.warning("There are more than 1 active shooting "
+                                "on the tank host");
+                rec['shid'] = sh[0].id
+                rec['scid'] = sh[0].scenario_id
+            records.append(json.dumps(rec))
+        return records
+
     def get_test_status(self, request):
         cursor = connection.cursor()
         cursor.execute(
@@ -87,23 +103,10 @@ class ScenarioRunView(View):
                                                  Tank.objects.all()))
         for record in cursor.fetchall():
             tanks_list = copy.copy(tanks)
-            values = {}
+            values = {'tank_host': '[]'}
             (scenario_id, scenario_path) = record
             values['id'] = scenario_id
             values['test_name'] = ini_manager.get_scenario_name(scenario_path)
-            if shootings:
-                scenario_shootings = shootings.filter(scenario_id=scenario_id)
-                if scenario_shootings:
-                    for sh in scenario_shootings:
-                        ex_values = copy.copy(values)
-                        for i in xrange(0, len(tanks_list)):
-                            if tanks_list[i]['pk'] == sh.tank_id:
-                                ex_values['tank_host'] = \
-                                    self.obtain_tanks_json(
-                                        [tanks_list.pop(i)], sh.id)
-                                break
-                        results.append(ex_values)
-            values['tank_host'] = self.obtain_tanks_json(tanks_list)
             results.append(values)
         sort = request_get_value(request, 'sort')
         if sort:
@@ -116,6 +119,7 @@ class ScenarioRunView(View):
         response_dict = {}
         response_dict['total'] = len(results)
         response_dict['rows'] = results
+        response_dict['tanks'] = self.adapt_tanks_list(tanks, shootings)
         response = HttpResponse(json.dumps(response_dict),
                                 content_type='application/json')
         return response
