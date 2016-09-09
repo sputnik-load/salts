@@ -144,7 +144,7 @@
                  active: []};
         $.each(jsonObj['tanks'], function(ix, js_str) {
           var tank = JSON.parse(js_str);
-          if (tank['shooting']) {
+          if ($.isEmptyObject(tank['shooting'])) {
             tanks['na'].push({value: tank['value'],
                               text: tank['text']});
           }

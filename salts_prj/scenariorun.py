@@ -75,8 +75,9 @@ class ScenarioRunView(View):
                 if len(sh) > 1:
                     log.warning("There are more than 1 active shooting "
                                 "on the tank host");
-                rec['id'] = sh[0].id
-                rec['scenario_id'] = sh[0].scenario_id
+                shooting = sh[0]
+                rec['shooting'] = {'id': shooting.id,
+                                   'scenario_id': shooting.scenario_id}
             records.append(json.dumps(rec))
         return records
 
