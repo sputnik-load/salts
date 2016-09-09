@@ -164,9 +164,10 @@
   });
 
   function test_name_formatter(v, row, index) {
-    return "<a href='#' name='test_name' data-type='text' " +
-           "data-placement='right' data-title='Имя теста'>" +
-           row['test_name'] + "</a>";
+    // return "<a href='#' name='test_name' data-type='text' " +
+    //        "data-placement='right' data-title='Имя теста'>" +
+    //        row['test_name'] + "</a>";
+    return "<div name='test_name'>" + row['test_name'] + "</div>";
   }
 
   function tank_host_formatter(v, row, index) {
