@@ -81,11 +81,12 @@
       var scenarioId = parseInt(divItem.attr('id').replace(/scenario_/, ''),
                                 10);
       $.each(tanks['active'], function(key, tank) {
-        if (scenarioId == tank['scid']) {
+        var shooting = tank['shooting'];
+        if (scenarioId == shooting['scenario_id']) {
           var trItem = divItem.parents('tr');
           var newItem = trItem.clone();
           var newDiv = newItem.find("div[id='scenario_" + scenarioId + "']");
-          newDiv.attr('id', "shooting_" + tank['shid']);
+          newDiv.attr('id', "shooting_" + shooting['id']);
           newDiv.html("<p value='" + tank['value'] +
                       "'>" + tank['text'] + "</p>");
           newItem.insertBefore(trItem);
@@ -143,12 +144,12 @@
                  active: []};
         $.each(jsonObj['tanks'], function(ix, js_str) {
           var tank = JSON.parse(js_str);
-          if (tank['shid']) {
-            tanks['active'].push(tank);
-          }
-          else {
+          if (tank['shooting']) {
             tanks['na'].push({value: tank['value'],
                               text: tank['text']});
+          }
+          else {
+            tanks['active'].push(tank);
           }
         });
         console.log("Tanks: " + JSON.stringify(tanks));
@@ -194,8 +195,9 @@
           if (tank['value'] == tank_id) {
             tanks['active'].push({value: tank['value'],
                                   text: tank['text'],
-                                  scid: scenario_id,
-                                  shid: json['id']});
+                                  shooting: {
+                                    id: json['id'],
+                                    scenario_id: scenario_id}});
             tanks['na'].splice(key, 1);
             return false;
           }
@@ -229,8 +231,7 @@
           if (tank['value'] == tank_id) {
             tanks['na'].push({value: tank['value'],
                               text: tank['text'],
-                              scid: 0,
-                              shid: 0});
+                              shooting: {}});
             tanks['active'].splice(key, 1);
             return false;
           }

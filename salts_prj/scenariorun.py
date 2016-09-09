@@ -64,28 +64,19 @@ class ScenarioRunView(View):
                 invalid.append(s.id)
         return shootings.exclude(id__in=invalid)
 
-    def obtain_tanks_json(self, tanks_list, active_shooting_id=0):
-        records = []
-        for tank in tanks_list:
-            records.append({
-                'value': tank['pk'],
-                'text': tank['fields']['host']})
-        return json.dumps({'active': active_shooting_id,
-                           'variants': records})
-
     def adapt_tanks_list(self, tanks_list, active_shootings):
         records = []
         for tank in tanks_list:
             rec = {'value': tank['pk'],
                    'text': tank['fields']['host'],
-                   'shid': 0, 'scid': 0}
+                   'shooting': {}}
             sh = active_shootings.filter(tank_id=tank['pk'])
             if sh:
                 if len(sh) > 1:
                     log.warning("There are more than 1 active shooting "
                                 "on the tank host");
-                rec['shid'] = sh[0].id
-                rec['scid'] = sh[0].scenario_id
+                rec['id'] = sh[0].id
+                rec['scenario_id'] = sh[0].scenario_id
             records.append(json.dumps(rec))
         return records
 
