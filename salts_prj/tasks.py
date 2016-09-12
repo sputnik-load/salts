@@ -16,7 +16,8 @@ def _worker():
             func(*args, **kwargs)
         except TankClientError, err:
             errors['TankClient'].append({'host': err.host,
-                                         'port': err.port})
+                                         'port': err.port,
+                                         'message': str(err)})
         except Exception, exc:
             import traceback
             details = traceback.format_exc()
