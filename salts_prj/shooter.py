@@ -13,7 +13,7 @@ from salts.models import Scenario, Tank, Shooting
 from salts.tankmanager import tank_manager
 from salts_prj.settings import log
 from rest_framework.authtoken.models import Token
-from salts_prj.tasks import postpone
+from salts_prj.tasks import postpone, errors
 from requesthelper import request_get_value
 
 
@@ -63,6 +63,16 @@ class ShooterView(View):
             """.format(shooting_id=shooting_id, req_username=username))
         return bool(cursor.fetchone())
 
+    def error_response(self, **kwargs):
+        if errors['TankClient']:
+            for err in errors['TankClient']:
+                tank = kwargs['tank']
+                if err['host'] == tank.host and err['port'] == tank.port:
+                    resp = {'status': 'failed',
+                            'message': str(err)}
+                    return HttpResponse(json.dumps(resp),
+                                        content_type="application/json",
+                                        status=434)
 
     def start_shooting(self, scenario_id, tank_id, custom_data, username):
         response_dict = {'message': ''}
@@ -120,8 +130,10 @@ class ShooterView(View):
             user = User.objects.get(username=config['salts']['api_user'])
             tokens = Token.objects.filter(user_id=user.id)
             config['salts']['api_key'] = tokens[0].key
-        start_shooting_process(scenario=scenario, tank=tank,
-                               custom_data=json.dumps(config))
+        test_data = {'scenario': scenario,
+                     'tank': tank,
+                     'custom_data': json.dumps(config)}
+        start_shooting_process(**test_data)
         while True:
             log.info("Wait for shooting start.")
             time.sleep(1)
@@ -132,6 +144,9 @@ class ShooterView(View):
                     response_dict['id'] = sh.id
                     response_dict['status'] = 'success'
                     break
+            err_resp = self.error_response(**test_data)
+            if err_resp:
+                return err_resp
         return HttpResponse(json.dumps(response_dict),
                             content_type="application/json")
 

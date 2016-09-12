@@ -3,6 +3,10 @@
 import atexit
 import Queue
 import threading
+from tank_api_client import TankClientError
+
+
+errors = {'TankClient': []}
 
 
 def _worker():
@@ -10,7 +14,10 @@ def _worker():
         func, args, kwargs = _queue.get()
         try:
             func(*args, **kwargs)
-        except:
+        except TankClientError, err:
+            errors['TankClient'].append({'host': err.host,
+                                         'port': err.port})
+        except Exception, exc:
             import traceback
             details = traceback.format_exc()
         finally:
