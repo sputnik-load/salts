@@ -110,6 +110,12 @@ class ScenarioRunView(View):
 
         response_dict = {}
         response_dict['total'] = len(results)
+        offset = request_get_value(request, 'offset')
+        limit = request_get_value(request, 'limit')
+        if offset and limit:
+            offset = int(offset)
+            limit = int(limit)
+            results = results[offset:offset+limit]
         response_dict['rows'] = results
         response_dict['tanks'] = self.adapt_tanks_list(tanks, shootings)
         response = HttpResponse(json.dumps(response_dict),
