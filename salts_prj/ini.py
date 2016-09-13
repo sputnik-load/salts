@@ -242,9 +242,12 @@ class IniCtrl(object):
             with open("/tmp/1.csv", "r") as f:
                 cursor = connection.cursor()
                 cursor.copy_from(f, "salts_scenario", sep=";")
-        for spath in self.get_scenario_pathes("A"):
+        for spath in self.get_scenario_pathes('D'):
+            if spath in scenario_pathes:
+                self.set_scenario_status(spath, 'A')
+        for spath in self.get_scenario_pathes('A'):
             if spath not in scenario_pathes:
-                self.set_scenario_status(spath, "D")
+                self.set_scenario_status(spath, 'D')
 
 
 
