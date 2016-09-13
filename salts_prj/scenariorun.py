@@ -87,7 +87,7 @@ class ScenarioRunView(View):
             """
                 SELECT ss.id, ss.scenario_path FROM salts_scenario ss
                 JOIN auth_user_groups usr_gr USING(group_id)
-                WHERE usr_gr.user_id = '{user_id}'
+                WHERE usr_gr.user_id = {user_id} AND ss.status = 'A'
             """.format(user_id=request.user.id))
         shootings = self.active_shootings()
         results = []
