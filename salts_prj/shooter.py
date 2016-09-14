@@ -154,6 +154,7 @@ class ShooterView(View):
             b64line = unquote_plus(custom_data)
             json_str = b64line.decode('base64', 'strict')
         config = json.loads(json_str)
+        json_str = json.dumps(config)
         if 'salts' not in config:
             config['salts'] = {}
         err = self.check_auth(username, config)
@@ -182,7 +183,7 @@ class ShooterView(View):
                 shooting = Shooting.objects.get(session_id=session_id)
 
             custom_saved = self.save_custom_data(shooting,
-                                                 reqdata['custom_data'],
+                                                 json_str,
                                                  custom_saved)
             if shooting and shooting.status == 'R':
                 resp = {'status': 'success',

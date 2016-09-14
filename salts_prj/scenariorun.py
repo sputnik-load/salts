@@ -77,7 +77,8 @@ class ScenarioRunView(View):
                                 "on the tank host");
                 shooting = sh[0]
                 rec['shooting'] = {'id': shooting.id,
-                                   'scenario_id': shooting.scenario_id}
+                                   'scenario_id': shooting.scenario_id,
+                                   'custom_data': shooting.custom_data}
             records.append(json.dumps(rec))
         return records
 

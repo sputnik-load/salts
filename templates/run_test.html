@@ -70,6 +70,25 @@
     });
   }
 
+
+  function displayCustomData(customData) {
+		var htmlCode = "<ul>";
+		if (!customData) {
+			customData = "{}";
+		}
+		console.log("customData: " + customData);
+		$.each(JSON.parse(customData), function(key, params) {
+			htmlCode += "<li>" + key + "</li>";
+			htmlCode += "<ul>";
+			$.each(params, function(p, value) {
+				htmlCode += "<li>" + p + ": " + value + "</li>";
+			});
+			htmlCode += "</ul>";
+		});
+		htmlCode += "</ul>";
+		return htmlCode;
+  }
+
   function displayTankHostCell(divItem) {
     var idValue = divItem.attr('id').replace(/_\d+/, '');
     if (idValue == "shooting") {
@@ -89,6 +108,8 @@
           newDiv.attr('id', "shooting_" + shooting['id']);
           newDiv.html("<p value='" + tank['value'] +
                       "'>" + tank['text'] + "</p>");
+          newDiv = newItem.find("div[name='custom_data']");
+          newDiv.html("<span>" + displayCustomData(shooting['custom_data']) + "</span>");
           newItem.insertBefore(trItem);
         }
       });
@@ -167,7 +188,8 @@
     // return "<a href='#' name='test_name' data-type='text' " +
     //        "data-placement='right' data-title='Имя теста'>" +
     //        row['test_name'] + "</a>";
-    return "<div name='test_name'>" + row['test_name'] + "</div>";
+    return "<div name='test_name'>" + row['test_name'] + "</div>" +
+           "<div name='custom_data' style='font-family:courier;font-size:70%'></div>";
   }
 
   function tank_host_formatter(v, row, index) {
