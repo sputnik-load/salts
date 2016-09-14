@@ -134,6 +134,13 @@ class ShooterView(View):
                                         content_type="application/json",
                                         status=434)
 
+    def save_custom_data(self, shooting, custom_data, custom_saved):
+        if not custom_saved and shooting:
+            shooting.custom_data = custom_data
+            shooting.save()
+            custom_saved = True
+        return custom_saved
+
     def start_shooting(self, scenario_id, tank_id, custom_data, username):
         reqdata = {}
         err = self.obtain_scenario(scenario_id, reqdata)
@@ -162,19 +169,30 @@ class ShooterView(View):
             config['salts']['api_key'] = tokens[0].key
         reqdata['custom_data'] = json.dumps(config)
         start_shooting_process(**reqdata)
+        custom_saved = False
+        session_id = None
         while True:
+            shooting = None
             log.info("Wait for shooting start.")
             time.sleep(1)
-            shootings = Shooting.objects.order_by('-id')
-            if shootings:
-                sh = shootings[0]
-                if sh.status == 'R':
-                    resp = {'status': 'success',
-                            'id': sh.id}
-                    return HttpResponse(json.dumps(resp),
-                                        content_type="application/json")
+            if not session_id:
+                session_id = tank_manager.read_from_lock(tank_id,
+                                                         'session_id')
+            if session_id:
+                shooting = Shooting.objects.get(session_id=session_id)
+
+            custom_saved = self.save_custom_data(shooting,
+                                                 reqdata['custom_data'],
+                                                 custom_saved)
+            if shooting and shooting.status == 'R':
+                resp = {'status': 'success',
+                        'id': shooting.id}
+                return HttpResponse(json.dumps(resp),
+                                    content_type="application/json")
             err_resp = self.check_for_error(**reqdata)
             if err_resp:
+                self.save_custom_data(shooting, reqdata['custom_data'],
+                                      custom_saved)
                 return err_resp
 
     def stop_shooting(self, shooting_id, username):

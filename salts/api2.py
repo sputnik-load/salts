@@ -125,6 +125,8 @@ class ShootingSerializer(serializers.HyperlinkedModelSerializer):
                    'ticket_id': validated_data.get('ticket_id'),
                    'alt_name': alt_name}
         shooting = Shooting.objects.create(**sh_data)
+        tank_manager.save_to_lock(tank.id, 'session_id',
+                                  validated_data.get('session_id'))
         return shooting
 
     def update(self, instance, validated_data):
