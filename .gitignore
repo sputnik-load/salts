@@ -12,6 +12,7 @@ logfile*
 celerybeat-schedule
 media
 static
+!salts/static
 dist
 components
 
