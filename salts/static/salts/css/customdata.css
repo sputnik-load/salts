@@ -1,0 +1,9 @@
+.editable-customdata {
+    display: block;
+    margin-bottom: 5px;  
+}
+
+.editable-customdata span {
+    width: 150px;  
+    display: inline-block;
+}
