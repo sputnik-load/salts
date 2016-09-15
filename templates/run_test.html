@@ -207,12 +207,17 @@
   });
 
   function test_name_formatter(v, row, index) {
+    var customData = {testname: row['test_name'],
+                      duration: 100};
     var codeSelect = "<a href='#' id='test_name' " +
                      "data-type='customdata' " +
-                     "data-placement='right' data-title='Изменяемые параметры'>" +
+                     "data-placement='right' " +
+                     "data-value='" + JSON.stringify(customData) + "'" +
+                     "data-title='Изменяемые параметры'>" +
                      row['test_name'] + "</a>";
     return "<div name='test_name'>" + codeSelect + "</div>" +
-           "<div name='custom_data' style='font-family:courier;font-size:70%'></div>";
+           "<div name='custom_data' " +
+           "style='font-family:courier;font-size:70%'></div>";
   }
 
   function tank_host_formatter(v, row, index) {
