@@ -21,10 +21,38 @@ $(function(){
 </script>
 **/
 
+function getObjects(obj, key) {
+  var objects = [];
+  for (var i in obj) {
+    if (!obj.hasOwnProperty(i)) continue;
+    if (typeof obj[i] == 'object') {
+      if (i === key) {
+        objects.push(obj[i]);
+      }
+      objects = objects.concat(getObjects(obj[i], key));
+    }
+  }
+  return objects;
+}
+
 (function ($) {
     "use strict";
     
     var CustomData = function (options) {
+        var htmlCode = "";
+        var valueObject = getObjects(options, 'value')[0];
+        $.each(valueObject, function(section, params) {
+          htmlCode += "<div name='configsection'><h2>" + section + "</h2>";
+          $.each(params, function(key, value) {
+            htmlCode += "<div name='configparameter'>" +
+                        "<label><span>" + key + "</span>" +
+                        "<input type='text' name='" + key + "' value='" +
+                        value + "'>" +
+                        "</label></div>";
+          });
+          htmlCode += "</div>";
+        });
+        CustomData.defaults.tpl = htmlCode;
         this.init('customdata', options, CustomData.defaults);
     };
 
@@ -38,7 +66,7 @@ $(function(){
         @method render() 
         **/        
         render: function() {
-           this.$input = this.$tpl.find('input');
+          this.$inputs = this.$tpl.find('input');
         },
         
         /**
@@ -47,16 +75,12 @@ $(function(){
         @method value2html(value, element) 
         **/
         value2html: function(value, element) {
-            if(!value) {
-                $(element).empty();
-                return; 
-            }
-            var html = $('<div>').text(value.testname).html();
-            $(element).html(html); 
         },
         
         /**
         Gets value from element's html
+            console.log("Editable: value2html: value: " + value +
+                        ", element: " + JSON.stringify(element));
         
         @method html2value(html) 
         **/        
@@ -84,13 +108,7 @@ $(function(){
         @method value2str(value)  
        **/
        value2str: function(value) {
-           var str = '';
-           if(value) {
-               for(var k in value) {
-                   str = str + k + ':' + value[k] + ';';  
-               }
-           }
-           return str;
+           return JSON.stringify(value);
        }, 
        
        /*
@@ -113,11 +131,17 @@ $(function(){
         @param {mixed} value
        **/         
        value2input: function(value) {
-           if(!value) {
-             return;
-           }
-           this.$input.filter('[name="testname"]').val(value.testname);
-           this.$input.filter('[name="duration"]').val(value.duration);
+          if(!value) {
+            return;
+          }
+          this.$inputs.each(function() {
+            var parentSec = $(this).parents("div[name='configsection']");
+            var section = parentSec.find('h2').text();
+            if (!value.hasOwnProperty(section)) {
+              value[section] = {};
+            }
+            $(this).val(value[section][$(this).attr('name')]);
+          });
        },       
        
        /**
@@ -126,10 +150,16 @@ $(function(){
         @method input2value() 
        **/          
        input2value: function() { 
-           return {
-              testname: this.$input.filter('[name="testname"]').val(), 
-              duration: this.$input.filter('[name="duration"]').val(), 
-           };
+          var value = {};
+          this.$inputs.each(function() {
+            var parentSec = $(this).parents("div[name='configsection']");
+            var section = parentSec.find('h2').text();
+            if (!value.hasOwnProperty(section)) {
+              value[section] = {};
+            }
+            value[section][$(this).attr('name')] = $(this).val();
+          });
+          return value;
        },        
        
         /**
@@ -138,33 +168,14 @@ $(function(){
         @method activate() 
        **/        
        activate: function() {
-            this.$input.filter('[name="testname"]').focus();
-       },  
-       
-       /**
-        Attaches handler to submit form in case of 'showbuttons=false' mode
-        
-        @method autosubmit() 
-       **/       
-       autosubmit: function() {
-           this.$input.keydown(function (e) {
-                if (e.which === 13) {
-                    $(this).closest('form').submit();
-                }
-           });
-       }       
+           this.$inputs.filter('[name="test_name"]').focus();
+       }   
     });
 
-    CustomData.defaults = $.extend({}, $.fn.editabletypes.abstractinput.defaults, {
-        tpl: "<div class='editable-customdata'>" +
-             "<label><span>Имя теста: </span>" +
-             "<input type='text' name='testname'>" +
-             "</label></div>" +
-             "<div class='editable-customdata'>" +
-             "<label><span>Длительность (сек): </span>" +
-             "<input type='number' name='duration'>" +
-             "</label></div>", 
-        inputclass: ""
+    CustomData.defaults = $.extend({},
+        $.fn.editabletypes.abstractinput.defaults, {
+          tpl: "", 
+          inputclass: ""
     });
 
     $.fn.editabletypes.customdata = CustomData;

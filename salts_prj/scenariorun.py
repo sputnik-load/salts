@@ -64,6 +64,33 @@ class ScenarioRunView(View):
                 invalid.append(s.id)
         return shootings.exclude(id__in=invalid)
 
+    def get_default_data(self, scenario_path):
+        dd = {'sputnikreport':
+                {'test_name': ini_manager.get_option_value(scenario_path,
+                                                           'sputnikreport',
+                                                           'test_name')
+                }
+             }
+        gentype = ini_manager.scenario_type(scenario_path)
+        if gentype == 'phantom':
+            dd['phantom'] = {
+                'rps_schedule': ini_manager.get_option_value(scenario_path,
+                                                             'phantom',
+                                                             'rps_schedule')}
+        if gentype == 'jmeter':
+            dd['jmeter'] = {
+                'rampup': ini_manager.get_option_value(scenario_path,
+                                                       'jmeter',
+                                                       'rampup'),
+                'testlen': ini_manager.get_option_value(scenario_path,
+                                                        'jmeter',
+                                                        'testlen'),
+                'rampdown': ini_manager.get_option_value(scenario_path,
+                                                         'jmeter',
+                                                         'rampdown'),
+            }
+        return dd
+
     def adapt_tanks_list(self, tanks_list, active_shootings):
         records = []
         for tank in tanks_list:
@@ -76,8 +103,11 @@ class ScenarioRunView(View):
                     log.warning("There are more than 1 active shooting "
                                 "on the tank host");
                 shooting = sh[0]
+                default_data = \
+                    self.get_default_data(shooting.scenario.scenario_path)
                 rec['shooting'] = {'id': shooting.id,
                                    'scenario_id': shooting.scenario_id,
+                                   'default_data': default_data,
                                    'custom_data': shooting.custom_data}
             records.append(json.dumps(rec))
         return records
@@ -100,6 +130,7 @@ class ScenarioRunView(View):
             (scenario_id, scenario_path) = record
             values['id'] = scenario_id
             values['test_name'] = ini_manager.get_scenario_name(scenario_path)
+            values['default_data'] = self.get_default_data(scenario_path)
             results.append(values)
         sort = request_get_value(request, 'sort')
         if sort:

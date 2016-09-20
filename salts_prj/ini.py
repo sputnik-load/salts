@@ -176,6 +176,25 @@ class IniCtrl(object):
         except Scenario.DoesNotExist:
             return 0
 
+    def scenario_type(self, scenario_path):
+        config = ConfigParser()
+        ini_path = os.path.join(self.dir_path, scenario_path)
+        if not os.path.exists(ini_path):
+            log.warning("Config %s is not found." % ini_path)
+            return None
+
+        config.read(ini_path)
+        if 'tank' not in config.sections():
+           log.warning("Config %s doesn't contain 'tank' section." % ini_path)
+           return None
+
+        if 'plugin_phantom' in config.options('tank') and \
+            config.get('tank', 'plugin_phantom'):
+            return 'phantom'
+        if 'plugin_jmeter' in config.options('tank') and \
+            config.get('tank', 'plugin_jmeter'):
+            return 'jmeter'
+
     def get_scenario_name(self, scenario_path):
         config = ConfigParser()
         ini_path = os.path.join(self.dir_path, scenario_path)
@@ -191,6 +210,21 @@ class IniCtrl(object):
         else:
             log.warning("Config %s is not found." % ini_path)
         return test_name
+
+    def get_option_value(self, scenario_path, section, option):
+        config = ConfigParser()
+        ini_path = os.path.join(self.dir_path, scenario_path)
+        if not os.path.exists(ini_path):
+            log.warning("Config %s is not found." % ini_path)
+            return None
+
+        config.read(ini_path)
+        try:
+            return config.get(section, option)
+        except (NoSectionError, NoOptionError):
+            log.warning("Config %s is not scenario: "
+                        "there is not '%s' option "
+                        "in the '%s' section." % (ini_path, option, section))
 
     def sync(self):
         scenario_pathes = ini_files(self.dir_path)

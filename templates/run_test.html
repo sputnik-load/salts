@@ -56,8 +56,13 @@
   function updateTestNameEditable(divItem) {
     var aItem = divItem.find('a');
     aItem.editable({
+      showbuttons: 'bottom',
+      validate: function(value) {
+        return;
+      },
       display: function(value, sourceData) {
-        console.log("Custom Data Content: " + sourceData);
+        aItem.attr('data-value', JSON.stringify(value));
+        aItem.text(value['sputnikreport']['test_name']);
       }
     });
   }
@@ -91,7 +96,6 @@
 		if (!customData) {
 			customData = "{}";
 		}
-		console.log("customData: " + customData);
 		$.each(JSON.parse(customData), function(key, params) {
 			htmlCode += "<li>" + key + "</li>";
 			htmlCode += "<ul>";
@@ -169,7 +173,6 @@
         $(mutation.addedNodes).each(function() {
           $(this).find("div[name='tank_host']").each(function() {
             var id = $(this).attr('id');
-            console.log("Tank Host Cell '" + id + "' will be displayed");
             displayTankHostCell($(this));
           });
           $(this).find("div[name='test_name']").each(function() {
@@ -195,7 +198,6 @@
             tanks['active'].push(tank);
           }
         });
-        console.log("Tanks: " + JSON.stringify(tanks));
       });
   }
 
@@ -207,12 +209,11 @@
   });
 
   function test_name_formatter(v, row, index) {
-    var customData = {testname: row['test_name'],
-                      duration: 100};
+    var defaultData = row['default_data'];
     var codeSelect = "<a href='#' id='test_name' " +
                      "data-type='customdata' " +
                      "data-placement='right' " +
-                     "data-value='" + JSON.stringify(customData) + "'" +
+                     "data-value='" + JSON.stringify(defaultData) + "'" +
                      "data-title='Изменяемые параметры'>" +
                      row['test_name'] + "</a>";
     return "<div name='test_name'>" + codeSelect + "</div>" +
@@ -235,13 +236,11 @@
       .find('button').attr('disabled', true);
     var data_url = "/shoot/?s=" + scenario_id +
                    "&t=" + tank_id;
-    console.log("RunTestURL: " + data_url);
     var resp = $.ajax({
       url: data_url,
       type: 'GET',
       dataType: 'json',
       success: function(json) {
-        console.log("Response: " + JSON.stringify(json));
         $.each(tanks['na'], function(key, tank) {
           if (tank['value'] == tank_id) {
             tanks['active'].push({value: tank['value'],
@@ -259,7 +258,6 @@
         updateRowIndexes();
         $("div[id='shooting_" + json['id'] + "']").parents('tr')
           .find('div[name=status]').html("Тест выполняется.");
-        console.log("Tanks: " + JSON.stringify(tanks));
       },
       error: function(json) {
         console.log("Response: " + JSON.stringify(json));
@@ -271,13 +269,11 @@
     var trItem = $("div[id='shooting_" + shooting_id + "']").parents('tr');
     trItem.find('button').attr('disabled', true);
     var data_url = "/shoot/?stop=" + shooting_id;
-    console.log("StopTestURL: " + data_url);
     var resp = $.ajax({
       url: data_url,
       type: 'GET',
       dataType: 'json',
       success: function(json) {
-        console.log("Response: " + JSON.stringify(json));
         $.each(tanks['active'], function(key, tank) {
           if (tank['value'] == tank_id) {
             tanks['na'].push({value: tank['value'],
@@ -294,7 +290,6 @@
         updateRowIndexes();
         $("div[id='scenario_" + scenario_id + "']").parents('tr')
           .find('div[name=status]').html("Тест прерван.");
-        console.log("Tanks: " + JSON.stringify(tanks));
       },
       error: function(json) {
         console.log("Response: " + JSON.stringify(json));
