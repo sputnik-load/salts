@@ -2,7 +2,6 @@
 
 import time
 import json
-from urllib import unquote_plus
 from django.http import HttpResponse
 from django.views.generic import View
 from django.contrib.auth.models import User
@@ -15,6 +14,7 @@ from salts_prj.settings import log
 from rest_framework.authtoken.models import Token
 from salts_prj.tasks import postpone, errors
 from requesthelper import request_get_value
+from tank_api_client import bin2jsonstr, jsonstr2bin
 
 
 @postpone
@@ -151,8 +151,7 @@ class ShooterView(View):
             return err
         json_str = '{}'
         if custom_data:
-            quoted = custom_data.decode('base64', 'strict')
-            json_str = unquote_plus(quoted)
+            json_str = bin2jsonstr(custom_data)
         config = json.loads(json_str)
         json_str = json.dumps(config)
         if 'salts' not in config:
@@ -187,7 +186,8 @@ class ShooterView(View):
                                                  custom_saved)
             if shooting and shooting.status == 'R':
                 resp = {'status': 'success',
-                        'id': shooting.id}
+                        'id': shooting.id,
+                        'custom_data': jsonstr2bin(shooting.custom_data)}
                 return HttpResponse(json.dumps(resp),
                                     content_type="application/json")
             err_resp = self.check_for_error(**reqdata)

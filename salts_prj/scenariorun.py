@@ -18,6 +18,7 @@ from salts_prj.settings import log
 from salts_prj.requesthelper import (request_get_value, generate_context,
                                      add_version)
 from salts_prj.ini import ini_manager
+from tank_api_client import jsonstr2bin
 
 
 class ScenarioRunView(View):
@@ -108,7 +109,8 @@ class ScenarioRunView(View):
                 rec['shooting'] = {'id': shooting.id,
                                    'scenario_id': shooting.scenario_id,
                                    'default_data': default_data,
-                                   'custom_data': shooting.custom_data}
+                                   'custom_data': \
+                                        jsonstr2bin(shooting.custom_data)}
             records.append(json.dumps(rec))
         return records
 
