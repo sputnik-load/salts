@@ -151,8 +151,8 @@ class ShooterView(View):
             return err
         json_str = '{}'
         if custom_data:
-            b64line = unquote_plus(custom_data)
-            json_str = b64line.decode('base64', 'strict')
+            quoted = custom_data.decode('base64', 'strict')
+            json_str = unquote_plus(quoted)
         config = json.loads(json_str)
         json_str = json.dumps(config)
         if 'salts' not in config:
