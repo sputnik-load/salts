@@ -52,18 +52,26 @@
                              attributes: true, subtree: true };
   var tanks;
 
-
   function updateTestNameEditable(divItem) {
     var aItem = divItem.find('a');
     aItem.editable({
       showbuttons: 'bottom',
-      value: unescape(atob(aItem.attr('data-value'))),
+      value: bin2jsonstr(aItem.attr('data-value')),
       validate: function(value) {
         return;
       },
       display: function(value, sourceData) {
+        if (aItem.attr('data-value') == value)
+          return;
+        if (!aItem.attr('data-old-value'))
+          aItem.attr('data-old-value', aItem.attr('data-value'));
         aItem.attr('data-value', value);
-        var jsonObj = JSON.parse(unescape(atob(aItem.attr('data-value'))));
+        var dataOldValue = aItem.attr('data-old-value');
+        if (dataOldValue && value == dataOldValue) {
+          aItem.removeAttr('data-old-value');
+          aItem.removeClass('editable-unsaved');
+        }
+        var jsonObj = JSON.parse(bin2jsonstr(aItem.attr('data-value')));
         aItem.text(jsonObj['sputnikreport']['test_name']);
         displayActionButton(divItem.parents('tr'));
       }
@@ -95,11 +103,13 @@
 
 
   function displayCustomData(customData) {
+    var jsonStr = "";
 		var htmlCode = "<ul>";
-		if (!customData) {
-			customData = "{}";
-		}
-		$.each(JSON.parse(customData), function(key, params) {
+		if (customData != undefined)
+      jsonStr = bin2jsonstr(customData);
+    else
+      jsonStr = "{}";
+		$.each(JSON.parse(jsonStr), function(key, params) {
 			htmlCode += "<li>" + key + "</li>";
 			htmlCode += "<ul>";
 			$.each(params, function(p, value) {
@@ -223,7 +233,7 @@
   });
 
   function test_name_formatter(v, row, index) {
-    var dataValue = btoa(escape(JSON.stringify(row['default_data'])));
+    var dataValue = jsonstr2bin(JSON.stringify(row['default_data']));
     var codeSelect = "<a href='#' id='test_name' " +
                      "data-type='customdata' " +
                      "data-placement='right' " +
@@ -264,7 +274,8 @@
                                   text: tank['text'],
                                   shooting: {
                                     id: json['id'],
-                                    scenario_id: scenario_id}});
+                                    scenario_id: scenario_id,
+                                    custom_data: b64line}});
             tanks['na'].splice(key, 1);
             return false;
           }

@@ -21,6 +21,14 @@ $(function(){
 </script>
 **/
 
+function bin2jsonstr(binStr) {
+  return unescape(atob(binStr));
+}
+
+function jsonstr2bin(jsonStr) {
+  return btoa(escape(jsonStr));
+}
+
 function getObjectsOfType(obj, key, typeName) {
   var objects = [];
   for (var i in obj) {
@@ -40,7 +48,7 @@ function getObjectsOfType(obj, key, typeName) {
     var CustomData = function (options) {
         var htmlCode = "";
         var value = getObjectsOfType(options, 'value', 'string')[0];
-        $.each(JSON.parse(unescape(atob(value))), function(section, params) {
+        $.each(JSON.parse(bin2jsonstr(value)), function(section, params) {
           htmlCode += "<div name='configsection'><h2>" + section + "</h2>";
           $.each(params, function(key, value) {
             htmlCode += "<div name='configparameter'>" +
@@ -120,7 +128,7 @@ function getObjectsOfType(obj, key, typeName) {
           if(!value) {
             return;
           }
-          var jsonObj = JSON.parse(unescape(atob(value))); 
+          var jsonObj = JSON.parse(bin2jsonstr(value));
           this.$inputs.each(function() {
             var parentSec = $(this).parents("div[name='configsection']");
             var section = parentSec.find('h2').text();
@@ -145,7 +153,7 @@ function getObjectsOfType(obj, key, typeName) {
             }
             jsonObj[section][$(this).attr('name')] = $(this).val();
           });
-          return btoa(escape(JSON.stringify(jsonObj)));
+          return jsonstr2bin(JSON.stringify(jsonObj));
        },        
        
         /**
