@@ -21,16 +21,15 @@ $(function(){
 </script>
 **/
 
-function getObjects(obj, key) {
+function getObjectsOfType(obj, key, typeName) {
   var objects = [];
   for (var i in obj) {
     if (!obj.hasOwnProperty(i)) continue;
-    if (typeof obj[i] == 'object') {
-      if (i === key) {
+    if (typeof obj[i] == typeName && i == key) {
         objects.push(obj[i]);
-      }
-      objects = objects.concat(getObjects(obj[i], key));
     }
+    if (typeof obj[i] == 'object')
+      objects = objects.concat(getObjectsOfType(obj[i], key, typeName));
   }
   return objects;
 }
@@ -40,8 +39,8 @@ function getObjects(obj, key) {
     
     var CustomData = function (options) {
         var htmlCode = "";
-        var valueObject = getObjects(options, 'value')[0];
-        $.each(valueObject, function(section, params) {
+        var value = getObjectsOfType(options, 'value', 'string')[0];
+        $.each(JSON.parse(unescape(atob(value))), function(section, params) {
           htmlCode += "<div name='configsection'><h2>" + section + "</h2>";
           $.each(params, function(key, value) {
             htmlCode += "<div name='configparameter'>" +
@@ -85,19 +84,6 @@ function getObjects(obj, key) {
         @method html2value(html) 
         **/        
         html2value: function(html) {        
-          /*
-            you may write parsing method to get value by element's html
-            e.g. "Moscow, st. Lenina, bld. 15" => {city: "Moscow", street: "Lenina", building: "15"}
-            but for complex structures it's not recommended.
-            Better set value directly via javascript, e.g. 
-            editable({
-                value: {
-                    city: "Moscow", 
-                    street: "Lenina", 
-                    building: "15"
-                }
-            });
-          */ 
           return null;  
         },
       
@@ -108,7 +94,7 @@ function getObjects(obj, key) {
         @method value2str(value)  
        **/
        value2str: function(value) {
-           return JSON.stringify(value);
+           return value;
        }, 
        
        /*
@@ -134,13 +120,13 @@ function getObjects(obj, key) {
           if(!value) {
             return;
           }
+          var jsonObj = JSON.parse(unescape(atob(value))); 
           this.$inputs.each(function() {
             var parentSec = $(this).parents("div[name='configsection']");
             var section = parentSec.find('h2').text();
-            if (!value.hasOwnProperty(section)) {
-              value[section] = {};
+            if (jsonObj.hasOwnProperty(section)) {
+              $(this).val(jsonObj[section][$(this).attr('name')]);
             }
-            $(this).val(value[section][$(this).attr('name')]);
           });
        },       
        
@@ -150,16 +136,16 @@ function getObjects(obj, key) {
         @method input2value() 
        **/          
        input2value: function() { 
-          var value = {};
+          var jsonObj = {};
           this.$inputs.each(function() {
             var parentSec = $(this).parents("div[name='configsection']");
             var section = parentSec.find('h2').text();
-            if (!value.hasOwnProperty(section)) {
-              value[section] = {};
+            if (!jsonObj.hasOwnProperty(section)) {
+              jsonObj[section] = {};
             }
-            value[section][$(this).attr('name')] = $(this).val();
+            jsonObj[section][$(this).attr('name')] = $(this).val();
           });
-          return value;
+          return btoa(escape(JSON.stringify(jsonObj)));
        },        
        
         /**

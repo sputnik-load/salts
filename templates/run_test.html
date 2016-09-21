@@ -57,12 +57,15 @@
     var aItem = divItem.find('a');
     aItem.editable({
       showbuttons: 'bottom',
+      value: unescape(atob(aItem.attr('data-value'))),
       validate: function(value) {
         return;
       },
       display: function(value, sourceData) {
-        aItem.attr('data-value', JSON.stringify(value));
-        aItem.text(value['sputnikreport']['test_name']);
+        aItem.attr('data-value', value);
+        var jsonObj = JSON.parse(unescape(atob(aItem.attr('data-value'))));
+        aItem.text(jsonObj['sputnikreport']['test_name']);
+        displayActionButton(divItem.parents('tr'));
       }
     });
   }
@@ -74,7 +77,7 @@
         var content = $.fn.editableutils.itemsByValue(value, sourceData);
         aItem.html(content[0]['text']);
         aItem.attr('data-value', value);
-        displayActionButton(divItem);
+        displayActionButton(divItem.parents('tr'));
       }
     });
     aItem.editable('option', 'source', JSON.stringify(tanks['na']));
@@ -109,13 +112,13 @@
   }
 
   function displayTestNameCell(divItem) {
-    updateTestNameEditable(divItem); 
+    updateTestNameEditable(divItem);
   }
 
   function displayTankHostCell(divItem) {
     var idValue = divItem.attr('id').replace(/_\d+/, '');
     if (idValue == "shooting") {
-      displayActionButton(divItem);
+      displayActionButton(divItem.parents('tr'));
       return;
     }
     updateTankHostEditable(divItem);
@@ -139,11 +142,16 @@
     }
   }
 
-  function displayActionButton(divItem) {
-    var trItem = divItem.parents('tr');
+  function b64ScenarioChanges(aItem) {
+    if (!aItem.hasClass('editable-unsaved'))
+      return;
+    return aItem.attr('data-value');
+  }
+
+  function displayActionButton(trItem) {
     var scenarioId = trItem.find('td:eq(0)').text();
-    var shootingId = parseInt(divItem.attr('id').replace(/shooting_/, ''),
-                              10);
+    var shootingId = parseInt(trItem.find("div[name='tank_host']")
+                              .attr('id').replace(/shooting_/, ''), 10);
     var onclickHandler = '';
     var butItem = trItem.find('button');
     var butName = "Запустить";
@@ -156,10 +164,16 @@
       butName = "Остановить";
     }
     else {
-      var tankId = trItem.find('a[data-value]').attr('data-value');
+      var tankId = trItem.find("a[name='tank_host']").attr('data-value');
       if (tankId > 0) {
         disabled = false;
-        onclickHandler = "runTest(" + scenarioId + ", " + tankId + ")";
+        var argsLine = scenarioId + ", " + tankId;
+        var b64Line = b64ScenarioChanges(trItem
+                                          .find("div[name='test_name'] a"));
+        if (b64Line) {
+          argsLine += ", '" + b64Line + "'";
+        }
+        onclickHandler = "runTest(" + argsLine + ")";
       }
     }
     butItem.prop('disabled', disabled);
@@ -209,11 +223,11 @@
   });
 
   function test_name_formatter(v, row, index) {
-    var defaultData = row['default_data'];
+    var dataValue = btoa(escape(JSON.stringify(row['default_data'])));
     var codeSelect = "<a href='#' id='test_name' " +
                      "data-type='customdata' " +
                      "data-placement='right' " +
-                     "data-value='" + JSON.stringify(defaultData) + "'" +
+                     "data-value='" + dataValue + "'" +
                      "data-title='Изменяемые параметры'>" +
                      row['test_name'] + "</a>";
     return "<div name='test_name'>" + codeSelect + "</div>" +
@@ -234,8 +248,11 @@
   function runTest(scenario_id, tank_id, b64line) {
     $("div[id='scenario_" + scenario_id + "']").parents('tr')
       .find('button').attr('disabled', true);
-    var data_url = "/shoot/?s=" + scenario_id +
-                   "&t=" + tank_id;
+    var data_url = "/shoot/?s=" + scenario_id + "&t=" + tank_id;
+    if (b64line) {
+      data_url += "&j=" + b64line;
+    }
+
     var resp = $.ajax({
       url: data_url,
       type: 'GET',
