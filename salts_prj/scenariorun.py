@@ -82,13 +82,13 @@ class ScenarioRunView(View):
             dd['jmeter'] = {
                 'rampup': ini_manager.get_option_value(scenario_path,
                                                        'jmeter',
-                                                       'rampup'),
+                                                       'rampup', '0'),
                 'testlen': ini_manager.get_option_value(scenario_path,
                                                         'jmeter',
-                                                        'testlen'),
+                                                        'testlen', '0'),
                 'rampdown': ini_manager.get_option_value(scenario_path,
                                                          'jmeter',
-                                                         'rampdown'),
+                                                         'rampdown', '0'),
             }
         return dd
 

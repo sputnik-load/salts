@@ -211,7 +211,8 @@ class IniCtrl(object):
             log.warning("Config %s is not found." % ini_path)
         return test_name
 
-    def get_option_value(self, scenario_path, section, option):
+    def get_option_value(self, scenario_path, section, option,
+                         default_value=None):
         config = ConfigParser()
         ini_path = os.path.join(self.dir_path, scenario_path)
         if not os.path.exists(ini_path):
@@ -222,9 +223,12 @@ class IniCtrl(object):
         try:
             return config.get(section, option)
         except (NoSectionError, NoOptionError):
-            log.warning("Config %s is not scenario: "
-                        "there is not '%s' option "
-                        "in the '%s' section." % (ini_path, option, section))
+            if default_value is None:
+                log.warning("Config %s: "
+                            "there is not '%s' option "
+                            "in the '%s' section." \
+                            % (ini_path, option, section))
+            return default_value
 
     def sync(self):
         scenario_pathes = ini_files(self.dir_path)
