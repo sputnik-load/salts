@@ -2,6 +2,7 @@
 
 import time
 import json
+import time
 from django.http import HttpResponse
 from django.views.generic import View
 from django.contrib.auth.models import User
@@ -23,6 +24,8 @@ def start_shooting_process(**kwargs):
 
 
 class ShooterView(View):
+
+    MAX_WAIT_FOR_SHOOTING_START = 10
 
     @method_decorator(never_cache)
     def dispatch(self, *args, **kwargs):
@@ -171,8 +174,9 @@ class ShooterView(View):
         start_shooting_process(**reqdata)
         custom_saved = False
         session_id = None
-        while True:
-            shooting = None
+        shooting = None
+        curr_time = start_time = time.time()
+        while curr_time - start_time < ShooterView.MAX_WAIT_FOR_SHOOTING_START:
             log.info("Wait for shooting start.")
             time.sleep(1)
             if not session_id:
@@ -195,6 +199,8 @@ class ShooterView(View):
                 self.save_custom_data(shooting, reqdata['custom_data'],
                                       custom_saved)
                 return err_resp
+            curr_time = time.time()
+        return HttpResponse(status=408)
 
     def stop_shooting(self, shooting_id, username):
         err = self.check_perm_stop(username, shooting_id)

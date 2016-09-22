@@ -127,6 +127,7 @@ class TankManager(object):
                 log.info("The test id=%s isn't "
                          "been saved yet." % shooting.session_id)
                 time.sleep(TankManager.POLL_INTERVAL)
+                curr_time = time.time()
                 continue
             if test_result.dt_finish - test_result.dt_start >= ctrl_c_delta:
                 log.info("The test id=%s: "
