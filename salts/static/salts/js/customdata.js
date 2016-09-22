@@ -22,11 +22,11 @@ $(function(){
 **/
 
 function bin2jsonstr(binStr) {
-  return unescape(atob(binStr));
+  return decodeURIComponent(atob(binStr));
 }
 
 function jsonstr2bin(jsonStr) {
-  return btoa(escape(jsonStr));
+  return btoa(encodeURIComponent(jsonStr));
 }
 
 function getObjectsOfType(obj, key, typeName) {
