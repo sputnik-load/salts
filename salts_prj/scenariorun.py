@@ -12,8 +12,9 @@ from django.utils.decorators import method_decorator
 from django.shortcuts import render_to_response
 from django.db import connection
 from django.core import serializers
-from salts.models import Scenario, Shooting, Tank
+from salts.models import Scenario, Shooting, Tank, TestResult
 from django.contrib.auth.models import User
+from django.db.models import Max
 from salts_prj.settings import log
 from salts_prj.requesthelper import (request_get_value, generate_context,
                                      add_version)
@@ -115,24 +116,34 @@ class ScenarioRunView(View):
         return records
 
     def get_test_status(self, request):
-        cursor = connection.cursor()
-        cursor.execute(
-            """
-                SELECT ss.id, ss.scenario_path FROM salts_scenario ss
-                JOIN auth_user_groups usr_gr USING(group_id)
-                WHERE usr_gr.user_id = {user_id} AND ss.status = 'A'
-            """.format(user_id=request.user.id))
-        shootings = self.active_shootings()
+        scenarios = Scenario.objects.filter(
+                        group_id__in=User.objects.get(
+                                        id=request.user.id).groups.all(),
+                        status='A')
+        sh = Shooting.objects.filter(scenario_id__in=scenarios.values('id'))
+        sh_max = sh.values('scenario_id').annotate(max_finish=Max('finish'))
+        tr = TestResult.objects.filter(
+                scenario_path__in=scenarios.values('scenario_path'))
+        tr_max = tr.values('scenario_path').annotate(
+                                                max_finish=Max('dt_finish'))
+        active_sh = self.active_shootings()
         results = []
         tanks = json.loads(serializers.serialize('json',
                                                  Tank.objects.all()))
-        for record in cursor.fetchall():
-            tanks_list = copy.copy(tanks)
-            values = {'tank_host': '[]'}
-            (scenario_id, scenario_path) = record
-            values['id'] = scenario_id
-            values['test_name'] = ini_manager.get_scenario_name(scenario_path)
-            values['default_data'] = self.get_default_data(scenario_path)
+        for s in scenarios:
+            values = {}
+            values['id'] = s.id
+            values['test_name'] = ini_manager.get_scenario_name(s.scenario_path)
+            values['default_data'] = self.get_default_data(s.scenario_path)
+            values['last'] = {}
+            shs = sh_max.filter(scenario_id=s.id)
+            trs = tr_max.filter(scenario_path=s.scenario_path)
+            if shs and trs:
+                trs = TestResult.objects.filter(
+                        scenario_path=s.scenario_path,
+                        dt_finish=trs[0]['max_finish'])
+                values['last'] = {'tr_id': trs[0].id,
+                                  'finish': shs[0]['max_finish']}
             results.append(values)
         sort = request_get_value(request, 'sort')
         if sort:
@@ -151,7 +162,7 @@ class ScenarioRunView(View):
             limit = int(limit)
             results = results[offset:offset+limit]
         response_dict['rows'] = results
-        response_dict['tanks'] = self.adapt_tanks_list(tanks, shootings)
+        response_dict['tanks'] = self.adapt_tanks_list(tanks, active_sh)
         response = HttpResponse(json.dumps(response_dict),
                                 content_type='application/json')
         return response
