@@ -6,6 +6,7 @@
   {% load staticfiles %}
   <link href="{% static "salts/css/customdata.css" %}" rel="stylesheet" />
   <script type="text/javascript" src="{% static "salts/js/customdata.js" %}"></script>
+  <script type="text/javascript" src="{% static "moment/min/moment.min.js" %}"></script>
 {% endblock ext_static_files %}
 {% block container %}
 
@@ -284,8 +285,8 @@
           displayTankHostCell($(this));
         });
         updateRowIndexes();
-        $("div[id='shooting_" + json['id'] + "']").parents('tr')
-          .find('div[name=status]').html("Тест выполняется.");
+        // $("div[id='shooting_" + json['id'] + "']").parents('tr')
+        //  .find('div[name=status]').html("Тест выполняется.");
       },
       error: function(json) {
         console.log("Response: " + JSON.stringify(json));
@@ -316,8 +317,8 @@
           displayTankHostCell($(this));
         });
         updateRowIndexes();
-        $("div[id='scenario_" + scenario_id + "']").parents('tr')
-          .find('div[name=status]').html("Тест прерван.");
+        // $("div[id='scenario_" + scenario_id + "']").parents('tr')
+        //  .find('div[name=status]').html("Тест прерван.");
       },
       error: function(json) {
         console.log("Response: " + JSON.stringify(json));
@@ -331,6 +332,16 @@
   }
 
   function statusFormatter(v, row, index) {
-    return "<div name='status'></div>";
+	var divContent = "Нет результатов.";
+	if (!$.isEmptyObject(row['last'])) {
+        var testResultUrl = window.location.protocol + "//" +
+                        window.location.host +
+                        "/admin/salts/testresult/?id=" + row['last']['tr_id'];
+        var aContent = "<a href='" + testResultUrl + "' target='_blank'>" +
+                       row['last']['tr_id'] + "</a>";
+		var dateContent = "<p>" + moment.unix(row['last']['finish']).format('YYYY-MM-DD HH:mm:ss') + "</p>";
+		divContent = "Последний тест " + aContent + " был завершен " + dateContent;
+	}
+    return "<div name='status'>" + divContent + "</div>";
   }
 {% endblock scripts_blk %}
