@@ -191,6 +191,9 @@ class ShooterView(View):
             if shooting and shooting.status == 'R':
                 resp = {'status': 'success',
                         'id': shooting.id,
+                        'session': shooting.session_id,
+                        'start': shooting.start,
+                        'duration': shooting.planned_duration,
                         'custom_data': jsonstr2bin(shooting.custom_data)}
                 return HttpResponse(json.dumps(resp),
                                     content_type="application/json")
@@ -200,6 +203,8 @@ class ShooterView(View):
                                       custom_saved)
                 return err_resp
             curr_time = time.time()
+        if shooting:
+            tank_manager.interrupt(shooting)
         return HttpResponse(status=408)
 
     def stop_shooting(self, shooting_id, username):

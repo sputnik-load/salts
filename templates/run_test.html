@@ -285,8 +285,15 @@
           displayTankHostCell($(this));
         });
         updateRowIndexes();
-        // $("div[id='shooting_" + json['id'] + "']").parents('tr')
-        //  .find('div[name=status]').html("Тест выполняется.");
+		var startDate = moment.unix(json['start']).format('YYYY-MM-DD HH:mm:ss');
+		var statusContent = "Выполняется тест. ID сессии " + json['session'] +
+							". Запущен " + startDate + ". ";
+		var duration = parseInt(json['duration'], 10);
+		if (duration !== undefined && duration > 0)
+			statusContent += "Планируемая длительность - " + toHHMMSS(json['duration']) + ".";
+		console.log("Status Content: " + statusContent);
+		$("div[id='shooting_" + json['id'] + "']").parents('tr')
+			.find('div[name=status]').html("<div name='status'>" + statusContent + "</div>");
       },
       error: function(json) {
         console.log("Response: " + JSON.stringify(json));
@@ -317,8 +324,6 @@
           displayTankHostCell($(this));
         });
         updateRowIndexes();
-        // $("div[id='scenario_" + scenario_id + "']").parents('tr')
-        //  .find('div[name=status]').html("Тест прерван.");
       },
       error: function(json) {
         console.log("Response: " + JSON.stringify(json));
