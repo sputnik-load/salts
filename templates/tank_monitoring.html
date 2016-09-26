@@ -106,24 +106,13 @@
             "' target='_blank'>" + row['ticket_id'] + "</a>";
   }
 
-  function checkTime(i) {
-    if (i < 10) {
-      i = "0" + i;
-  } return i; }
-  
   function remainedTime(sec_num, row, index, n) {
     if (n === undefined) {
       n = 0;
     }
     if (sec_num < 0)
       sec_num = 0;
-    var hours = Math.floor(sec_num / 3600);
-    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-    var seconds = Math.floor(sec_num - (hours * 3600) - (minutes * 60));
-    h = checkTime(hours);
-    m = checkTime(minutes);
-    s = checkTime(seconds);
-    var time_line = h + ':' + m + ':' + s;
+    var time_line = toHHMMSS(sec_num);
 
     var td = $("#table tbody tr:nth-child(" + (index+1) + ") td");
     var th = $("#table thead th");

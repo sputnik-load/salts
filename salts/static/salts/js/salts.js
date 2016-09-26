@@ -1,21 +1,12 @@
-(function() {
-  "use strict";
-
-  var my_app = angular.module('salts');
-
-  my_app.controller('SaltsCtrl', function($scope) {
-    $scope.setTab = function(tab) {
-      $scope.activeTab = tab;
-    };
-
-    $scope.tabClass = function(tab) {
-      if (angular.isUndefined($scope.activeTab) && $scope.tabList.length > 0) {
-        $scope.activeTab = $scope.tabList[0];
-      }
-      return $scope.activeTab === tab ? 'active' : '';
-    };
-
-
-  });
-
-})();
+function toHHMMSS(seconds) {
+	var pad = function(num) {
+		if (num < 10) {
+			num = "0" + num;
+		}
+		return num;
+	}
+    var hh = Math.floor(seconds / 3600);
+    var mm = Math.floor((seconds - (hh * 3600)) / 60);
+    var ss = Math.floor(seconds - (hh * 3600) - (mm * 60));
+    return pad(hh) + ':' + pad(mm) + ':' + pad(ss);
+}
