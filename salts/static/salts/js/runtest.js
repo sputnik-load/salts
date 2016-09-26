@@ -104,8 +104,11 @@ function displayTankHostCell(divItem) {
 				var statusContent = "Выполняется тест. ID сессии " + shooting['session'] +
 									". Запущен " + moment.unix(shooting['start']).format('YYYY-MM-DD HH:mm:ss') + ". ";
 				var duration = parseInt(shooting['duration'], 10);
-				if (duration !== undefined && duration > 0)
-					statusContent += "Планируемая длительность - " + toHHMMSS(duration) + ".";
+				if (duration !== undefined && duration > 0) {
+					var d = new Date();
+					var currentTime = parseInt(d.getTime() / 1000);
+					statusContent += "Осталось - " + toHHMMSS(duration - (currentTime - shooting['start'])) + ".";
+				}
 				newItem.find('div[name=status]').html("<div name='status'>" + statusContent + "</div>");
 			}
 		});
@@ -234,6 +237,7 @@ function runTest(scenario_id, tank_id, b64line) {
 												id: json['id'],
 												session: json['session'],
 												start: json['start'],
+												duration: json['duration'],
 												scenario_id: scenario_id,
 												custom_data: b64line}
 											});
