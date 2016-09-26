@@ -101,6 +101,12 @@ function displayTankHostCell(divItem) {
 				newDiv = newItem.find("div[name='custom_data']");
 				newDiv.html("<span>" + displayCustomData(shooting['custom_data']) + "</span>");
 				newItem.insertBefore(trItem);
+				var statusContent = "Выполняется тест. ID сессии " + shooting['session'] +
+									". Запущен " + moment.unix(shooting['start']).format('YYYY-MM-DD HH:mm:ss') + ". ";
+				var duration = parseInt(shooting['duration'], 10);
+				if (duration !== undefined && duration > 0)
+					statusContent += "Планируемая длительность - " + toHHMMSS(duration) + ".";
+				newItem.find('div[name=status]').html("<div name='status'>" + statusContent + "</div>");
 			}
 		});
 	}
@@ -226,6 +232,8 @@ function runTest(scenario_id, tank_id, b64line) {
 											text: tank['text'],
 											shooting: {
 												id: json['id'],
+												session: json['session'],
+												start: json['start'],
 												scenario_id: scenario_id,
 												custom_data: b64line}
 											});
@@ -237,15 +245,6 @@ function runTest(scenario_id, tank_id, b64line) {
 				displayTankHostCell($(this));
 			});
 			updateRowIndexes();
-			var startDate = moment.unix(json['start']).format('YYYY-MM-DD HH:mm:ss');
-			var statusContent = "Выполняется тест. ID сессии " + json['session'] +
-								". Запущен " + startDate + ". ";
-			var duration = parseInt(json['duration'], 10);
-			if (duration !== undefined && duration > 0)
-				statusContent += "Планируемая длительность - " + toHHMMSS(json['duration']) + ".";
-			console.log("Status Content: " + statusContent);
-			$("div[id='shooting_" + json['id'] + "']").parents('tr')
-				.find('div[name=status]').html("<div name='status'>" + statusContent + "</div>");
 		},
 		error: function(json) {
 			console.log("Response: " + JSON.stringify(json));

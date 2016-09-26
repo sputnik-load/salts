@@ -108,6 +108,9 @@ class ScenarioRunView(View):
                 default_data = \
                     self.get_default_data(shooting.scenario.scenario_path)
                 rec['shooting'] = {'id': shooting.id,
+                                   'session': shooting.session_id,
+                                   'start': shooting.start,
+                                   'duration': shooting.planned_duration,
                                    'scenario_id': shooting.scenario_id,
                                    'default_data': default_data,
                                    'custom_data': \
