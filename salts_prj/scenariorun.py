@@ -19,7 +19,7 @@ from salts_prj.settings import log
 from salts_prj.requesthelper import (request_get_value, generate_context,
                                      add_version)
 from salts_prj.ini import ini_manager
-from tank_api_client import jsonstr2bin
+from tank_api_client import jsonstr2bin, bin2jsonstr
 
 
 class ScenarioRunView(View):
@@ -119,10 +119,17 @@ class ScenarioRunView(View):
         return records
 
     def get_test_status(self, request):
+        b_value = request_get_value(request, 'b')
+        scen_ids = []
+        if b_value:
+            jsonstr = bin2jsonstr(b_value)
+            scen_ids = json.loads(jsonstr)
         scenarios = Scenario.objects.filter(
                         group_id__in=User.objects.get(
                                         id=request.user.id).groups.all(),
                         status='A')
+        if scen_ids:
+            scenarios = scenarios.filter(id__in=scen_ids)
         sh = Shooting.objects.filter(scenario_id__in=scenarios.values('id'))
         sh_max = sh.values('scenario_id').annotate(max_finish=Max('finish'))
         tr = TestResult.objects.filter(
