@@ -79,6 +79,34 @@ function displayTestNameCell(divItem) {
 	updateTestNameEditable(divItem);
 }
 
+function updateScenarioStatus(scenarioRow, values) {
+	var div = scenarioRow.find("div[name=status]");
+	var trId = parseInt(div.find('a').text());
+	if ($.isEmptyObject(values) || trId == values['tr_id'])
+		return;
+	var testResultUrl = window.location.protocol + "//" +
+						window.location.host +
+						"/admin/salts/testresult/?id=" +
+						values['tr_id'];
+	var aContent = "<a href='" + testResultUrl + "' target='_blank'>" +
+					values['tr_id'] + "</a>";
+	var dateContent = "<p>" + moment.unix(values['finish']).format('YYYY-MM-DD HH:mm:ss') + "</p>";
+	divContent = "Последний тест " + aContent + " был завершен " + dateContent;
+	div.html(divContent);
+}
+
+function updateShootingStatus(shootingRow, values) {
+	var statusContent = "Выполняется тест. ID сессии " + values['session'] +
+						". Запущен " + moment.unix(values['start']).format('YYYY-MM-DD HH:mm:ss') + ". ";
+	var duration = parseInt(values['duration'], 10);
+	if (duration !== undefined && duration > 0) {
+		var d = new Date();
+		var currentTime = parseInt(d.getTime() / 1000);
+		statusContent += "Осталось - " + toHHMMSS(duration - (currentTime - values['start'])) + ".";
+	}
+	shootingRow.find('div[name=status]').html(statusContent);
+}
+
 function displayTankHostCell(divItem) {
 	var idValue = divItem.attr('id').replace(/_\d+/, '');
 	if (idValue == "shooting") {
@@ -101,15 +129,7 @@ function displayTankHostCell(divItem) {
 				newDiv = newItem.find("div[name='custom_data']");
 				newDiv.html("<span>" + displayCustomData(shooting['custom_data']) + "</span>");
 				newItem.insertBefore(trItem);
-				var statusContent = "Выполняется тест. ID сессии " + shooting['session'] +
-									". Запущен " + moment.unix(shooting['start']).format('YYYY-MM-DD HH:mm:ss') + ". ";
-				var duration = parseInt(shooting['duration'], 10);
-				if (duration !== undefined && duration > 0) {
-					var d = new Date();
-					var currentTime = parseInt(d.getTime() / 1000);
-					statusContent += "Осталось - " + toHHMMSS(duration - (currentTime - shooting['start'])) + ".";
-				}
-				newItem.find('div[name=status]').html("<div name='status'>" + statusContent + "</div>");
+				updateShootingStatus(newItem, shooting);
 			}
 		});
 	}
@@ -169,20 +189,76 @@ function mutationHandler(mutationRecords) {
 	});
 }
 
+function updateVisibleRows(scenBinStr) {
+	$.ajax({
+		type: 'get',
+		url: '/run/',
+		data: {'a': 1,
+			   'b': scenBinStr},
+		dataType: 'json',
+		cache: false,
+		success: function(upd) {
+			setGlobalTanks(upd['tanks']);
+			var divShootings = $("div[id^=shooting]");
+			$.each(upd['rows'], function(k, info) {
+				var div = $("div#scenario_" + info['id']);
+				updateScenarioStatus(div.parents('tr'), info['last']);
+			});
+			var needUpdate = false;
+			$.each(upd['tanks'], function(ix, js_str) {
+				var shooting = JSON.parse(js_str)['shooting'];
+				if (!$.isEmptyObject(shooting))	{
+					var idSelector = "[id=shooting_" + shooting['id'] + "]";
+					if (!divShootings.is(idSelector)) {
+						displayTankHostCell($("div#scenario_" + shooting['scenario_id']));
+						needUpdate = true;
+					}
+					else {
+						updateShootingStatus(divShootings.filter(idSelector).parents('tr'),
+											 shooting);
+						divShootings = divShootings.not(idSelector);
+					}
+				}
+			});
+			$(divShootings).each(function() {
+				needUpdate = true;
+				$(this).parents('tr').remove();
+				$("div[id^=scenario]").each(function() {
+					displayTankHostCell($(this));
+				});
+			});
+			if (needUpdate)
+				updateRowIndexes();
+		}
+	});
+}
+
+function setGlobalTanks(t) {
+	tanks = {na: [{value: "-1", text: "Не выбран"}],
+				active: []};
+	$.each(t, function(ix, js_str) {
+		var tank = JSON.parse(js_str);
+		if ($.isEmptyObject(tank['shooting'])) {
+			tanks['na'].push({value: tank['value'],
+								text: tank['text']});
+		}
+		else {
+			tanks['active'].push(tank);
+		}
+	});
+
+}
+
 function ajax_request(params) {
 	$.ajax(params).done(function(jsonObj) {
-		tanks = {na: [{value: "-1", text: "Не выбран"}],
-				 active: []};
-		$.each(jsonObj['tanks'], function(ix, js_str) {
-			var tank = JSON.parse(js_str);
-			if ($.isEmptyObject(tank['shooting'])) {
-				tanks['na'].push({value: tank['value'],
-								  text: tank['text']});
-			}
-			else {
-				tanks['active'].push(tank);
-			}
+		setGlobalTanks(jsonObj['tanks']);
+		var scenarios = [];
+		$('table#table tr[data-index]').each(function() {
+			scenarios.push(parseInt($(this).find('td:first').text(), 10));
 		});
+		setInterval(function () {
+			updateVisibleRows(jsonstr2bin(JSON.stringify(scenarios)));
+		}, 1000);
 	});
 }
 
@@ -229,26 +305,6 @@ function runTest(scenario_id, tank_id, b64line) {
 		type: 'GET',
 		dataType: 'json',
 		success: function(json) {
-			$.each(tanks['na'], function(key, tank) {
-				if (tank['value'] == tank_id) {
-					tanks['active'].push({value: tank['value'],
-											text: tank['text'],
-											shooting: {
-												id: json['id'],
-												session: json['session'],
-												start: json['start'],
-												duration: json['duration'],
-												scenario_id: scenario_id,
-												custom_data: b64line}
-											});
-					tanks['na'].splice(key, 1);
-					return false;
-				}
-			});
-			$("#table div[name='tank_host']").each(function() {
-				displayTankHostCell($(this));
-			});
-			updateRowIndexes();
 		},
 		error: function(json) {
 			console.log("Response: " + JSON.stringify(json));
@@ -265,20 +321,6 @@ function stopTest(scenario_id, tank_id, shooting_id) {
 		type: 'GET',
 		dataType: 'json',
 		success: function(json) {
-			$.each(tanks['active'], function(key, tank) {
-				if (tank['value'] == tank_id) {
-				tanks['na'].push({value: tank['value'],
-									text: tank['text'],
-									shooting: {}});
-				tanks['active'].splice(key, 1);
-				return false;
-				}
-			});
-			trItem.remove();
-			$("#table div[name='tank_host']").each(function() {
-				displayTankHostCell($(this));
-			});
-			updateRowIndexes();
 		},
 		error: function(json) {
 			console.log("Response: " + JSON.stringify(json));
@@ -288,19 +330,9 @@ function stopTest(scenario_id, tank_id, shooting_id) {
 
 function action_formatter(v, row, index) {
 	return "<button type='button' class='btn btn-primary' " +
-				"id='action_btn' " + "onclick=''></button>";
+		   "id='action_btn' " + "onclick=''></button>";
 }
 
 function statusFormatter(v, row, index) {
-	var divContent = "Нет результатов."; 
-	if (!$.isEmptyObject(row['last'])) {
-		var testResultUrl = window.location.protocol + "//" +
-						window.location.host +
-						"/admin/salts/testresult/?id=" + row['last']['tr_id'];
-		var aContent = "<a href='" + testResultUrl + "' target='_blank'>" +
-							row['last']['tr_id'] + "</a>";
-		var dateContent = "<p>" + moment.unix(row['last']['finish']).format('YYYY-MM-DD HH:mm:ss') + "</p>";
-		divContent = "Последний тест " + aContent + " был завершен " + dateContent;
-	}
-	return "<div name='status'>" + divContent + "</div>";
+	return "<div name='status'><a></a>Нет результатов</div>";
 }
