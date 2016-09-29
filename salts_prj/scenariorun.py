@@ -112,6 +112,7 @@ class ScenarioRunView(View):
                                    'start': shooting.start,
                                    'duration': shooting.planned_duration,
                                    'scenario_id': shooting.scenario_id,
+                                   'username': shooting.user.username,
                                    'default_data': default_data,
                                    'custom_data': \
                                         jsonstr2bin(shooting.custom_data)}

@@ -100,7 +100,9 @@ function updateScenarioStatus(scenarioRow, values) {
 
 function updateShootingStatus(shootingRow, values) {
 	var statusContent = "Выполняется тест. ID сессии " + values['session'] +
-						". Запущен " + moment.unix(values['start']).format('YYYY-MM-DD HH:mm:ss') + ". ";
+						". Запущен " +
+						moment.unix(values['start']).format('YYYY-MM-DD HH:mm:ss') +
+						" пользователем <i>" + values['username'] + "</i>. ";
 	var duration = parseInt(values['duration'], 10);
 	if (duration !== undefined && duration > 0) {
 		var d = new Date();
@@ -134,7 +136,7 @@ function displayTankHostCell(divItem) {
 							displayCustomData(b64ScenarioChanges(trItem.find("div[name='test_name'] a"))) +
 							"</span>");
 				newDiv = newItem.find("div[name='test_name']");
-				newDiv.html("<p>" + shooting['default_data']['sputnikreport']['test_name'] + ":</p>");
+				newDiv.html("<p>" + shooting['default_data']['sputnikreport']['test_name'] + "</p>");
 				newItem.insertBefore(trItem);
 				updateShootingStatus(newItem, shooting);
 			}
