@@ -133,7 +133,7 @@ function displayTankHostCell(divItem) {
 							"'>" + tank['text'] + "</p>");
 				newDiv = newItem.find("div[name='custom_data']");
 				newDiv.html("<span>" +
-							displayCustomData(b64ScenarioChanges(trItem.find("div[name='test_name'] a"))) +
+							displayCustomData(b64ScenarioChanges(trItem.find("div[name='test_name'] a"), shooting['custom_data'])) +
 							"</span>");
 				newDiv = newItem.find("div[name='test_name']");
 				newDiv.html("<p>" + shooting['default_data']['sputnikreport']['test_name'] + "</p>");
@@ -144,9 +144,11 @@ function displayTankHostCell(divItem) {
 	}
 }
 
-function b64ScenarioChanges(aItem) {
+function b64ScenarioChanges(aItem, custom_data) {
+	if (aItem.size() == 0)
+		return custom_data;
 	if (!aItem.hasClass('editable-unsaved'))
-		return;
+		return custom_data;
 	var initial = JSON.parse(bin2jsonstr(aItem.attr('data-old-value')));
 	var current = JSON.parse(bin2jsonstr(aItem.attr('data-value')));
 	var changes = {};
