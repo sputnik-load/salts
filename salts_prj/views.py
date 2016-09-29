@@ -28,6 +28,7 @@ from salts.models import (TestSettings, RPS, Target, Scenario,
                           Generator, TestRun, TestResult, Tank, Shooting)
 from salts.forms import SettingsEditForm, RPSEditForm
 from salts.tankmanager import tank_manager
+from salts.tankmanager import remainedtime
 from salts_prj.ini import ini_manager
 from salts_prj.forms import TestResultEditForm
 from salts_prj.settings import LT_PATH, LT_GITLAB, LT_JIRA, DATABASES
@@ -629,30 +630,6 @@ def get_results(request):
     return response
 
 
-def get_remained_time(shooting):
-    remained = 0
-    if shooting.planned_duration:
-        if shooting.planned_duration == -1:
-            return -1
-        if shooting.start:
-            if shooting.status == 'I':
-                ts = shooting.finish
-                if not ts:
-                    ts = shooting.start
-            else:
-                ts = int(time.time() + 0.5)
-            if shooting.status == 'P':
-                remained = shooting.planned_duration
-            else:
-                remained = shooting.planned_duration - (ts - shooting.start)
-        else:
-            remained = shooting.planned_duration
-    if remained < 0:
-        remained = 0
-
-    return remained
-
-
 @never_cache
 def get_tank_status(request):
     log.info("get_tank_status: request.GET: %s" % request.GET)
@@ -682,7 +659,7 @@ def get_tank_status(request):
                   'scenario_name': \
                     ini_manager.get_scenario_name(scenario_path),
                   'status': shooting.status,
-                  'countdown': get_remained_time(shooting),
+                  'countdown': remainedtime(shooting),
                   'shooting_id': shooting.id,
                   'ticket_id': shooting.ticket_id}
         port = tank_manager.read_from_lock(t.id, 'web_console_port')

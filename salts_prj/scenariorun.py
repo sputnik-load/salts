@@ -20,6 +20,7 @@ from salts_prj.requesthelper import (request_get_value, generate_context,
                                      add_version)
 from salts_prj.ini import ini_manager
 from tank_api_client import jsonstr2bin, bin2jsonstr
+from salts.tankmanager import remainedtime
 
 
 class ScenarioRunView(View):
@@ -110,7 +111,7 @@ class ScenarioRunView(View):
                 rec['shooting'] = {'id': shooting.id,
                                    'session': shooting.session_id,
                                    'start': shooting.start,
-                                   'duration': shooting.planned_duration,
+                                   'remained': remainedtime(shooting),
                                    'scenario_id': shooting.scenario_id,
                                    'username': shooting.user.username,
                                    'default_data': default_data,

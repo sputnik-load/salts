@@ -103,12 +103,7 @@ function updateShootingStatus(shootingRow, values) {
 						". Запущен " +
 						moment.unix(values['start']).format('YYYY-MM-DD HH:mm:ss') +
 						" пользователем <i>" + values['username'] + "</i>. ";
-	var duration = parseInt(values['duration'], 10);
-	if (duration !== undefined && duration > 0) {
-		var d = new Date();
-		var currentTime = parseInt(d.getTime() / 1000);
-		statusContent += "Осталось - " + toHHMMSS(duration - (currentTime - values['start'])) + ".";
-	}
+	statusContent += "Осталось - " + toHHMMSS(values['remained']) + ".";
 	shootingRow.find('div[name=status]').html(statusContent);
 }
 

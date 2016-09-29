@@ -16,6 +16,30 @@ from tank_api_client import TankClient
 from tank_api_client.confighelper import CustomConfig
 
 
+def remainedtime(shooting):
+    remained = 0
+    if shooting.planned_duration:
+        if shooting.planned_duration == -1:
+            return -1
+        if shooting.start:
+            if shooting.status == 'I':
+                ts = shooting.finish
+                if not ts:
+                    ts = shooting.start
+            else:
+                ts = int(time.time() + 0.5)
+            if shooting.status == 'P':
+                remained = shooting.planned_duration
+            else:
+                remained = shooting.planned_duration - (ts - shooting.start)
+        else:
+            remained = shooting.planned_duration
+    if remained < 0:
+        remained = 0
+
+    return remained
+
+
 def stg_completed_to_bool(value):
     if type(value) is bool:
         return value
