@@ -17,8 +17,9 @@ function updateTestNameEditable(divItem) {
 		display: function(value, sourceData) {
 			if (aItem.attr('data-value') == value)
 				return;
-			if (!aItem.attr('data-old-value'))
+			if (!aItem.attr('data-old-value')) {
 				aItem.attr('data-old-value', aItem.attr('data-value'));
+			}
 			aItem.attr('data-value', value);
 			var dataOldValue = aItem.attr('data-old-value');
 			if (dataOldValue && value == dataOldValue) {
@@ -128,10 +129,12 @@ function displayTankHostCell(divItem) {
 				newDiv.attr('id', "shooting_" + shooting['id']);
 				newDiv.html("<p value='" + tank['value'] +
 							"'>" + tank['text'] + "</p>");
+				newDiv = newItem.find("div[name='custom_data']");
+				newDiv.html("<span>" +
+							displayCustomData(b64ScenarioChanges(trItem.find("div[name='test_name'] a"))) +
+							"</span>");
 				newDiv = newItem.find("div[name='test_name']");
 				newDiv.html("<p>" + shooting['default_data']['sputnikreport']['test_name'] + ":</p>");
-				newDiv = newItem.find("div[name='custom_data']");
-				newDiv.html("<span>" + displayCustomData(shooting['custom_data']) + "</span>");
 				newItem.insertBefore(trItem);
 				updateShootingStatus(newItem, shooting);
 			}
@@ -142,7 +145,20 @@ function displayTankHostCell(divItem) {
 function b64ScenarioChanges(aItem) {
 	if (!aItem.hasClass('editable-unsaved'))
 		return;
-	return aItem.attr('data-value');
+	var initial = JSON.parse(bin2jsonstr(aItem.attr('data-old-value')));
+	var current = JSON.parse(bin2jsonstr(aItem.attr('data-value')));
+	var changes = {};
+	$.each(current, function(section, params) {
+		$.each(params, function(name, value) {
+			if (initial[section][name] != value) {
+				if (!changes.hasOwnProperty(section)) {
+					changes[section] = {};
+				}
+				changes[section][name] = value;
+			}
+		});
+	});
+	return jsonstr2bin(JSON.stringify(changes));
 }
 
 function displayActionButton(trItem) {
