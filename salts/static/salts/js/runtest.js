@@ -76,7 +76,9 @@ function displayCustomData(customData) {
 }
 
 function displayTestNameCell(divItem) {
-	updateTestNameEditable(divItem);
+	if (divItem.find('a').size() > 0) {
+		updateTestNameEditable(divItem);
+	}
 }
 
 function updateScenarioStatus(scenarioRow, values) {
@@ -126,6 +128,8 @@ function displayTankHostCell(divItem) {
 				newDiv.attr('id', "shooting_" + shooting['id']);
 				newDiv.html("<p value='" + tank['value'] +
 							"'>" + tank['text'] + "</p>");
+				newDiv = newItem.find("div[name='test_name']");
+				newDiv.html("<p>" + shooting['default_data']['sputnikreport']['test_name'] + ":</p>");
 				newDiv = newItem.find("div[name='custom_data']");
 				newDiv.html("<span>" + displayCustomData(shooting['custom_data']) + "</span>");
 				newItem.insertBefore(trItem);
@@ -159,13 +163,13 @@ function displayActionButton(trItem) {
 	else {
 		var tankId = trItem.find("a[name='tank_host']").attr('data-value');
 		if (tankId > 0) {
-		disabled = false;
-		var argsLine = scenarioId + ", " + tankId;
-		var b64Line = b64ScenarioChanges(trItem.find("div[name='test_name'] a"));
-		if (b64Line) {
-			argsLine += ", '" + b64Line + "'";
-		}
-		onclickHandler = "runTest(" + argsLine + ")";
+			disabled = false;
+			var argsLine = scenarioId + ", " + tankId;
+			var b64Line = b64ScenarioChanges(trItem.find("div[name='test_name'] a"));
+			if (b64Line) {
+				argsLine += ", '" + b64Line + "'";
+			}
+			onclickHandler = "runTest(" + argsLine + ")";
 		}
 	}
 	butItem.prop('disabled', disabled);
