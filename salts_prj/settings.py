@@ -131,9 +131,8 @@ BOWER_INSTALLED_APPS = (
     'x-editable#1.5.1',
     'purl#2.3.1',
     'bootstrap#3.3.6',
-    'jquery#2.2.0',
     'https://github.com/burthen/dygraphs.git#1.1.2',
-    'moment#2.11.2'
+    'moment#2.11.2',
 )
 
 DEBUG_TOOLBAR_PATCH_SETTINGS = False

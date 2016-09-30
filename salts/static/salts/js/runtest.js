@@ -4,6 +4,8 @@ var MutationObserver    = window.MutationObserver ||
 var myObserver          = new MutationObserver (mutationHandler);
 var obsConfig           = {childList: true, characterData: true,
                             attributes: true, subtree: true };
+var updateIntervalId;
+var updateIntervalFunc;
 var tanks;
 
 function updateTestNameEditable(divItem) {
@@ -275,9 +277,12 @@ function ajax_request(params) {
 		$('table#table tr[data-index]').each(function() {
 			scenarios.push(parseInt($(this).find('td:first').text(), 10));
 		});
-		setInterval(function () {
-			updateVisibleRows(jsonstr2bin(JSON.stringify(scenarios)));
-		}, 1000);
+		updateIntervalFunc = function() {
+			updateIntervalId = setInterval(function () {
+				updateVisibleRows(jsonstr2bin(JSON.stringify(scenarios)));
+			}, 1000);
+		}
+		updateIntervalFunc();
 	});
 }
 
@@ -286,6 +291,18 @@ $(document).ready(function() {
 		myObserver.observe(this, obsConfig);
 	});
 	$.fn.editable.defaults.mode = 'popup';
+	$(document).on('visibilitychange', function() {
+		if (document.visibilityState == 'hidden') {
+			clearInterval(updateIntervalId);
+			updateIntervalId = 0;
+		}
+		else {
+			if (updateIntervalId == undefined)
+				return;
+			if (!updateIntervalId)
+				updateIntervalFunc();
+		}
+	});
 });
 
 function test_name_formatter(v, row, index) {
