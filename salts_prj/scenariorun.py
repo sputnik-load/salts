@@ -22,7 +22,7 @@ from salts_prj.requesthelper import (request_get_value, generate_context,
 from salts_prj.ini import ini_manager
 from tank_api_client import jsonstr2bin, bin2jsonstr
 from salts.tankmanager import remainedtime
-from yandextank.stepper.util import parse_duration
+# from yandextank.stepper.util import parse_duration
 
 
 SCENARIO_RPS_DEFAULT = '2'
@@ -45,25 +45,26 @@ def phantom_rps_schedule(scenario_path):
     m = pat.findall(rps_line)
     rps = 0
     durs = {}
-    valid = m == sample
+    # valid = m == sample
+    valid = False # пока всегда будут грузиться значения по умолчанию
     if valid:
         pat = re.compile("^line\((\d+),(\d+),(.*?)\).*")
         m = pat.findall(rps_line)
         valid = m and len(m[0]) == 3 and m[0][0] == '1'
         if valid:
             rps = m[0][1]
-            durs['rampup'] = parse_duration(m[0][2])
+            # durs['rampup'] = parse_duration(m[0][2])
         if valid:
             pat = re.compile(".*const\((\d+),(.*?)\).*")
             m = pat.findall(rps_line)
             valid = m and len(m[0]) == 2 and m[0][0] == rps
             if valid:
-                durs['testlen'] = parse_duration(m[0][1])
+                # durs['testlen'] = parse_duration(m[0][1])
                 pat = re.compile(".*line\((\d+),(\d+),(.*?)\)$")
                 m = pat.findall(rps_line)
                 valid = m and len(m[0]) == 3 and m[0][0] == rps and m[0][1] == '1'
-                if valid:
-                    durs['rampdown'] = parse_duration(m[0][2])
+                # if valid:
+                    # durs['rampdown'] = parse_duration(m[0][2])
     if valid:
         log.info("Phantom Durations (ms): %s" % durs)
         dd.update({'rps': rps})
