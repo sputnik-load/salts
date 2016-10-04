@@ -230,6 +230,22 @@ class IniCtrl(object):
                             % (ini_path, option, section))
             return default_value
 
+    def get_rps_sections(self, scenario_path):
+        avail_types = ['phantom', 'jmeter']
+        scen_type = self.scenario_type(scenario_path)
+        if scen_type not in avail_types:
+            return []
+        config = ConfigParser()
+        ini_path = os.path.join(self.dir_path, scenario_path)
+        config.read(ini_path)
+        pat = re.compile("%s.*" % scen_type)
+        result = []
+        for s in config.sections():
+            m = pat.match(s)
+            if m:
+                result.append(m.group())
+        return result
+
     def sync(self):
         scenario_pathes = ini_files(self.dir_path)
         absent_ini_pathes = []
