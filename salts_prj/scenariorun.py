@@ -3,6 +3,7 @@
 import json
 import time
 import copy
+import re
 from operator import itemgetter
 from django.http import HttpResponse
 from django.views.generic import View
@@ -21,7 +22,72 @@ from salts_prj.requesthelper import (request_get_value, generate_context,
 from salts_prj.ini import ini_manager
 from tank_api_client import jsonstr2bin, bin2jsonstr
 from salts.tankmanager import remainedtime
+from yandextank.stepper.util import parse_duration
 
+
+SCENARIO_RPS_DEFAULT = '2'
+SCENARIO_DURATIONS_DEFAULT = {'rampup': '5000',
+                              'testlen': '90000',
+                              'rampdown': '5000'
+                             }
+
+
+def phantom_rps_schedule(scenario_path):
+    dd = {'test_name': ini_manager.get_option_value(scenario_path,
+                                                    'sputnikreport',
+                                                    'test_name')
+         }
+    sample = ['line', 'const', 'line']
+    rps_line = ini_manager.get_option_value(scenario_path, 'phantom',
+                                            'rps_schedule')
+    rps_line = re.sub('\n|\t| ', '', rps_line)
+    pat = re.compile("(line|const|step)\(.*?\)")
+    m = pat.findall(rps_line)
+    rps = 0
+    durs = {}
+    valid = m == sample
+    if valid:
+        pat = re.compile("^line\((\d+),(\d+),(.*?)\).*")
+        m = pat.findall(rps_line)
+        valid = m and len(m[0]) == 3 and m[0][0] == '1'
+        if valid:
+            rps = m[0][1]
+            durs['rampup'] = parse_duration(m[0][2])
+        if valid:
+            pat = re.compile(".*const\((\d+),(.*?)\).*")
+            m = pat.findall(rps_line)
+            valid = m and len(m[0]) == 2 and m[0][0] == rps
+            if valid:
+                durs['testlen'] = parse_duration(m[0][1])
+                pat = re.compile(".*line\((\d+),(\d+),(.*?)\)$")
+                m = pat.findall(rps_line)
+                valid = m and len(m[0]) == 3 and m[0][0] == rps and m[0][1] == '1'
+                if valid:
+                    durs['rampdown'] = parse_duration(m[0][2])
+    if valid:
+        log.info("Phantom Durations (ms): %s" % durs)
+        dd.update({'rps': rps})
+        dd.update(durs)
+        return dd
+    else:
+        log.info("RPS Schedule will be replaced with default.")
+        dd.update({'rps': SCENARIO_RPS_DEFAULT})
+        dd.update(SCENARIO_DURATIONS_DEFAULT)
+        return dd
+
+def jmeter_rps_schedule(scenario_path):
+    def jmeter_duration(key):
+        return str(1000 * int(ini_manager.get_option_value(scenario_path, 'jmeter', key,
+                                int(SCENARIO_DURATIONS_DEFAULT[key]) / 1000)))
+    return {'test_name': ini_manager.get_option_value(scenario_path,
+                                                       'sputnikreport',
+                                                       'test_name'),
+            'rampup': jmeter_duration('rampup'),
+            'testlen': jmeter_duration('testlen'),
+            'rampdown': jmeter_duration('rampdown'),
+            'rps': ini_manager.get_option_value(scenario_path, 'jmeter', 'rps1',
+                                                SCENARIO_RPS_DEFAULT)
+           }
 
 class ScenarioRunView(View):
 
@@ -68,30 +134,16 @@ class ScenarioRunView(View):
         return shootings.exclude(id__in=invalid)
 
     def get_default_data(self, scenario_path):
-        dd = {'sputnikreport':
-                {'test_name': ini_manager.get_option_value(scenario_path,
-                                                           'sputnikreport',
-                                                           'test_name')
-                }
-             }
-        gentype = ini_manager.scenario_type(scenario_path)
-        if gentype == 'phantom':
-            dd['phantom'] = {
-                'rps_schedule': ini_manager.get_option_value(scenario_path,
-                                                             'phantom',
-                                                             'rps_schedule')}
-        if gentype == 'jmeter':
-            dd['jmeter'] = {
-                'rampup': ini_manager.get_option_value(scenario_path,
-                                                       'jmeter',
-                                                       'rampup', '0'),
-                'testlen': ini_manager.get_option_value(scenario_path,
-                                                        'jmeter',
-                                                        'testlen', '0'),
-                'rampdown': ini_manager.get_option_value(scenario_path,
-                                                         'jmeter',
-                                                         'rampdown', '0'),
-            }
+        rps_default_section = ini_manager.scenario_type(scenario_path)
+        if not rps_default_section:
+            return {}
+        if rps_default_section not in ini_manager.get_rps_sections(scenario_path):
+            log.warning("'%s' section is required." % rps_default_section)
+            return {}
+        rps_schedule = {'phantom': phantom_rps_schedule,
+                        'jmeter': jmeter_rps_schedule}
+        dd = rps_schedule[rps_default_section](scenario_path)
+        dd['gen_type'] = rps_default_section
         return dd
 
     def adapt_tanks_list(self, tanks_list, active_shootings):

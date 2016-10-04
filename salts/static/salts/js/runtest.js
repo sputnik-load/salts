@@ -28,8 +28,8 @@ function updateTestNameEditable(divItem) {
 				aItem.removeAttr('data-old-value');
 				aItem.removeClass('editable-unsaved');
 			}
-			var jsonObj = JSON.parse(bin2jsonstr(aItem.attr('data-value')));
-			aItem.text(jsonObj['sputnikreport']['test_name']);
+			var data_value = JSON.parse(bin2jsonstr(aItem.attr('data-value')));
+			aItem.text(data_value['test_name']);
 			displayActionButton(divItem.parents('tr'));
 		}
 	});
@@ -129,11 +129,8 @@ function displayTankHostCell(divItem) {
 				newDiv.html("<p value='" + tank['value'] +
 							"'>" + tank['text'] + "</p>");
 				newDiv = newItem.find("div[name='custom_data']");
-				newDiv.html("<span>" +
-							displayCustomData(b64ScenarioChanges(trItem.find("div[name='test_name'] a"), shooting['custom_data'])) +
-							"</span>");
 				newDiv = newItem.find("div[name='test_name']");
-				newDiv.html("<p>" + shooting['default_data']['sputnikreport']['test_name'] + "</p>");
+				newDiv.html("<p>" + shooting['default_data']['test_name'] + "</p>");
 				newItem.insertBefore(trItem);
 				updateShootingStatus(newItem, shooting);
 			}
@@ -149,17 +146,37 @@ function b64ScenarioChanges(aItem, custom_data) {
 	var initial = JSON.parse(bin2jsonstr(aItem.attr('data-old-value')));
 	var current = JSON.parse(bin2jsonstr(aItem.attr('data-value')));
 	var changes = {};
-	$.each(current, function(section, params) {
-		$.each(params, function(name, value) {
-			if (initial[section][name] != value) {
-				if (!changes.hasOwnProperty(section)) {
-					changes[section] = {};
-				}
-				changes[section][name] = value;
-			}
-		});
+	$.each(current, function(name, value) {
+		if (initial[name] != value) {
+			changes[name] = value;
+		}
 	});
 	return jsonstr2bin(JSON.stringify(changes));
+}
+
+function toScenarioFormat(aItem) {
+	var gen_type = aItem.attr('data-gen-type');
+	var data_value = JSON.parse(bin2jsonstr(aItem.attr('data-value')));
+	var scenario = {
+		sputnikreport: {
+			test_name: data_value['test_name']
+		}
+	};
+	var ms2sec = function(ms) { return ms / 1000; }
+	if (gen_type == 'phantom') {
+		scenario['phantom'] = {};
+		scenario['phantom']['rps_schedule'] = "line(1," + data_value['rps'] +
+			"," + ms2sec(data_value['rampup']) + "s) " +
+			"const("+ data_value['rps'] + "," + ms2sec(data_value['testlen']) + "s) " +
+			"line(" + data_value['rps'] + ",1," + ms2sec(data_value['rampdown']) + "s)";
+	}
+	else {
+		scenario['jmeter'] = {};
+		scenario['jmeter']['rampup'] = data_value['rampup'];
+		scenario['jmeter']['testlen'] = data_value['testlen'];
+		scenario['jmeter']['rampdown'] = data_value['rampdown'];
+	}
+	return jsonstr2bin(JSON.stringify(scenario));	
 }
 
 function displayActionButton(trItem) {
@@ -182,10 +199,7 @@ function displayActionButton(trItem) {
 		if (tankId > 0) {
 			disabled = false;
 			var argsLine = scenarioId + ", " + tankId;
-			var b64Line = b64ScenarioChanges(trItem.find("div[name='test_name'] a"));
-			if (b64Line) {
-				argsLine += ", '" + b64Line + "'";
-			}
+			argsLine += ", '" + toScenarioFormat(trItem.find("div[name='test_name'] a")) + "'";
 			onclickHandler = "runTest(" + argsLine + ")";
 		}
 	}
@@ -309,6 +323,7 @@ function test_name_formatter(v, row, index) {
 	var dataValue = jsonstr2bin(JSON.stringify(row['default_data']));
 	var codeSelect = "<a href='#' id='test_name' " +
 						"data-type='customdata' " +
+						"data-gen-type='" + row['default_data']['gen_type'] + "' " +
 						"data-placement='right' " +
 						"data-value='" + dataValue + "'" +
 						"data-title='Изменяемые параметры'>" +
