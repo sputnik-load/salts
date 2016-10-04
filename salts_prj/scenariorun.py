@@ -169,7 +169,7 @@ class ScenarioRunView(View):
                                    'username': shooting.user.username,
                                    'default_data': default_data,
                                    'custom_data': \
-                                        jsonstr2bin(shooting.custom_data)}
+                                        jsonstr2bin(str(shooting.custom_data))}
             records.append(json.dumps(rec))
         return records
 
