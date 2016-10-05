@@ -170,12 +170,14 @@ function toScenarioFormat(aItem) {
 			"," + ms2sec(data_value['rampup']) + "s) " +
 			"const("+ data_value['rps'] + "," + ms2sec(data_value['testlen']) + "s) " +
 			"line(" + data_value['rps'] + ",1," + ms2sec(data_value['rampdown']) + "s)";
+		scenario['phantom']['address'] = data_value['target'] + ":" + data_value['port']
 	}
 	else {
 		scenario['jmeter'] = {};
 		scenario['jmeter']['rampup'] = data_value['rampup'];
 		scenario['jmeter']['testlen'] = data_value['testlen'];
 		scenario['jmeter']['rampdown'] = data_value['rampdown'];
+		scenario['jmeter']['hostname'] = data_value['target'] + ":" + data_value['port']
 	}
 	return jsonstr2bin(JSON.stringify(scenario));	
 }

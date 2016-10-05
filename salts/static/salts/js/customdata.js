@@ -51,6 +51,8 @@ function jsonstr2bin(jsonStr) {
 			this.$input.filter("[name='rampup']").val(ms2sec(changed['rampup']));
 			this.$input.filter("[name='testlen']").val(ms2sec(changed['testlen']));
 			this.$input.filter("[name='rampdown']").val(ms2sec(changed['rampdown']));
+			this.$input.filter("[name='target']").val(changed['target']);
+			this.$input.filter("[name='port']").val(changed['port']);
 		},
        
 		input2value: function() {
@@ -60,7 +62,9 @@ function jsonstr2bin(jsonStr) {
 				rps: this.$input.filter("[name='rps']").val(),
 				rampup: sec2ms(this.$input.filter("[name='rampup']").val()),
 				testlen: sec2ms(this.$input.filter("[name='testlen']").val()),
-				rampdown: sec2ms(this.$input.filter("[name='rampdown']").val())
+				rampdown: sec2ms(this.$input.filter("[name='rampdown']").val()),
+				target: this.$input.filter("[name='target']").val(),
+				port: this.$input.filter("[name='port']").val()
 			};
 			return jsonstr2bin(JSON.stringify(changed));
 		},
@@ -76,7 +80,9 @@ function jsonstr2bin(jsonStr) {
 				 "<div><label><span>RPS: </span></label><input type='text' name='rps'></label></div>" +
 				 "<div><label><span>Ramp Up: </span></label><input type='text' name='rampup'></label></div>" +
 				 "<div><label><span>Const Len: </span></label><input type='text' name='testlen'></label></div>" +
-				 "<div><label><span>Ramp Down: </span></label><input type='text' name='rampdown'></label></div>",
+				 "<div><label><span>Ramp Down: </span></label><input type='text' name='rampdown'></label></div>" +
+				 "<div><label><span>Target: </span></label><input type='text' name='target'></label>" +
+				 "<label><span>Port: </span></label><input type='text' name='port'></label></div>",
 			inputclass: ""
 	});
 

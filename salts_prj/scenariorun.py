@@ -90,6 +90,18 @@ def phantom_rps_schedule(scenario_path):
         dd.update(SCENARIO_DURATIONS_DEFAULT)
         return dd
 
+
+def phantom_target_info(scenario_path):
+    result = {'target': '', 'port': 8000}
+    target_info = ini_manager.get_option_value(scenario_path, 'phantom', 'address', '')
+    if not target_info:
+        return  result
+    targ = target_info.split(':')
+    if len(targ) >= 2:
+        return {'target': targ[0], 'port': targ[1]}
+    return {'target': targ[0], 'port': def_values['port']}
+
+
 def jmeter_rps_schedule(scenario_path):
     def jmeter_duration(key):
         return str(1000 * int(ini_manager.get_option_value(scenario_path, 'jmeter', key,
@@ -103,6 +115,23 @@ def jmeter_rps_schedule(scenario_path):
             'rps': ini_manager.get_option_value(scenario_path, 'jmeter', 'rps1',
                                                 SCENARIO_RPS_DEFAULT)
            }
+
+
+def jmeter_target_info(scenario_path):
+    result = {'target': '', 'port': 8000}
+    target_info = ini_manager.get_option_value(scenario_path,
+                                               'jmeter', 'hostname', '')
+    if target_info:
+        targ = target_info.split(':')
+        result['target'] = targ[0]
+        if len(targ) == 1:
+            result['port'] = ini_manager.get_option_value(scenario_path,
+                                                          'jmeter', 'port',
+                                                          result['port'])
+        else:
+            result['port'] = targ[1]
+    return result
+
 
 class ScenarioRunView(View):
 
@@ -157,8 +186,11 @@ class ScenarioRunView(View):
             return {}
         rps_schedule = {'phantom': phantom_rps_schedule,
                         'jmeter': jmeter_rps_schedule}
+        target_info = {'phantom': phantom_target_info,
+                       'jmeter': jmeter_target_info}
         dd = rps_schedule[rps_default_section](scenario_path)
         dd['gen_type'] = rps_default_section
+        dd.update(target_info[rps_default_section](scenario_path))
         return dd
 
     def adapt_tanks_list(self, tanks_list, active_shootings, request_user):
