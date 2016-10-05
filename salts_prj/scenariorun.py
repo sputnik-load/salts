@@ -14,7 +14,7 @@ from django.shortcuts import render_to_response
 from django.db import connection
 from django.core import serializers
 from salts.models import Scenario, Shooting, Tank, TestResult
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.db.models import Max
 from salts_prj.settings import log
 from salts_prj.requesthelper import (request_get_value, generate_context,
@@ -161,7 +161,7 @@ class ScenarioRunView(View):
         dd['gen_type'] = rps_default_section
         return dd
 
-    def adapt_tanks_list(self, tanks_list, active_shootings):
+    def adapt_tanks_list(self, tanks_list, active_shootings, request_user):
         records = []
         for tank in tanks_list:
             rec = {'value': tank['pk'],
@@ -175,6 +175,8 @@ class ScenarioRunView(View):
                 shooting = sh[0]
                 default_data = \
                     self.get_default_data(shooting.scenario.scenario_path)
+                can_stop = request_user.id == shooting.user.id or \
+                    Group.objects.get(name='Salts') in request_user.groups.all()
                 rec['shooting'] = {'id': shooting.id,
                                    'session': shooting.session_id,
                                    'start': shooting.start,
@@ -183,7 +185,9 @@ class ScenarioRunView(View):
                                    'username': shooting.user.username,
                                    'default_data': default_data,
                                    'custom_data': \
-                                        jsonstr2bin(str(shooting.custom_data))}
+                                        jsonstr2bin(str(shooting.custom_data)),
+                                   'can_stop': can_stop
+                                  }
             records.append(json.dumps(rec))
         return records
 
@@ -241,7 +245,7 @@ class ScenarioRunView(View):
             limit = int(limit)
             results = results[offset:offset+limit]
         response_dict['rows'] = results
-        response_dict['tanks'] = self.adapt_tanks_list(tanks, active_sh)
+        response_dict['tanks'] = self.adapt_tanks_list(tanks, active_sh, request.user)
         response = HttpResponse(json.dumps(response_dict),
                                 content_type='application/json')
         return response

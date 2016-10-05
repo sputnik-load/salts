@@ -131,6 +131,7 @@ function displayTankHostCell(divItem) {
 				newDiv = newItem.find("div[name='custom_data']");
 				newDiv = newItem.find("div[name='test_name']");
 				newDiv.html("<p>" + shooting['default_data']['test_name'] + "</p>");
+				newItem.find("button").attr('can_stop', shooting['can_stop'] ? '1' : '')
 				newItem.insertBefore(trItem);
 				updateShootingStatus(newItem, shooting);
 			}
@@ -188,7 +189,7 @@ function displayActionButton(trItem) {
 	var butName = "Запустить";
 	var disabled = true;
 	if (shootingId) {
-		disabled = false;
+		disabled = !butItem.attr('can_stop');
 		var tankId = trItem.find('p[value]').attr('value');
 		onclickHandler = "stopTest(" + scenarioId + ", " + tankId +
 							", " + shootingId + ")";
