@@ -22,7 +22,6 @@ from salts_prj.requesthelper import (request_get_value, generate_context,
 from salts_prj.ini import ini_manager
 from tank_api_client import jsonstr2bin, bin2jsonstr
 from salts.tankmanager import remainedtime
-# from yandextank.stepper.util import parse_duration
 
 
 SCENARIO_RPS_DEFAULT = '2'
@@ -30,6 +29,22 @@ SCENARIO_DURATIONS_DEFAULT = {'rampup': '5000',
                               'testlen': '90000',
                               'rampdown': '5000'
                              }
+
+
+def duration2ms(line):
+    ts = [('h', 3600000), ('m[^s]', 60000),
+          ('s', 1000), ('ms', 1), ('', 1000)]
+    total = 0
+    for (unit, ms) in ts:
+        pat = re.compile("^(\d+)%s" % unit)
+        m = pat.match(line)
+        if not m:
+            continue
+        if not unit and total:
+            break
+        total += ms * int(m.groups()[0])
+        line = pat.sub('', line)
+    return total
 
 
 def phantom_rps_schedule(scenario_path):
@@ -45,26 +60,25 @@ def phantom_rps_schedule(scenario_path):
     m = pat.findall(rps_line)
     rps = 0
     durs = {}
-    # valid = m == sample
-    valid = False # пока всегда будут грузиться значения по умолчанию
+    valid = m == sample
     if valid:
         pat = re.compile("^line\((\d+),(\d+),(.*?)\).*")
         m = pat.findall(rps_line)
         valid = m and len(m[0]) == 3 and m[0][0] == '1'
         if valid:
             rps = m[0][1]
-            # durs['rampup'] = parse_duration(m[0][2])
+            durs['rampup'] = duration2ms(m[0][2])
         if valid:
             pat = re.compile(".*const\((\d+),(.*?)\).*")
             m = pat.findall(rps_line)
             valid = m and len(m[0]) == 2 and m[0][0] == rps
             if valid:
-                # durs['testlen'] = parse_duration(m[0][1])
+                durs['testlen'] = duration2ms(m[0][1])
                 pat = re.compile(".*line\((\d+),(\d+),(.*?)\)$")
                 m = pat.findall(rps_line)
                 valid = m and len(m[0]) == 3 and m[0][0] == rps and m[0][1] == '1'
-                # if valid:
-                    # durs['rampdown'] = parse_duration(m[0][2])
+                if valid:
+                    durs['rampdown'] = duration2ms(m[0][2])
     if valid:
         log.info("Phantom Durations (ms): %s" % durs)
         dd.update({'rps': rps})
