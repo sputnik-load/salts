@@ -118,7 +118,8 @@ def jmeter_rps_schedule(scenario_path):
 
 
 def jmeter_target_info(scenario_path):
-    result = {'target': '', 'port': 8000}
+    result = {'target': '', 'port': 8000,
+              's': ''}
     target_info = ini_manager.get_option_value(scenario_path,
                                                'jmeter', 'hostname', '')
     if target_info:
@@ -128,6 +129,8 @@ def jmeter_target_info(scenario_path):
             result['port'] = ini_manager.get_option_value(scenario_path,
                                                           'jmeter', 'port',
                                                           result['port'])
+            result['s'] = '1' # target и port д.б.
+                              # сохранены в разных опциях
         else:
             result['port'] = targ[1]
     return result

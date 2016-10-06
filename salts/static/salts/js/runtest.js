@@ -174,10 +174,16 @@ function toScenarioFormat(aItem) {
 	}
 	else {
 		scenario['jmeter'] = {};
-		scenario['jmeter']['rampup'] = data_value['rampup'];
-		scenario['jmeter']['testlen'] = data_value['testlen'];
-		scenario['jmeter']['rampdown'] = data_value['rampdown'];
-		scenario['jmeter']['hostname'] = data_value['target'] + ":" + data_value['port']
+		scenario['jmeter']['rampup'] = ms2sec(data_value['rampup']);
+		scenario['jmeter']['testlen'] = ms2sec(data_value['testlen']);
+		scenario['jmeter']['rampdown'] = ms2sec(data_value['rampdown']);
+		if (data_value['s']) {
+			scenario['jmeter']['hostname'] = data_value['target'];
+			scenario['jmeter']['port'] = data_value['port'];
+		}
+		else
+			scenario['jmeter']['hostname'] = data_value['target'] + ":" +
+											 data_value['port']
 	}
 	return jsonstr2bin(JSON.stringify(scenario));	
 }
