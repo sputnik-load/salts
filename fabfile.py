@@ -16,6 +16,7 @@ if not env.hosts:
     env.hosts = DEFAULT_HOSTS
 
 is_local = False
+env.run  = run
 
 @task
 def locally():
