@@ -14,7 +14,3 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "salts_prj.settings")
 
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
-
-from salts_prj.ini import ini_manager
-
-ini_manager.sync()
