@@ -56,24 +56,40 @@ class TankViewSet(viewsets.ModelViewSet):
         return Tank.objects.filter(host=info[0])
 
 
-class ShootingHttpIssue(Exception):
-    def __init__(self, errno, msg):
-        self.args = (errno, msg)
-        self.code = errno
-        self.message = msg
-
-
 class ScenarioSerializer(serializers.HyperlinkedModelSerializer):
-    # id = serializers.ReadOnlyField()
+    id = serializers.ReadOnlyField()
     # group = GroupSerializer()
     class Meta:
         model = Scenario
+
+    def create(self, validated_data):
+        scenarios = Scenario.objects.all()
+        if scenarios:
+            s = scenarios.filter(scenario_path=validated_data.get('scenario_path'))
+            if s:
+                return s[0]
+        new_id = 1
+        if scenarios:
+            scenarios = scenarios.order_by('-id')
+            new_id = scenarios[0].id
+        new_scenario = Scenario(id=new_id, scenario_path=validated_data.get('scenario_path'),
+                                group=validated_data.get('group'))
+        new_scenario.save()
+        return new_scenario
+
 
 class ScenarioViewSet(viewsets.ModelViewSet):
     serializer_class = ScenarioSerializer
     queryset = Scenario.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
     filter_fields = ("id", "scenario_path", "status")
+
+
+class ShootingHttpIssue(Exception):
+    def __init__(self, errno, msg):
+        self.args = (errno, msg)
+        self.code = errno
+        self.message = msg
 
 
 class ShootingSerializer(serializers.HyperlinkedModelSerializer):
