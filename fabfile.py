@@ -89,14 +89,15 @@ def _my_replace_in_remote_file(src, dst):
 
 @task
 def deploy(reload_=True):
-    checkout_last_version()
+#    checkout_last_version()
     remote_dir = _my_replace('#PROJECT_ROOT#')
     sudo(_my_replace('mkdir -p "#PROJECT_ROOT#"'))
     if not is_local:
-        sudo(_my_replace('chown $(whoami).uwsgi -R "#PROJECT_ROOT#"'))
+        username = env.run("echo $(whoami)")
+        sudo(_my_replace('chown ' + username + '.uwsgi -R "#PROJECT_ROOT#"'))
     else:
-        print env.run("echo $(whoami)")
-        sudo(_my_replace('chown $(whoami).$(whoami) -R "#PROJECT_ROOT#"'))
+        username = env.run("echo $(whoami)")
+        sudo(_my_replace('chown ' + username + '.' + username + ' -R "#PROJECT_ROOT#"'))
     sudo(_my_replace('chmod g+rwX -R "#PROJECT_ROOT#"'))
     put('salts', remote_path=remote_dir) # use_sudo=is_local
     put('salts_prj', remote_path=remote_dir)
