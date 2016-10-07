@@ -71,7 +71,7 @@ class ScenarioSerializer(serializers.HyperlinkedModelSerializer):
         new_id = 1
         if scenarios:
             scenarios = scenarios.order_by('-id')
-            new_id = scenarios[0].id
+            new_id = scenarios[0].id + 1
         new_scenario = Scenario(id=new_id, scenario_path=validated_data.get('scenario_path'),
                                 group=validated_data.get('group'))
         new_scenario.save()
