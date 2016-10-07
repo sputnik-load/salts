@@ -93,20 +93,22 @@ def deploy(reload_=True):
     remote_dir = _my_replace('#PROJECT_ROOT#')
     sudo(_my_replace('mkdir -p "#PROJECT_ROOT#"'))
     if not is_local:
-        sudo(_my_replace('chown suhov.uwsgi -R "#PROJECT_ROOT#"'))
-        sudo(_my_replace('chmod g+rwX -R "#PROJECT_ROOT#"'))
-    put('salts', remote_path=remote_dir, use_sudo=is_local)
-    put('salts_prj', remote_path=remote_dir, use_sudo=is_local)
-    put('templates', remote_path=remote_dir, use_sudo=is_local)
+        sudo(_my_replace('chown $(whoami).$(whoami) -R "#PROJECT_ROOT#"'))
+    else:
+        sudo(_my_replace('chown $(whoami).uwsgi -R "#PROJECT_ROOT#"'))
+    sudo(_my_replace('chmod g+rwX -R "#PROJECT_ROOT#"'))
+    put('salts', remote_path=remote_dir) # use_sudo=is_local
+    put('salts_prj', remote_path=remote_dir)
+    put('templates', remote_path=remote_dir)
     #put('js', remote_path=remote_dir+"/static/")
-    put('logfile', remote_path=remote_dir, use_sudo=is_local)
-    put('run_series.log', remote_path=remote_dir, use_sudo=is_local)
-    put('static/favicon.ico', remote_path=remote_dir+"/static/", use_sudo=is_local)
-    put('version', remote_path=remote_dir, use_sudo=is_local)
+    #put('logfile', remote_path=remote_dir)
+    #put('run_series.log', remote_path=remote_dir)
+    put('static/favicon.ico', remote_path=remote_dir+"/static/")
+    put('version', remote_path=remote_dir)
     with settings(warn_only=True):
-        put('*.py', remote_path=remote_dir, use_sudo=is_local)
+        put('*.py', remote_path=remote_dir)
 
-    put('conf', remote_path=remote_dir, use_sudo=is_local)
+    put('conf', remote_path=remote_dir)
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/uwsgi.ini.sample', '#PROJECT_ROOT#/conf/uwsgi.ini')
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/uwsgi-krylov.ini.sample', '#PROJECT_ROOT#/conf/uwsgi-krylov.ini')
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/nginx.conf.sample', '#PROJECT_ROOT#/conf/nginx.conf')
