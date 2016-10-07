@@ -174,6 +174,8 @@ function toScenarioFormat(aItem) {
 	}
 	else {
 		scenario['jmeter'] = {};
+		scenario['jmeter']['rps1'] = data_value['rps'];
+		scenario['jmeter']['rps2'] = data_value['rps'];
 		scenario['jmeter']['rampup'] = ms2sec(data_value['rampup']);
 		scenario['jmeter']['testlen'] = ms2sec(data_value['testlen']);
 		scenario['jmeter']['rampdown'] = ms2sec(data_value['rampdown']);
