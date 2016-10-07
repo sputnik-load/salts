@@ -106,6 +106,7 @@ def deploy(reload_=True):
     #put('js', remote_path=remote_dir+"/static/")
     #put('logfile', remote_path=remote_dir)
     #put('run_series.log', remote_path=remote_dir)
+    env.run(_my_replace('mkdir -p "#PROJECT_ROOT#/static"'))
     put('static/favicon.ico', remote_path=remote_dir+"/static/")
     put('version', remote_path=remote_dir)
     with settings(warn_only=True):
