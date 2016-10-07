@@ -2,13 +2,27 @@
 import re
 import datetime
 from os.path import abspath,dirname
-from fabric.api import put, env, run, cd, sudo, lcd, local, settings, get
+from fabric.api import put, env, run, cd, sudo, lcd, local, settings, get, task
 
 #import logging
 #logging.basicConfig(level=logging.DEBUG)
 
+DEFAULT_HOSTS = ['salt-dev.dev.ix.km']
+
+def local_run(*args, **kwargs):
+    return local(*args, shell="/bin/bash", **kwargs)
+
 if not env.hosts:
-    env.hosts = ['salt-dev.dev.ix.km']
+    env.hosts = DEFAULT_HOSTS
+
+is_local = False
+
+@task
+def locally():
+    global is_local
+    is_local = True
+    env.run = local_run
+
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 PYTHON = 'python2.7'
 PIP = 'pip2.7'
@@ -73,27 +87,26 @@ def _my_replace_in_remote_file(src, dst):
     command = command + " '{0}' > '{1}'".format(_my_replace(src), _my_replace(dst))
     sudo(command)
 
-
+@task
 def deploy(reload_=True):
     checkout_last_version()
     remote_dir = _my_replace('#PROJECT_ROOT#')
     sudo(_my_replace('mkdir -p "#PROJECT_ROOT#"'))
-    sudo(_my_replace('chown suhov.uwsgi -R "#PROJECT_ROOT#"'))
-    sudo(_my_replace('chmod g+rwX -R "#PROJECT_ROOT#"'))
-    put('salts', remote_path=remote_dir)
-    put('salts_prj', remote_path=remote_dir)
-    put('templates', remote_path=remote_dir)
+    if not is_local:
+        sudo(_my_replace('chown suhov.uwsgi -R "#PROJECT_ROOT#"'))
+        sudo(_my_replace('chmod g+rwX -R "#PROJECT_ROOT#"'))
+    put('salts', remote_path=remote_dir, use_sudo=is_local)
+    put('salts_prj', remote_path=remote_dir, use_sudo=is_local)
+    put('templates', remote_path=remote_dir, use_sudo=is_local)
     #put('js', remote_path=remote_dir+"/static/")
-    put('static/favicon.ico', remote_path=remote_dir+"/static/")
-    put('version', remote_path=remote_dir)
+    put('logfile', remote_path=remote_dir, use_sudo=is_local)
+    put('run_series.log', remote_path=remote_dir, use_sudo=is_local)
+    put('static/favicon.ico', remote_path=remote_dir+"/static/", use_sudo=is_local)
+    put('version', remote_path=remote_dir, use_sudo=is_local)
     with settings(warn_only=True):
-        put('*.py', remote_path=remote_dir)
-        # put('*.sh', remote_path=remote_dir)
- #   with cd(remote_dir):
- #       run('chmod +x manage.py')
- #       run('chmod +x *.sh')
+        put('*.py', remote_path=remote_dir, use_sudo=is_local)
 
-    put('conf', remote_path=remote_dir)
+    put('conf', remote_path=remote_dir, use_sudo=is_local)
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/uwsgi.ini.sample', '#PROJECT_ROOT#/conf/uwsgi.ini')
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/uwsgi-krylov.ini.sample', '#PROJECT_ROOT#/conf/uwsgi-krylov.ini')
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/nginx.conf.sample', '#PROJECT_ROOT#/conf/nginx.conf')
@@ -101,13 +114,13 @@ def deploy(reload_=True):
     sudo('rm -rf /var/tmp/django_cache/*')
 
     with cd(_my_replace("#PROJECT_ROOT#")):
-        run(PYTHON + " manage.py bower_install")
-        run(PYTHON + " manage.py collectstatic --noinput")
+        env.run(PYTHON + " manage.py bower_install")
+        env.run(PYTHON + " manage.py collectstatic --noinput")
 
     if reload_:
         reload_svc()
 
-
+@task
 def install_req():
 #    sudo('yum install -y uwsgi uwsgi-plugin-python supervisor')
 #    sudo('yum install -y MySQL-python mysql-connector-python python-pip')
@@ -130,16 +143,16 @@ def _setup_django():
     sudo(_my_replace('ln -fs #PROJECT_ROOT#/conf/nginx.conf /etc/nginx/conf.d/#HOSTNAME#.conf'))
     # TODO: manage.py installstatic
     with cd(_my_replace("#PROJECT_ROOT#")):
-        run(PYTHON + " manage.py bower_install")
-        run(PYTHON + " manage.py collectstatic --noinput")
+        env.run(PYTHON + " manage.py bower_install")
+        env.run(PYTHON + " manage.py collectstatic --noinput")
 
-
+@task
 def setup():
     deploy(False)
     _setup_django()
     reload_svc()
 
-
+@task
 def reload_svc():
     sudo('service nginx reload')
     # sudo('service supervisord reload')
@@ -156,6 +169,7 @@ def test_():
         with lcd(run('pwd')):
             print local('pwd')
 
+@task
 def backup_files():
     with cd(_my_replace('#PROJECT_ROOT#')):
         archive = '/tmp/salts-{ts}.tar.gz'.format(ts=get_ts())
@@ -163,6 +177,7 @@ def backup_files():
         get(archive)
         remote_rm(archive)
 
+@task
 def backup_database():
     with cd(_my_replace('#PROJECT_ROOT#')):
         archive = '/tmp/salts-{ts}.sql.gz'.format(ts=get_ts())
@@ -170,6 +185,7 @@ def backup_database():
         get(archive)
         remote_rm(archive)
 
+@task
 def backup_results():
     with cd(_my_replace('#PROJECT_ROOT#')):
         archive = '/tmp/salts-results-{ts}.tar.gz'.format(ts=get_ts())
@@ -177,10 +193,12 @@ def backup_results():
         get(archive)
         remote_rm(archive)
 
+@task
 def backup():
     backup_database()
     backup_files()
 
+@task
 def backup_all():
     backup_database()
     backup_files()
