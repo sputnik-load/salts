@@ -53,6 +53,7 @@ function jsonstr2bin(jsonStr) {
 			this.$input.filter("[name='rampdown']").val(ms2sec(changed['rampdown']));
 			this.$input.filter("[name='target']").val(changed['target']);
 			this.$input.filter("[name='port']").val(changed['port']);
+			this.target_port = changed['s'];
 		},
        
 		input2value: function() {
@@ -64,7 +65,8 @@ function jsonstr2bin(jsonStr) {
 				testlen: sec2ms(this.$input.filter("[name='testlen']").val()),
 				rampdown: sec2ms(this.$input.filter("[name='rampdown']").val()),
 				target: this.$input.filter("[name='target']").val(),
-				port: this.$input.filter("[name='port']").val()
+				port: this.$input.filter("[name='port']").val(),
+				s: this.target_port
 			};
 			return jsonstr2bin(JSON.stringify(changed));
 		},
