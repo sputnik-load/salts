@@ -10,7 +10,7 @@ from fabric.api import put, env, run, cd, sudo, lcd, local, settings, get, task
 DEFAULT_HOSTS = ['salt-dev.dev.ix.km']
 
 def local_run(*args, **kwargs):
-    return local(*args, shell="/bin/bash", **kwargs)
+    return local(*args, shell="/bin/bash", capture=True, **kwargs)
 
 if not env.hosts:
     env.hosts = DEFAULT_HOSTS
@@ -93,9 +93,10 @@ def deploy(reload_=True):
     remote_dir = _my_replace('#PROJECT_ROOT#')
     sudo(_my_replace('mkdir -p "#PROJECT_ROOT#"'))
     if not is_local:
-        sudo(_my_replace('chown $(whoami).$(whoami) -R "#PROJECT_ROOT#"'))
-    else:
         sudo(_my_replace('chown $(whoami).uwsgi -R "#PROJECT_ROOT#"'))
+    else:
+        print env.run("echo $(whoami)")
+        sudo(_my_replace('chown $(whoami).$(whoami) -R "#PROJECT_ROOT#"'))
     sudo(_my_replace('chmod g+rwX -R "#PROJECT_ROOT#"'))
     put('salts', remote_path=remote_dir) # use_sudo=is_local
     put('salts_prj', remote_path=remote_dir)
