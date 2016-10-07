@@ -10,19 +10,21 @@ from fabric.api import put, env, run, cd, sudo, lcd, local, settings, get, task
 DEFAULT_HOSTS = ['salt-dev.dev.ix.km']
 
 def local_run(*args, **kwargs):
-    return local(*args, shell="/bin/bash", capture=True, **kwargs)
+    return local(*args, shell="/bin/bash", capture=False, **kwargs)
 
 if not env.hosts:
     env.hosts = DEFAULT_HOSTS
 
 is_local = False
 env.run  = run
+env.cd   = cd
 
 @task
 def locally():
     global is_local
     is_local = True
-    env.run = local_run
+    env.run  = local_run
+    env.cd   = lcd
 
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 PYTHON = 'python2.7'
@@ -94,10 +96,10 @@ def deploy(reload_=True):
     remote_dir = _my_replace('#PROJECT_ROOT#')
     sudo(_my_replace('mkdir -p "#PROJECT_ROOT#"'))
     if not is_local:
-        username = env.run("echo $(whoami)")
+        username = run("echo $(whoami)")
         sudo(_my_replace('chown ' + username + '.uwsgi -R "#PROJECT_ROOT#"'))
     else:
-        username = env.run("echo $(whoami)")
+        username = run("echo $(whoami)")
         sudo(_my_replace('chown ' + username + '.' + username + ' -R "#PROJECT_ROOT#"'))
     sudo(_my_replace('chmod g+rwX -R "#PROJECT_ROOT#"'))
     put('salts', remote_path=remote_dir) # use_sudo=is_local
@@ -119,7 +121,7 @@ def deploy(reload_=True):
 
     sudo('rm -rf /var/tmp/django_cache/*')
 
-    with cd(_my_replace("#PROJECT_ROOT#")):
+    with env.cd(_my_replace("#PROJECT_ROOT#")):
         env.run(PYTHON + " manage.py bower_install")
         env.run(PYTHON + " manage.py collectstatic --noinput")
 
