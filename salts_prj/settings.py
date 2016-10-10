@@ -64,6 +64,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'djangobower',
+    'django_extensions',
 )
 
 ROOT_URLCONF = 'salts_prj.urls'

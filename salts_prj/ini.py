@@ -57,9 +57,8 @@ class IniCtrl(object):
     DEFAULT_GROUP = 'Salts'
     SCENARIO_ID_OPTION = 'scenario_id'
 
-    def __init__(self, root, exclude):
+    def __init__(self, root):
         self.dir_path = root
-        self.exclude_names = exclude
         try:
             g = Group.objects.get(name=IniCtrl.DEFAULT_GROUP)
         except Group.DoesNotExist:
@@ -304,5 +303,7 @@ class IniCtrl(object):
                 self.set_scenario_status(spath, 'D')
 
 
+def getIniManager(lt_path):
+    return IniCtrl(lt_path)
 
-ini_manager = IniCtrl(LT_PATH, EXCLUDE_INI_FILES)
+ini_manager = getIniManager(LT_PATH)

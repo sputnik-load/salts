@@ -12,3 +12,4 @@ django-filter
 simplejson
 django-bower
 django-pgjsonb==0.0.23
+django-extensions==1.7.4
