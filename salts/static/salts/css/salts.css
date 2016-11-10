@@ -184,3 +184,7 @@
 .table-hover > tbody > tr.success_even:hover > th {
   background-color: #9bbb77;
 }
+
+.salts-table-title {
+	font-family: "Play script=cyrillic rev=2";
+}

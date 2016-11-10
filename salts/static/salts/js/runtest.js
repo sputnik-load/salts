@@ -1,4 +1,5 @@
-var targetNodes         = $("#table");
+var availTable			= $("#avail-table");
+var runTable			= $("#run-table");
 var MutationObserver    = window.MutationObserver ||
                             window.WebKitMutationObserver;
 var myObserver          = new MutationObserver (mutationHandler);
@@ -30,7 +31,7 @@ function updateTestNameEditable(divItem) {
 			}
 			var data_value = JSON.parse(bin2jsonstr(aItem.attr('data-value')));
 			aItem.text(data_value['test_name']);
-			displayActionButton(divItem.parents('tr'));
+			displayStartButton(divItem.parents('tr'));
 		}
 	});
 }
@@ -42,7 +43,7 @@ function updateTankHostEditable(divItem) {
 			var content = $.fn.editableutils.itemsByValue(value, sourceData);
 			aItem.html(content[0]['text']);
 			aItem.attr('data-value', value);
-			displayActionButton(divItem.parents('tr'));
+			displayStartButton(divItem.parents('tr'));
 		}
 	});
 	aItem.editable('option', 'source', JSON.stringify(tanks['na']));
@@ -52,7 +53,7 @@ function updateTankHostEditable(divItem) {
 
 function updateRowIndexes() {
 	var index = 0;
-	$("#table tr[data-index]").each(function() {
+	availTable.filter("tr[data-index]").each(function() {
 		$(this).attr("data-index", index);
 		index += 1;
 	});
@@ -107,14 +108,10 @@ function updateShootingStatus(shootingRow, values) {
 						" пользователем <i>" + values['username'] + "</i>. ";
 	statusContent += "Осталось - " + toHHMMSS(values['remained']) + ".";
 	shootingRow.find('div[name=status]').html(statusContent);
+	runTable.bootstrapTable("resetWidth");
 }
 
 function displayTankHostCell(divItem) {
-	var idValue = divItem.attr('id').replace(/_\d+/, '');
-	if (idValue == "shooting") {
-		displayActionButton(divItem.parents('tr'));
-		return;
-	}
 	updateTankHostEditable(divItem);
 	if (tanks['active']) {
 		var scenarioId = parseInt(divItem.attr('id').replace(/scenario_/, ''),
@@ -123,17 +120,27 @@ function displayTankHostCell(divItem) {
 			var shooting = tank['shooting'];
 			if (scenarioId == shooting['scenario_id']) {
 				var trItem = divItem.parents('tr');
-				var newItem = trItem.clone();
-				var newDiv = newItem.find("div[id='scenario_" + scenarioId + "']");
-				newDiv.attr('id', "shooting_" + shooting['id']);
-				newDiv.html("<p value='" + tank['value'] +
-							"'>" + tank['text'] + "</p>");
-				newDiv = newItem.find("div[name='custom_data']");
-				newDiv = newItem.find("div[name='test_name']");
-				newDiv.html("<p>" + shooting['default_data']['test_name'] + "</p>");
-				newItem.find("button").attr('can_stop', shooting['can_stop'] ? '1' : '')
-				newItem.insertBefore(trItem);
-				updateShootingStatus(newItem, shooting);
+				var row = {
+					shooting_id: shooting["id"],
+					id: scenarioId,
+					test_name: shooting["default_data"]["test_name"],
+					tank_host: tank["text"],
+					action: "",
+					status: "",
+					default_data: shooting["default_data"]
+				};
+				var trItems = runTable.find("tbody tr[data-index]");
+				index = trItems.size();
+				tr = runTable.find("tbody tr[id=" + shooting["id"] + "]");
+				if (tr.size() === 0) {
+					runTable.bootstrapTable("insertRow", {
+						index: index,
+						row: row
+					});
+					tr = runTable.find("tbody tr[data-index=" + index + "]");
+					tr.attr("id", shooting["id"]);
+					displayStopButton(tr, shooting, tank);
+				}
 			}
 		});
 	}
@@ -190,33 +197,30 @@ function toScenarioFormat(aItem) {
 	return jsonstr2bin(JSON.stringify(scenario));	
 }
 
-function displayActionButton(trItem) {
-	var scenarioId = trItem.find('td:eq(0)').text();
-	var shootingId = parseInt(trItem.find("div[name='tank_host']")
-								.attr('id').replace(/shooting_/, ''), 10);
-	var onclickHandler = '';
-	var butItem = trItem.find('button');
-	var butName = "Запустить";
-	var disabled = true;
-	if (shootingId) {
-		disabled = !butItem.attr('can_stop');
-		var tankId = trItem.find('p[value]').attr('value');
-		onclickHandler = "stopTest(" + scenarioId + ", " + tankId +
-							", " + shootingId + ")";
-		butName = "Остановить";
+function displayStopButton(tr, shooting, tank) {
+	var butItem = tr.find("button");
+	var onclickHandler = "stopTest(" + shooting["scenario_id"] + ", " + tank["id"] +
+						 ", " + shooting["id"] + ")";
+	butItem.prop("disabled", !shooting["can_stop"]);
+	butItem.attr("onclick", onclickHandler);
+	butItem.text("Остановить");
+}
+
+function displayStartButton(trItem) {
+	var scenarioId = trItem.find("td:eq(0)").text();
+	var onclickHandler = "";
+	var butItem = trItem.find("button");
+	var tankId = trItem.find("a[name='tank_host']").attr("data-value");
+	disabled = true;
+	if (tankId > 0) {
+		disabled = false;
+		var argsLine = scenarioId + ", " + tankId;
+		argsLine += ", '" + toScenarioFormat(trItem.find("div[name='test_name'] a")) + "'";
+		onclickHandler = "runTest(" + argsLine + ")";
 	}
-	else {
-		var tankId = trItem.find("a[name='tank_host']").attr('data-value');
-		if (tankId > 0) {
-			disabled = false;
-			var argsLine = scenarioId + ", " + tankId;
-			argsLine += ", '" + toScenarioFormat(trItem.find("div[name='test_name'] a")) + "'";
-			onclickHandler = "runTest(" + argsLine + ")";
-		}
-	}
-	butItem.prop('disabled', disabled);
-	butItem.attr('onclick', onclickHandler);
-	butItem.text(butName);
+	butItem.prop("disabled", disabled);
+	butItem.attr("onclick", onclickHandler);
+	butItem.text("Запустить");
 }
 
 function mutationHandler(mutationRecords) {
@@ -246,6 +250,8 @@ function updateVisibleRows(scenBinStr) {
 		success: function(upd) {
 			setGlobalTanks(upd['tanks']);
 			var divShootings = $("div[id^=shooting]");
+			var trShootings = runTable.find("tbody tr[data-index]");
+			var parentRunTable = runTable.parents("div.bootstrap-table");
 			$.each(upd['rows'], function(k, info) {
 				var div = $("div#scenario_" + info['id']);
 				updateScenarioStatus(div.parents('tr'), info['last']);
@@ -255,26 +261,38 @@ function updateVisibleRows(scenBinStr) {
 				var shooting = JSON.parse(js_str)['shooting'];
 				if (!$.isEmptyObject(shooting))	{
 					var idSelector = "[id=shooting_" + shooting['id'] + "]";
-					if (!divShootings.is(idSelector)) {
-						displayTankHostCell($("div#scenario_" + shooting['scenario_id']));
+					var idSel = "[id=" + shooting["id"] + "]";
+					if (!trShootings.is(idSel)) {
+						displayTankHostCell(availTable.find("div#scenario_" + shooting['scenario_id']));	
+						if (parentRunTable.is(":visible"))
+							runTable.bootstrapTable("resetView",
+													{"height": runTable.height() + 150});
+						else {
+							parentRunTable.show();
+							runTable.bootstrapTable("resetView", {"height": 250});
+						}
 						needUpdate = true;
 					}
 					else {
-						updateShootingStatus(divShootings.filter(idSelector).parents('tr'),
+						updateShootingStatus(trShootings.filter(idSel),
 											 shooting);
-						divShootings = divShootings.not(idSelector);
+						trShootings = trShootings.not(idSel);
 					}
 				}
 			});
-			$(divShootings).each(function() {
+			$(trShootings).each(function() {
 				needUpdate = true;
-				$(this).parents('tr').remove();
+				runTable.bootstrapTable("removeByUniqueId", $(this).attr("id"));
+				runTable.bootstrapTable("resetView",
+										{"height": runTable.height() - 150});
+			});
+			var trShootings = runTable.find("tbody tr[data-index]");
+			if (trShootings.size() == 0)
+				parentRunTable.hide();
+			if (needUpdate)
 				$("div[id^=scenario]").each(function() {
 					displayTankHostCell($(this));
 				});
-			});
-			if (needUpdate)
-				updateRowIndexes();
 		}
 	});
 }
@@ -299,7 +317,7 @@ function ajax_request(params) {
 	$.ajax(params).done(function(jsonObj) {
 		setGlobalTanks(jsonObj['tanks']);
 		var scenarios = [];
-		$('table#table tr[data-index]').each(function() {
+		availTable.filter('tr[data-index]').each(function() {
 			scenarios.push(parseInt($(this).find('td:first').text(), 10));
 		});
 		updateIntervalFunc = function() {
@@ -312,9 +330,10 @@ function ajax_request(params) {
 }
 
 $(document).ready(function() {
-	targetNodes.each(function() {
+	availTable.each(function() {
 		myObserver.observe(this, obsConfig);
 	});
+	runTable.parents("div.bootstrap-table").hide();
 	$.fn.editable.defaults.mode = 'popup';
 	$(document).on('visibilitychange', function() {
 		if (document.visibilityState == 'hidden') {
@@ -344,7 +363,7 @@ function test_name_formatter(v, row, index) {
 				"style='font-family:courier;font-size:70%'></div>";
 }
 
-function tank_host_formatter(v, row, index) {
+function availTankHostFormatter(v, row, index) {
 	var codeSelect = "<a href='#' name='tank_host'" +
 						"data-source='' " +
 						"data-type='select' data-value='' " +
