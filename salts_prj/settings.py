@@ -12,9 +12,6 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import ConfigParser
 from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 
-import logging
-log = logging.getLogger('salts')
-
 TEMPLATE_CONTEXT_PROCESSORS += (
     'django.core.context_processors.request',
 )
@@ -174,15 +171,18 @@ LOGGING = {
         },
         'django.db.backends': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'WARN',
             'propagate': False,
         },
         'salts': {
             'handlers': ['console', 'logfile'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     }
 }
+
+import logging
+log = logging.getLogger('salts')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

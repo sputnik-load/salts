@@ -2,18 +2,12 @@
 
 import os
 import re
-import codecs
-from glob import glob
-from settings import LT_PATH, EXCLUDE_INI_FILES
+from settings import LT_PATH
 from django.db import connection
 from django.contrib.auth.models import Group
 from salts.models import Scenario
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError, Error
-from salts.logger import Logger
-from salts_prj.settings import LT_PATH, EXCLUDE_INI_FILES
-
-
-log = Logger.get_logger()
+from salts_prj.settings import log
 
 
 def ini_files(dir_path):

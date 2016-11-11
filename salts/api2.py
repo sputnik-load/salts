@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
-from rest_framework import routers, serializers, viewsets, generics, filters
+from rest_framework import serializers, viewsets, filters
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from django.contrib.auth.models import User, Group, Permission
+from django.contrib.auth.models import User, Group
 from salts.models import (TestResult, GeneratorTypeList,
                           GeneratorType, Shooting, Scenario,
                           Tank)
 from django.db import connection
-from logger import Logger
 from tankmanager import tank_manager
+from salts_prj.settings import log
 import socket
-
-
-log = Logger.get_logger()
 
 
 class GeneratorTypeSerializer(serializers.HyperlinkedModelSerializer):
