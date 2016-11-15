@@ -245,6 +245,24 @@ class ScenarioRunView(View):
         tr_max = tr.values('scenario_path').annotate(
                                                 max_finish=Max('dt_finish'))
         active_sh = self.active_shootings()
+        sort = request_get_value(request, "sort")
+        if sort:
+            order = request_get_value(request, "order")
+            reverse = ""
+            if not order:
+                order = "asc"
+            if order == "desc":
+                reverse = "-"
+            scenarios = scenarios.order_by("%sid" % reverse)
+        response_dict = {}
+        response_dict["total"] = len(scenarios)
+        offset = request_get_value(request, "offset")
+        limit = request_get_value(request, "limit")
+        if offset and limit:
+            offset = int(offset)
+            limit = int(limit)
+            scenarios = scenarios[offset:offset+limit]
+
         results = []
         tanks = json.loads(serializers.serialize('json',
                                                  Tank.objects.all()))
@@ -263,24 +281,9 @@ class ScenarioRunView(View):
                 values['last'] = {'tr_id': trs[0].id,
                                   'finish': shs[0]['max_finish']}
             results.append(values)
-        sort = request_get_value(request, 'sort')
-        if sort:
-            order = request_get_value(request, 'order')
-            if not order:
-                order = 'asc'
-            reverse = order == 'desc'
-            results = sorted(results, key=itemgetter('id'), reverse=reverse)
-
-        response_dict = {}
-        response_dict['total'] = len(results)
-        offset = request_get_value(request, 'offset')
-        limit = request_get_value(request, 'limit')
-        if offset and limit:
-            offset = int(offset)
-            limit = int(limit)
-            results = results[offset:offset+limit]
         response_dict['rows'] = results
-        response_dict['tanks'] = self.adapt_tanks_list(tanks, active_sh, request.user)
+        response_dict['tanks'] = self.adapt_tanks_list(tanks, active_sh,
+                                                       request.user)
         response = HttpResponse(json.dumps(response_dict),
                                 content_type='application/json')
         return response
