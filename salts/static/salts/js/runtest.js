@@ -316,12 +316,14 @@ function setGlobalTanks(t) {
 function ajax_request(params) {
 	$.ajax(params).done(function(jsonObj) {
 		setGlobalTanks(jsonObj['tanks']);
-		var scenarios = [];
-		availTable.filter('tr[data-index]').each(function() {
-			scenarios.push(parseInt($(this).find('td:first').text(), 10));
-		});
 		updateIntervalFunc = function() {
+			if (updateIntervalId)
+				clearInterval(updateIntervalId);
 			updateIntervalId = setInterval(function () {
+				var scenarios = [];
+				availTable.find('tr[data-index]').each(function() {
+					scenarios.push(parseInt($(this).find('td:first').text(), 10));
+				});
 				updateVisibleRows(jsonstr2bin(JSON.stringify(scenarios)));
 			}, 1000);
 		}
