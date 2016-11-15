@@ -140,6 +140,14 @@ function displayTankHostCell(divItem) {
 					tr = runTable.find("tbody tr[data-index=" + index + "]");
 					tr.attr("id", shooting["id"]);
 					displayStopButton(tr, shooting, tank);
+					var parentRunTable = runTable.parents("div.bootstrap-table");
+					if (parentRunTable.is(":visible"))
+						runTable.bootstrapTable("resetView",
+												{"height": runTable.height() + 150});
+					else {
+						parentRunTable.show();
+						runTable.bootstrapTable("resetView", {"height": 250});
+					}
 				}
 			}
 		});
@@ -264,13 +272,6 @@ function updateVisibleRows(scenBinStr) {
 					var idSel = "[id=" + shooting["id"] + "]";
 					if (!trShootings.is(idSel)) {
 						displayTankHostCell(availTable.find("div#scenario_" + shooting['scenario_id']));	
-						if (parentRunTable.is(":visible"))
-							runTable.bootstrapTable("resetView",
-													{"height": runTable.height() + 150});
-						else {
-							parentRunTable.show();
-							runTable.bootstrapTable("resetView", {"height": 250});
-						}
 						needUpdate = true;
 					}
 					else {
@@ -335,7 +336,8 @@ $(document).ready(function() {
 	availTable.each(function() {
 		myObserver.observe(this, obsConfig);
 	});
-	runTable.parents("div.bootstrap-table").hide();
+	var parentRunTable = runTable.parents("div.bootstrap-table");
+	parentRunTable.hide();
 	$.fn.editable.defaults.mode = 'popup';
 	$(document).on('visibilitychange', function() {
 		if (document.visibilityState == 'hidden') {
