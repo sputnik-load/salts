@@ -1,10 +1,10 @@
 var availTable			= $("#avail-table");
 var runTable			= $("#run-table");
 var MutationObserver    = window.MutationObserver ||
-                            window.WebKitMutationObserver;
+                          window.WebKitMutationObserver;
 var myObserver          = new MutationObserver (mutationHandler);
 var obsConfig           = {childList: true, characterData: true,
-                            attributes: true, subtree: true };
+                           attributes: true, subtree: true };
 var updateIntervalId;
 var updateIntervalFunc;
 var tanks;
@@ -114,32 +114,35 @@ function updateShootingStatus(shootingRow, values) {
 function displayTankHostCell(divItem) {
 	updateTankHostEditable(divItem);
 	if (tanks['active']) {
-		var scenarioId = parseInt(divItem.attr('id').replace(/scenario_/, ''),
-								  10);
+		var trItem = divItem.parents('tr');
+		var scenarioId = parseInt(trItem.find("td:eq(0)").text(), 10);
 		$.each(tanks['active'], function(key, tank) {
 			var shooting = tank['shooting'];
 			if (scenarioId == shooting['scenario_id']) {
-				var trItem = divItem.parents('tr');
+				var onclickHandler = "stopTest(" + shooting["scenario_id"] +
+									 ", " + tank["id"] +
+						 			 ", " + shooting["id"] + ")";
 				var row = {
 					shooting_id: shooting["id"],
 					id: scenarioId,
 					test_name: shooting["default_data"]["test_name"],
 					tank_host: tank["text"],
-					action: "",
+					action_text: "Остановить",
+					action_click_handler: onclickHandler,
 					status: "",
 					default_data: shooting["default_data"]
 				};
 				var trItems = runTable.find("tbody tr[data-index]");
 				index = trItems.size();
-				tr = runTable.find("tbody tr[id=" + shooting["id"] + "]");
+				tr = runTable.find("tbody tr[data-uniqueid=" + shooting["id"] + "]");
 				if (tr.size() === 0) {
 					runTable.bootstrapTable("insertRow", {
 						index: index,
 						row: row
 					});
-					tr = runTable.find("tbody tr[data-index=" + index + "]");
-					tr.attr("id", shooting["id"]);
-					displayStopButton(tr, shooting, tank);
+					tr = runTable.find("tbody tr[data-uniqueid=" + shooting["id"] + "]");
+					var butItem = tr.find("button");
+					butItem.prop("disabled", !shooting["can_stop"]);
 					var parentRunTable = runTable.parents("div.bootstrap-table");
 					if (parentRunTable.is(":visible"))
 						runTable.bootstrapTable("resetView",
@@ -205,14 +208,6 @@ function toScenarioFormat(aItem) {
 	return jsonstr2bin(JSON.stringify(scenario));	
 }
 
-function displayStopButton(tr, shooting, tank) {
-	var butItem = tr.find("button");
-	var onclickHandler = "stopTest(" + shooting["scenario_id"] + ", " + tank["id"] +
-						 ", " + shooting["id"] + ")";
-	butItem.prop("disabled", !shooting["can_stop"]);
-	butItem.attr("onclick", onclickHandler);
-	butItem.text("Остановить");
-}
 
 function displayStartButton(trItem) {
 	var scenarioId = trItem.find("td:eq(0)").text();
@@ -257,7 +252,6 @@ function updateVisibleRows(scenBinStr) {
 		cache: false,
 		success: function(upd) {
 			setGlobalTanks(upd['tanks']);
-			var divShootings = $("div[id^=shooting]");
 			var trShootings = runTable.find("tbody tr[data-index]");
 			var parentRunTable = runTable.parents("div.bootstrap-table");
 			$.each(upd['rows'], function(k, info) {
@@ -268,8 +262,7 @@ function updateVisibleRows(scenBinStr) {
 			$.each(upd['tanks'], function(ix, js_str) {
 				var shooting = JSON.parse(js_str)['shooting'];
 				if (!$.isEmptyObject(shooting))	{
-					var idSelector = "[id=shooting_" + shooting['id'] + "]";
-					var idSel = "[id=" + shooting["id"] + "]";
+					var idSel = "[data-uniqueid=" + shooting["id"] + "]";
 					if (!trShootings.is(idSel)) {
 						displayTankHostCell(availTable.find("div#scenario_" + shooting['scenario_id']));	
 						needUpdate = true;
@@ -283,7 +276,7 @@ function updateVisibleRows(scenBinStr) {
 			});
 			$(trShootings).each(function() {
 				needUpdate = true;
-				runTable.bootstrapTable("removeByUniqueId", $(this).attr("id"));
+				runTable.bootstrapTable("removeByUniqueId", $(this).attr("data-uniqueid"));
 				runTable.bootstrapTable("resetView",
 										{"height": runTable.height() - 150});
 			});
@@ -415,7 +408,9 @@ function stopTest(scenario_id, tank_id, shooting_id) {
 
 function action_formatter(v, row, index) {
 	return "<button type='button' class='btn btn-primary' " +
-		   "id='action_btn' " + "onclick=''></button>";
+		   "id='action_btn' " + "onclick='" +
+			row["action_click_handler"] + "'>" +
+			row["action_text"] + "</button>";
 }
 
 function statusFormatter(v, row, index) {

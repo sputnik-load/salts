@@ -142,6 +142,9 @@ class ScenarioRunView(View):
 
     def __init__(self, *args, **kwargs):
         super(ScenarioRunView, self).__init__(*args, **kwargs)
+        self._default_data = {}
+        self._salts_group = Group.objects.get(name="Salts")
+        self._actual_tanks_info = {}
 
     @method_decorator(never_cache)
     @method_decorator(login_required)
@@ -181,6 +184,11 @@ class ScenarioRunView(View):
         return shootings.exclude(id__in=invalid)
 
     def get_default_data(self, scenario_path):
+        log.info("testing1372: get_default_data: scenario_path: %s",
+                 scenario_path)
+        if scenario_path in self._default_data:
+            return self._default_data[scenario_path]
+        self._default_data[scenario_path] = {}
         rps_default_section = ini_manager.scenario_type(scenario_path)
         if not rps_default_section:
             return {}
@@ -194,37 +202,47 @@ class ScenarioRunView(View):
         dd = rps_schedule[rps_default_section](scenario_path)
         dd['gen_type'] = rps_default_section
         dd.update(target_info[rps_default_section](scenario_path))
+        self._default_data[scenario_path] = dd
         return dd
 
     def adapt_tanks_list(self, tanks_list, active_shootings, request_user):
-        records = []
-        for tank in tanks_list:
-            rec = {'value': tank['pk'],
-                   'text': tank['fields']['host'],
-                   'shooting': {}}
-            sh = active_shootings.filter(tank_id=tank['pk'])
-            if sh:
-                if len(sh) > 1:
-                    log.warning("There are more than 1 active shooting "
-                                "on the tank host");
-                shooting = sh[0]
-                default_data = \
-                    self.get_default_data(shooting.scenario.scenario_path)
-                can_stop = request_user.id == shooting.user.id or \
-                    Group.objects.get(name='Salts') in request_user.groups.all()
-                rec['shooting'] = {'id': shooting.id,
-                                   'session': shooting.session_id,
-                                   'start': shooting.start,
-                                   'remained': remainedtime(shooting),
-                                   'scenario_id': shooting.scenario_id,
-                                   'username': shooting.user.username,
-                                   'default_data': default_data,
-                                   'custom_data': \
-                                        jsonstr2bin(str(shooting.custom_data)),
-                                   'can_stop': can_stop
-                                  }
-            records.append(json.dumps(rec))
-        return records
+        if request_user.id in self._actual_tanks_info:
+            for record in self._actual_tanks_info[request_user.id]:
+                sh = active_shootings.filter(id=record["shooting"]["id"])
+                if sh:
+                    record["shooting"]["remained"] = remainedtime(sh[0])
+                else:
+                    self._actual_tanks_info[request_user.id]["shooting"] = {}
+        else:
+            self._actual_tanks_info[request_user.id] = []
+            for tank in tanks_list:
+                rec = {"value": tank["pk"],
+                       "text": tank["fields"]["host"],
+                       "shooting": {}}
+                sh = active_shootings.filter(tank_id=tank["pk"])
+                if sh:
+                    if len(sh) > 1:
+                        log.warning("There are more than 1 active shooting "
+                                    "on the tank host")
+                    shooting = sh[0]
+                    default_data = \
+                        self.get_default_data(shooting.scenario.scenario_path)
+                    can_stop = request_user.id == shooting.user.id or \
+                        self._salts_group in request_user.groups.all()
+                    rec["shooting"] = {"id": shooting.id,
+                                       "session": shooting.session_id,
+                                       "start": shooting.start,
+                                       "remained": remainedtime(shooting),
+                                       "scenario_id": shooting.scenario_id,
+                                       "username": shooting.user.username,
+                                       "default_data": default_data,
+                                       "custom_data": jsonstr2bin(str(shooting.custom_data)),
+                                       "can_stop": can_stop
+                                    }
+                self._actual_tanks_info[request_user.id].append(rec)
+            # records.append(json.dumps(rec))
+        return [json.dumps(r)
+                for r in self._actual_tanks_info[request_user.id]]
 
     def get_test_status(self, request):
         b_value = request_get_value(request, 'b')

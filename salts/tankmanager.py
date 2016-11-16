@@ -111,13 +111,13 @@ class TankManager(object):
                     if resp["retcode"] is None:
                         completed = False
                 if completed:
-                    log.info("Test %s. Response: %s" \
-                             % (status, format_resp(resp)))
+                    log.debug("Test %s. Response: %s"
+                              % (status, format_resp(resp)))
                     break
-                log.info("Test %s. Response: %s" \
-                         % (status, format_resp(resp)))
+                log.debug("Test %s. Response: %s"
+                          % (status, format_resp(resp)))
             else:
-                log.info("Response: %s" % format_resp(resp))
+                log.debug("Response: %s" % format_resp(resp))
 
     def shoot(self, **kwargs):
         custom_data = kwargs.get('custom_data')
