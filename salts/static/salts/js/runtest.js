@@ -144,13 +144,10 @@ function displayTankHostCell(divItem) {
 					var butItem = tr.find("button");
 					butItem.prop("disabled", !shooting["can_stop"]);
 					var parentRunTable = runTable.parents("div.bootstrap-table");
-					if (parentRunTable.is(":visible"))
-						runTable.bootstrapTable("resetView",
-												{"height": runTable.height() + 150});
-					else {
+					if (!parentRunTable.is(":visible")) {
 						parentRunTable.show();
-						runTable.bootstrapTable("resetView", {"height": 250});
 					}
+					changeRunTableHeight();
 				}
 			}
 		});
@@ -242,6 +239,12 @@ function mutationHandler(mutationRecords) {
 	});
 }
 
+function changeRunTableHeight() {
+	var totalRows = runTable.bootstrapTable("getData").length;
+	runTable.bootstrapTable("resetView",
+							{"height": 150 * (totalRows + 1)});
+}
+
 function updateVisibleRows(scenBinStr) {
 	$.ajax({
 		type: 'get',
@@ -277,8 +280,7 @@ function updateVisibleRows(scenBinStr) {
 			$(trShootings).each(function() {
 				needUpdate = true;
 				runTable.bootstrapTable("removeByUniqueId", $(this).attr("data-uniqueid"));
-				runTable.bootstrapTable("resetView",
-										{"height": runTable.height() - 150});
+				changeRunTableHeight();
 			});
 			var trShootings = runTable.find("tbody tr[data-index]");
 			if (trShootings.size() == 0)
