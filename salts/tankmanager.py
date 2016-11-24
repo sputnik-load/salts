@@ -135,6 +135,22 @@ class TankManager(object):
         self._wait_for_completed(client, session_id, tank.id, True)
         log.info("Test with id=%s stopped." % session_id)
 
+    def shootmq(self, tank, scenario, custom_data):
+        tank_fields = tank[0]["fields"]
+        tank_id = tank[0]["pk"]
+        scenario_fields = scenario[0]["fields"]
+        client = TankClient(tank_fields["host"], tank_fields["port"])
+        config = CustomConfig(os.path.join(LT_PATH, scenario_fields["scenario_path"]))
+        config.mergejson(custom_data)
+        resp = None
+        resp = client.run(config.textcontent(), "start")
+        session_id = resp["session"]
+        log.info("Test with id=%s started." % session_id)
+        self._wait_for_completed(client, session_id, tank_id, False)
+        client.resume(session_id)
+        self._wait_for_completed(client, session_id, tank_id, True)
+        log.info("Test with id=%s stopped." % session_id)
+
     def _change_test_status(self, **kwargs):
         from salts.models import TestResult
         from datetime import timedelta
