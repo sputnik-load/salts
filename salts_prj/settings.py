@@ -9,8 +9,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
+from __future__ import absolute_import, unicode_literals
+
 import ConfigParser
 from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
+
+CELERY_BROKER_URL = 'amqp://salts:salts@salt-dev.dev.ix.km:5672/salts'
+CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_BROKER_VHOST="salts"
 
 TEMPLATE_CONTEXT_PROCESSORS += (
     'django.core.context_processors.request',
@@ -218,6 +226,12 @@ if os.path.exists(debug_settings_path):
             LT_PATH = cfg.get('repo', 'lt_path')
         if 'lt_gitlab' in options:
             LT_GITLAB = cfg.get('repo', 'lt_gitlab')
+    if 'celery' in sections:
+        options = cfg.options('celery')
+        if 'broker_url' in options:
+            CELERY_BROKER_URL = cfg.get('celery', 'broker_url')
+        if 'CELERY_BROKER_VHOST' in options:
+            CELERY_BROKER_VHOST = cfg.get('celery', 'broker_vhost')
 
 if cache_on:
     MIDDLEWARE_CLASSES = (
@@ -253,8 +267,3 @@ else:
         # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
         'audit_log.middleware.UserLoggingMiddleware',
     )
-
-
-# from salts_prj.ini import IniCtrl
-# ini_ctrl = IniCtrl(LT_PATH, EXCLUDE_INI_FILES)
-# ini_ctrl.sync()

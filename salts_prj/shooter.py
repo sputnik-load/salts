@@ -2,7 +2,7 @@
 
 import time
 import json
-import time
+from django.core import serializers
 from django.http import HttpResponse
 from django.views.generic import View
 from django.contrib.auth.models import User
@@ -14,6 +14,7 @@ from salts.tankmanager import tank_manager
 from salts_prj.settings import log
 from rest_framework.authtoken.models import Token
 from salts_prj.tasks import postpone, errors
+from salts_prj.celery import shoot
 from requesthelper import request_get_value
 from tank_api_client import bin2jsonstr, jsonstr2bin
 
@@ -42,9 +43,8 @@ class ShooterView(View):
         return self.start_shooting(scenario_id, tank_id, custom_data,
                                    request.user.username)
 
-    def check_perm_start(self, config, reqdata):
+    def check_perm_start(self, config, scenario):
         username = config['salts']['api_user']
-        scenario = reqdata['scenario']
         cursor = connection.cursor()
         cursor.execute(
             """
@@ -66,7 +66,7 @@ class ShooterView(View):
 
     def obtain_scenario(self, scenario_id, reqdata):
         try:
-            reqdata['scenario'] = Scenario.objects.get(id=scenario_id)
+            reqdata["scenario"] = Scenario.objects.filter(id=scenario_id)
             return None
         except Scenario.DoesNotExist:
             resp = {'status': 'failed',
@@ -79,7 +79,7 @@ class ShooterView(View):
 
     def obtain_tank(self, tank_id, reqdata):
         try:
-            reqdata['tank'] = Tank.objects.get(id=tank_id)
+            reqdata["tank"] = Tank.objects.filter(id=tank_id)
             return None
         except Tank.DoesNotExist:
             resp = {'status': 'failed',
@@ -162,7 +162,7 @@ class ShooterView(View):
         err = self.check_auth(username, config)
         if err:
             return err
-        err = self.check_perm_start(config, reqdata)
+        err = self.check_perm_start(config, reqdata["scenario"][0])
         if err:
             return err
 
@@ -171,7 +171,9 @@ class ShooterView(View):
             tokens = Token.objects.filter(user_id=user.id)
             config['salts']['api_key'] = tokens[0].key
         reqdata['custom_data'] = json.dumps(config)
-        start_shooting_process(**reqdata)
+        shoot.delay(json.loads(serializers.serialize("json", reqdata["tank"])),
+                    json.loads(serializers.serialize("json", reqdata["scenario"])),
+                    reqdata["custom_data"])
         custom_saved = False
         session_id = None
         shooting = None
@@ -197,7 +199,7 @@ class ShooterView(View):
                         'custom_data': jsonstr2bin(shooting.custom_data)}
                 return HttpResponse(json.dumps(resp),
                                     content_type="application/json")
-            err_resp = self.check_for_error(**reqdata)
+            err_resp = None
             if err_resp:
                 self.save_custom_data(shooting, reqdata['custom_data'],
                                       custom_saved)
