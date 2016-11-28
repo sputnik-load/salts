@@ -17,6 +17,7 @@ from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 CELERY_BROKER_URL = 'amqp://salts:salts@salt-dev.dev.ix.km:5672/salts'
 CELERY_ACCEPT_CONTENT = ['json']
 # CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite'
+CELERY_RESULT_BACKEND = "db+postgresql://salts:salts@salt-dev.dev.ix.km/salts"
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_BROKER_VHOST="salts"
 
@@ -230,8 +231,10 @@ if os.path.exists(debug_settings_path):
         options = cfg.options('celery')
         if 'broker_url' in options:
             CELERY_BROKER_URL = cfg.get('celery', 'broker_url')
-        if 'CELERY_BROKER_VHOST' in options:
+        if 'broker_vhost' in options:
             CELERY_BROKER_VHOST = cfg.get('celery', 'broker_vhost')
+        if 'result_backend' in options:
+            CELERY_RESULT_BACKEND = cfg.get('celery', 'result_backend')
 
 if cache_on:
     MIDDLEWARE_CLASSES = (
