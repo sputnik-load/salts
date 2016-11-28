@@ -55,6 +55,7 @@ class TankManager(object):
 
     CTRL_C_INTERVAL = 180  # seconds (TESTING-2586)
     POLL_INTERVAL = 5  # seconds
+    WAIT_INTERVAL = 1  # seconds
     WAIT_FOR_RESULT_SAVED = 60  # seconds
 
     def __init__(self):
@@ -113,11 +114,25 @@ class TankManager(object):
                 if completed:
                     log.debug("Test %s. Response: %s"
                               % (status, format_resp(resp)))
-                    break
+                    return resp
                 log.debug("Test %s. Response: %s"
                           % (status, format_resp(resp)))
             else:
                 log.debug("Response: %s" % format_resp(resp))
+            time.sleep(TankManager.WAIT_INTERVAL)
+
+    def _wait_for_status(self, client, session_id):
+        while True:
+            resp = client.status(session_id)
+            if "status" not in resp:
+                log.warning("Response doesn't contain the 'status' field. "
+                            "Test with id=%s. Response: %s"
+                            % (session_id, resp))
+                return resp
+            if resp["status"] == "running":
+                time.sleep(TankManager.WAIT_INTERVAL)
+                continue
+            return resp
 
     def shoot(self, **kwargs):
         custom_data = kwargs.get('custom_data')
@@ -132,8 +147,9 @@ class TankManager(object):
         log.info("Test with id=%s started." % session_id)
         self._wait_for_completed(client, session_id, tank.id, False)
         client.resume(session_id)
-        self._wait_for_completed(client, session_id, tank.id, True)
+        response = self._wait_for_completed(client, session_id, tank.id, True)
         log.info("Test with id=%s stopped." % session_id)
+        return response
 
     def shootmq(self, tank, scenario, custom_data):
         tank_fields = tank[0]["fields"]
@@ -149,7 +165,10 @@ class TankManager(object):
         self._wait_for_completed(client, session_id, tank_id, False)
         client.resume(session_id)
         self._wait_for_completed(client, session_id, tank_id, True)
+        response = self._wait_for_status(client, session_id)
         log.info("Test with id=%s stopped." % session_id)
+        return response
+
 
     def _change_test_status(self, **kwargs):
         from salts.models import TestResult
