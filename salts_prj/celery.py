@@ -24,4 +24,4 @@ app.autodiscover_tasks()
 
 @shared_task
 def shoot(tank, scenario, custom_data):
-    tank_manager.shootmq(tank, scenario, custom_data)
+    return tank_manager.shootmq(tank, scenario, custom_data)

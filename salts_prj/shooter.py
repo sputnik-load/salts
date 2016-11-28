@@ -2,6 +2,7 @@
 
 import time
 import json
+import pickle
 from django.core import serializers
 from django.http import HttpResponse
 from django.views.generic import View
@@ -125,17 +126,23 @@ class ShooterView(View):
                             content_type="application/json",
                             status=403)
 
-    def check_for_error(self, **kwargs):
-        if errors['TankClient']:
-            for err in errors['TankClient']:
-                tank = kwargs['tank']
-                if err['host'] == tank.host and err['port'] == tank.port:
-                    resp = {'status': 'failed',
-                            'message': err['message']}
-                    log.warning(resp['message'])
-                    return HttpResponse(json.dumps(resp),
-                                        content_type="application/json",
-                                        status=434)
+    def _check_for_error(self, task_id):
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+                SELECT result FROM celery_taskmeta WHERE task_id='{task_id}'
+            """.format(task_id=task_id))
+        rows = cursor.fetchall()
+        if not rows:
+            return None
+        result = pickle.loads(rows[0][0])
+        if result["status"] == "failed":
+            return HttpResponse(json.dumps({"status": result["status"],
+                                            "failures": result["failures"]}),
+                                content_type="application/json",
+                                status=434)
+        return None
+
 
     def save_custom_data(self, shooting, custom_data, custom_saved):
         if not custom_saved and shooting:
@@ -171,9 +178,9 @@ class ShooterView(View):
             tokens = Token.objects.filter(user_id=user.id)
             config['salts']['api_key'] = tokens[0].key
         reqdata['custom_data'] = json.dumps(config)
-        shoot.delay(json.loads(serializers.serialize("json", reqdata["tank"])),
-                    json.loads(serializers.serialize("json", reqdata["scenario"])),
-                    reqdata["custom_data"])
+        task_id = shoot.delay(json.loads(serializers.serialize("json", reqdata["tank"])),
+                              json.loads(serializers.serialize("json", reqdata["scenario"])),
+                              reqdata["custom_data"])
         custom_saved = False
         session_id = None
         shooting = None
@@ -199,7 +206,7 @@ class ShooterView(View):
                         'custom_data': jsonstr2bin(shooting.custom_data)}
                 return HttpResponse(json.dumps(resp),
                                     content_type="application/json")
-            err_resp = None
+            err_resp = self._check_for_error(task_id)
             if err_resp:
                 self.save_custom_data(shooting, reqdata['custom_data'],
                                       custom_saved)
