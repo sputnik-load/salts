@@ -87,6 +87,8 @@ function displayTestNameCell(divItem) {
 
 function updateScenarioStatus(scenarioRow, values) {
 	var div = scenarioRow.find("div[name=status]");
+	if (div.attr("update") == "false")
+		return;
 	var trId = parseInt(div.find('a').text());
 	if ($.isEmptyObject(values) || trId == values['tr_id'])
 		return;
@@ -372,22 +374,47 @@ function availTankHostFormatter(v, row, index) {
 			codeSelect + "</div>";
 }
 
+function getErrorMessage(failures) {
+	var preamble = "Тест не смог быть запущен по причине:<br>";
+	var content = "";
+    $.each(failures, function(ix, item) {
+		if (item["reason"] === "skipped")
+			return true;
+		if (item["stage"] !== "prepare")
+			preamble = "Тест был некорректно завершен по причине: ";
+		$.each(item["reason"].split("\n"), function(kx, line) {
+			if (line)
+				content += line + "<br>";
+		});
+		return false;
+	});
+	return preamble + "<span style='color:red;'>" + content + "</span>";
+}
+
 function runTest(scenario_id, tank_id, b64line) {
-	$("div[id='scenario_" + scenario_id + "']").parents('tr')
-		.find('button').attr('disabled', true);
+	var $row = $("div[id='scenario_" + scenario_id + "']").parents("tr");
+	var $button = $row.find("button");
+	$button.attr("disabled", true);
 	var data_url = "/shoot/?s=" + scenario_id + "&t=" + tank_id;
 	if (b64line) {
 		data_url += "&j=" + b64line;
 	}
 
-	var resp = $.ajax({
+	$.ajax({
 		url: data_url,
 		type: 'GET',
 		dataType: 'json',
-		success: function(json) {
+		success: function(resp) {
+			var $div = $row.find("div[name=status]");
+			$div.attr("update", "true");
 		},
-		error: function(json) {
-			console.log("Response: " + JSON.stringify(json));
+		error: function(resp) {
+			var jsonObj = JSON.parse(resp["responseText"]);
+			var $div = $row.find("div[name=status]");
+			$div.attr("update", "false");
+			$button.attr("disabled", false);
+			$div.html(getErrorMessage(jsonObj["failures"]));
+			availTable.bootstrapTable("resetView");
 		}
 	});
 }
@@ -416,5 +443,5 @@ function action_formatter(v, row, index) {
 }
 
 function statusFormatter(v, row, index) {
-	return "<div name='status'><a></a>Нет результатов</div>";
+	return "<div name='status' update='true'><a></a>Нет результатов</div>";
 }
