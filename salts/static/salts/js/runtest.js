@@ -348,6 +348,9 @@ $(document).ready(function() {
 				updateIntervalFunc();
 		}
 	});
+	$(window).resize(function() {
+		availTable.bootstrapTable("resetView");
+	});
 });
 
 function test_name_formatter(v, row, index) {
