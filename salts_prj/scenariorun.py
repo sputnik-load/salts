@@ -184,8 +184,6 @@ class ScenarioRunView(View):
         return shootings.exclude(id__in=invalid)
 
     def get_default_data(self, scenario_path):
-        log.info("testing1372: get_default_data: scenario_path: %s",
-                 scenario_path)
         if scenario_path in self._default_data:
             return self._default_data[scenario_path]
         self._default_data[scenario_path] = {}

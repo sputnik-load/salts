@@ -7,13 +7,11 @@ import shutil
 import json
 import re
 import pickle
-import codecs
-import ConfigParser
-import StringIO
 from salts_prj.settings import LT_PATH
 from salts_prj.settings import log
-from tank_api_client import TankClient
+from tank_api_client import TankClient, TankClientError
 from tank_api_client.confighelper import CustomConfig
+from django.http import HttpResponse
 
 
 def remainedtime(shooting):
@@ -155,8 +153,20 @@ class TankManager(object):
         tank_fields = tank[0]["fields"]
         tank_id = tank[0]["pk"]
         scenario_fields = scenario[0]["fields"]
-        client = TankClient(tank_fields["host"], tank_fields["port"])
-        config = CustomConfig(os.path.join(LT_PATH, scenario_fields["scenario_path"]))
+        try:
+            client = TankClient(tank_fields["host"], tank_fields["port"])
+        except TankClientError, exc:
+            resp = {"status": "failed",
+                    "failures": [
+                        {
+                            "reason": str(exc),
+                            "stage": "prepare"
+                        }
+                    ]}
+            return resp
+
+        config = CustomConfig(os.path.join(LT_PATH,
+                                           scenario_fields["scenario_path"]))
         config.mergejson(custom_data)
         resp = None
         resp = client.run(config.textcontent(), "start")
@@ -165,10 +175,9 @@ class TankManager(object):
         self._wait_for_completed(client, session_id, tank_id, False)
         client.resume(session_id)
         self._wait_for_completed(client, session_id, tank_id, True)
-        response = self._wait_for_status(client, session_id)
+        resp = self._wait_for_status(client, session_id)
         log.info("Test with id=%s stopped." % session_id)
-        return response
-
+        return resp
 
     def _change_test_status(self, **kwargs):
         from salts.models import TestResult
@@ -197,10 +206,10 @@ class TankManager(object):
             test_result.save()
             log.info("The test id=%s: "
                      "test duration less than 3 minutes, "
-                     "the status is changed with Debug." \
+                     "the status is changed with Debug."
                      % shooting.session_id)
             return
-        log.warning("The test id=%s wasn't saved into DB." \
+        log.warning("The test id=%s wasn't saved into DB."
                     % shooting.session_id)
 
     def interrupt(self, shooting):
@@ -212,8 +221,8 @@ class TankManager(object):
                 client.stop(shooting.session_id)
             except Exception, exc:
                 log.info("Exception when test "
-                        "has been interrupted: %s" % exc)
-        log.info("TankManager.interrupt. Shooting.session_id: %s" \
+                         "has been interrupted: %s" % exc)
+        log.info("TankManager.interrupt. Shooting.session_id: %s"
                  % shooting.session_id)
         try:
             log.info("The test id=%s is stopped." % shooting.session_id)
