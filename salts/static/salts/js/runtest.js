@@ -257,6 +257,10 @@ function updateVisibleRows(scenBinStr) {
 		cache: false,
 		success: function(upd) {
 			setGlobalTanks(upd['tanks']);
+			availTable.find("div[name='tank_host']").each(function() {
+				var aItem = $(this).find("a");
+				aItem.editable("option", "source", JSON.stringify(tanks["na"]));
+			});
 			var trShootings = runTable.find("tbody tr[data-index]");
 			var parentRunTable = runTable.parents("div.bootstrap-table");
 			$.each(upd['rows'], function(k, info) {
@@ -308,7 +312,6 @@ function setGlobalTanks(t) {
 			tanks['active'].push(tank);
 		}
 	});
-
 }
 
 function ajax_request(params) {

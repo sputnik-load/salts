@@ -2,33 +2,32 @@
 
 import json
 import time
-import copy
 import re
-from operator import itemgetter
+import os
+import pickle
 from django.http import HttpResponse
 from django.views.generic import View
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.shortcuts import render_to_response
-from django.db import connection
 from django.core import serializers
 from salts.models import Scenario, Shooting, Tank, TestResult
 from django.contrib.auth.models import User, Group
 from django.db.models import Max
-from salts_prj.settings import log
+from salts_prj.settings import log, LT_PATH
 from salts_prj.requesthelper import (request_get_value, generate_context,
                                      add_version)
 from salts_prj.ini import ini_manager
 from tank_api_client import jsonstr2bin, bin2jsonstr
 from salts.tankmanager import remainedtime
+from salts_prj.celery import obtain_active_tanks
 
 
 SCENARIO_RPS_DEFAULT = '2'
 SCENARIO_DURATIONS_DEFAULT = {'rampup': '5000',
                               'testlen': '90000',
-                              'rampdown': '5000'
-                             }
+                              'rampdown': '5000'}
 
 
 def duration2ms(line):
@@ -50,8 +49,7 @@ def duration2ms(line):
 def phantom_rps_schedule(scenario_path):
     dd = {'test_name': ini_manager.get_option_value(scenario_path,
                                                     'sputnikreport',
-                                                    'test_name')
-         }
+                                                    'test_name')}
     sample = ['line', 'const', 'line']
     rps_line = ini_manager.get_option_value(scenario_path, 'phantom',
                                             'rps_schedule')
@@ -92,14 +90,14 @@ def phantom_rps_schedule(scenario_path):
 
 
 def phantom_target_info(scenario_path):
-    result = {'target': '', 'port': 8000}
-    target_info = ini_manager.get_option_value(scenario_path, 'phantom', 'address', '')
+    def_values = {"target": "", "port": 8000}
+    target_info = ini_manager.get_option_value(scenario_path, "phantom", "address", "")
     if not target_info:
-        return  result
-    targ = target_info.split(':')
+        return  def_values
+    targ = target_info.split(":")
     if len(targ) >= 2:
-        return {'target': targ[0], 'port': targ[1]}
-    return {'target': targ[0], 'port': def_values['port']}
+        return {"target": targ[0], "port": targ[1]}
+    return {"target": targ[0], "port": def_values["port"]}
 
 
 def jmeter_rps_schedule(scenario_path):
@@ -145,6 +143,15 @@ class ScenarioRunView(View):
         self._default_data = {}
         self._salts_group = Group.objects.get(name="Salts")
         self._actual_tanks_info = {}
+        lock_dir_path = os.path.join(LT_PATH, "lock")
+        if not os.path.exists(lock_dir_path):
+            os.mkdir(lock_dir_path)
+        self._active_tanks_path = os.path.join(lock_dir_path, "tanks")
+        self._tanks_lock_path = "%s.lock" % self._active_tanks_path
+        self._tanks_mq_path = "%s.mq" % self._tanks_lock_path
+        if not os.path.exists(self._tanks_lock_path) and \
+           not os.path.exists(self._active_tanks_path):
+            open(self._active_tanks_path, "w").close()
 
     @method_decorator(never_cache)
     @method_decorator(login_required)
@@ -182,6 +189,29 @@ class ScenarioRunView(View):
                             % s.id)
                 invalid.append(s.id)
         return shootings.exclude(id__in=invalid)
+
+    def get_active_tanks(self, http_host):
+        while True:
+            if not os.path.exists(self._tanks_lock_path):
+                os.rename(self._active_tanks_path,
+                          self._tanks_lock_path)
+                break
+        if os.path.exists(self._tanks_mq_path):
+            os.rename(self._tanks_mq_path, self._tanks_lock_path)
+        tanks = Tank.objects.all()
+        s = os.stat(self._tanks_lock_path)
+        cr_date = os.path.getmtime(self._tanks_lock_path)
+        ctime = time.time()
+        if ctime - cr_date > 30 or s.st_size == 0:
+            jtanks = json.loads(serializers.serialize("json", tanks))
+            obtain_active_tanks.delay(self._tanks_mq_path, jtanks, http_host)
+        if s.st_size:
+            with open(self._tanks_lock_path, "rb") as f:
+                active_id = pickle.load(f)
+                tanks = tanks.filter(id__in=active_id)
+        jtanks = json.loads(serializers.serialize("json", tanks))
+        os.rename(self._tanks_lock_path, self._active_tanks_path)
+        return jtanks
 
     def get_default_data(self, scenario_path):
         if scenario_path in self._default_data:
@@ -280,8 +310,7 @@ class ScenarioRunView(View):
             scenarios = scenarios[offset:offset+limit]
 
         results = []
-        tanks = json.loads(serializers.serialize('json',
-                                                 Tank.objects.all()))
+        tanks = self.get_active_tanks(request.META["HTTP_HOST"])
         for s in scenarios:
             values = {}
             values['id'] = s.id

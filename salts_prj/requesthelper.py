@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import requests
+import socket
+import time
 from os.path import exists
-from django.core.context_processors import csrf
+from salts_prj.settings import log
 from salts_prj.settings import BASE_DIR, VERSION_FILE_NAME, DATABASES
 
 
@@ -29,6 +32,7 @@ def add_version(response):
 
 
 def generate_context(request):
+    from django.core.context_processors import csrf
     context = {}
     context.update(csrf(request))
     context['host'] = DATABASES['default']['HOST']
@@ -37,3 +41,28 @@ def generate_context(request):
     context['is_superuser'] = request.user.is_superuser
     context['is_staff'] = request.user.is_staff
     return context
+
+
+def test_connection(target, port, hname=None):
+    try:
+        if hname:
+            req = "http://{hname}:5000/conn?target={target}&port={port}"
+            resp = requests.get(req.format(hname=hname, target=target,
+                                           port=port))
+            return float(resp.content) > 0.0
+        else:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(1)
+            st = time.time()
+            s.connect((target, port))
+            return time.time() - st > 0.0
+    except Exception, exc:
+        if not hname:
+            hname = "localhost"
+        log.warning("The connection from %s to %s:%s is impossible due to %s. "
+                    % (hname, target, port, exc))
+        return False
+
+
+def log_message(msg):
+    log.info(msg)

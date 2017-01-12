@@ -14,11 +14,11 @@ from __future__ import absolute_import, unicode_literals
 import ConfigParser
 from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 
-CELERY_BROKER_URL = 'amqp://salts:salts@salt-dev.dev.ix.km:5672/salts'
-CELERY_ACCEPT_CONTENT = ['json']
+CELERY_BROKER_URL = "amqp://salts:salts@salt-dev.dev.ix.km:5672/salts"
+CELERY_ACCEPT_CONTENT = ["json"]
 # CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite'
 CELERY_RESULT_BACKEND = "db+postgresql://salts:salts@salt-dev.dev.ix.km/salts"
-CELERY_TASK_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = "json"
 CELERY_BROKER_VHOST="salts"
 
 TEMPLATE_CONTEXT_PROCESSORS += (
@@ -214,10 +214,9 @@ if os.path.exists(debug_settings_path):
     cfg = ConfigParser.RawConfigParser()
     cfg.read(debug_settings_path)
     sections = cfg.sections()
-    for k in DATABASES['default']:
-        DATABASES['default'][k] = cfg.get('database', k)
-    if 'on' in cfg.options('cache') and cfg.get('cache', 'on') != '1':
-        cache_on = False
+    if "database" in sections:
+        for k in DATABASES['default']:
+            DATABASES['default'][k] = cfg.get('database', k)
     if 'cache' in sections:
         if 'on' in cfg.options('cache') and cfg.get('cache', 'on') != '1':
             cache_on = False
