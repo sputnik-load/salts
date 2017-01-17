@@ -7,6 +7,7 @@ from celery import Celery
 from celery import shared_task
 from salts.tankmanager import tank_manager
 from salts_prj.requesthelper import test_connection
+# from salts_prj.requesthelper import log_message
 
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "salts_prj.settings")
@@ -46,4 +47,16 @@ def obtain_active_tanks(fpath, tanks, http_host):
                 active_tanks.append(t["pk"])
     with open(fpath, "wb") as f:
         pickle.dump(active_tanks, f)
+    return os.path.exists(fpath)
+
+
+@shared_task
+def obtain_connection_time(fpath, tanks, trg_host, trg_port):
+    ctimes = {}
+    for t in tanks.split(","):
+        ctime = test_connection(trg_host, trg_port, t)
+        if ctime:
+            ctimes[t] = ctime
+    with open(fpath, "wb") as f:
+        pickle.dump(("", ctimes), f)
     return os.path.exists(fpath)
