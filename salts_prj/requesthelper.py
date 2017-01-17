@@ -49,19 +49,19 @@ def test_connection(target, port, hname=None):
             req = "http://{hname}:5000/conn?target={target}&port={port}"
             resp = requests.get(req.format(hname=hname, target=target,
                                            port=port))
-            return float(resp.content) > 0.0
+            return float(resp.content)
         else:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(1)
             st = time.time()
             s.connect((target, port))
-            return time.time() - st > 0.0
+            return time.time() - st
     except Exception, exc:
         if not hname:
             hname = "localhost"
         log.warning("The connection from %s to %s:%s is impossible due to %s. "
                     % (hname, target, port, exc))
-        return False
+        return 0.0
 
 
 def log_message(msg):
