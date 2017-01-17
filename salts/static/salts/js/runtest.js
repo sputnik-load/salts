@@ -48,6 +48,7 @@ function updateTankHostEditable(divItem) {
 	});
 	aItem.editable('option', 'source', JSON.stringify(tanks['na']));
 	aItem.editable('setValue', '-1', true);
+	aItem.editable("option", "disabled", true);
 	aItem.removeClass('editable-unsaved');
 }
 
@@ -257,15 +258,14 @@ function updateVisibleRows(scenBinStr) {
 		cache: false,
 		success: function(upd) {
 			setGlobalTanks(upd['tanks']);
-			availTable.find("div[name='tank_host']").each(function() {
-				var aItem = $(this).find("a");
-				aItem.editable("option", "source", JSON.stringify(tanks["na"]));
-			});
 			var trShootings = runTable.find("tbody tr[data-index]");
 			var parentRunTable = runTable.parents("div.bootstrap-table");
 			$.each(upd['rows'], function(k, info) {
 				var div = $("div#scenario_" + info['id']);
 				updateScenarioStatus(div.parents('tr'), info['last']);
+				var aItem = $(div).find("a");
+				aItem.editable("option", "source", JSON.stringify(tanks["na"]));
+				aItem.editable("setValue", info["tank_host"]["id"], true);
 			});
 			var needUpdate = false;
 			$.each(upd['tanks'], function(ix, js_str) {
@@ -295,12 +295,13 @@ function updateVisibleRows(scenBinStr) {
 				$("div[id^=scenario]").each(function() {
 					displayTankHostCell($(this));
 				});
+			availTable.bootstrapTable("resetView");
 		}
 	});
 }
 
 function setGlobalTanks(t) {
-	tanks = {na: [{value: "-1", text: "Не выбран"}],
+	tanks = {na: [{value: "-1", text: "Нет доступных танков"}],
 				active: []};
 	$.each(t, function(ix, js_str) {
 		var tank = JSON.parse(js_str);

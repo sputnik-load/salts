@@ -21,7 +21,7 @@ from salts_prj.requesthelper import (request_get_value, generate_context,
 from salts_prj.ini import ini_manager
 from tank_api_client import jsonstr2bin, bin2jsonstr
 from salts.tankmanager import remainedtime
-from salts_prj.celery import obtain_active_tanks
+from salts_prj.celery import obtain_active_tanks, obtain_connection_time
 
 
 SCENARIO_RPS_DEFAULT = '2'
@@ -143,10 +143,10 @@ class ScenarioRunView(View):
         self._default_data = {}
         self._salts_group = Group.objects.get(name="Salts")
         self._actual_tanks_info = {}
-        lock_dir_path = os.path.join(LT_PATH, "lock")
-        if not os.path.exists(lock_dir_path):
-            os.mkdir(lock_dir_path)
-        self._active_tanks_path = os.path.join(lock_dir_path, "tanks")
+        self._lock_dir_path = os.path.join(LT_PATH, "lock")
+        if not os.path.exists(self._lock_dir_path):
+            os.mkdir(self._lock_dir_path)
+        self._active_tanks_path = os.path.join(self._lock_dir_path, "tanks")
         self._tanks_lock_path = "%s.lock" % self._active_tanks_path
         self._tanks_mq_path = "%s.mq" % self._tanks_lock_path
         if not os.path.exists(self._tanks_lock_path) and \
@@ -209,6 +209,8 @@ class ScenarioRunView(View):
             with open(self._tanks_lock_path, "rb") as f:
                 active_id = pickle.load(f)
                 tanks = tanks.filter(id__in=active_id)
+        else:
+            tanks = []
         jtanks = json.loads(serializers.serialize("json", tanks))
         os.rename(self._tanks_lock_path, self._active_tanks_path)
         return jtanks
@@ -272,6 +274,67 @@ class ScenarioRunView(View):
         return [json.dumps(r)
                 for r in self._actual_tanks_info[request_user.id]]
 
+    def select_tank_host(self, tanks, active_shootings, trg_host, trg_port):
+        default_result = {"id": "-1", "name": ""}
+        if not (trg_host and trg_port):
+            return default_result
+        ct_fname = "%s_%s" % (trg_host.replace(".", "_"),
+                              trg_port)
+        ct_fpath = os.path.join(self._lock_dir_path,
+                                ct_fname)
+        ct_fpath_lock = "%s.lock" % ct_fpath
+        trg_host_parts = trg_host.split(".")
+        sfx = ""
+        if len(trg_host_parts) > 1:
+            sfx = ".%s" % ".".join(trg_host_parts[1:])
+        extanks = {t["fields"]["host"]: t["pk"] for t in tanks}
+        tank_set = set([t["fields"]["host"] for t in tanks
+                        if t["fields"]["host"].endswith(sfx) or t["fields"]["host"].endswith(".int.pv.km")])
+        while True:
+            if not os.path.exists(ct_fpath_lock):
+                if not os.path.exists(ct_fpath):
+                    open(ct_fpath, "w").close()
+                os.rename(ct_fpath, ct_fpath_lock)
+                break
+        ct_fpath_lock_mq = "%s.mq" % ct_fpath_lock
+        if os.path.exists(ct_fpath_lock_mq):
+            os.rename(ct_fpath_lock_mq, ct_fpath_lock)
+        s = os.stat(ct_fpath_lock)
+        ctimes = {}
+        current_id = ""
+        if s.st_size:
+            with open(ct_fpath_lock, "rb") as f:
+                (current_id, ctimes) = pickle.load(f)
+        old_tank_set = set(ctimes)
+        cr_date = os.path.getmtime(ct_fpath_lock)
+        ctime = time.time()
+        need_upd = (not current_id) and \
+                   (tank_set != old_tank_set or \
+                   ctime - cr_date > 30 or s.st_size == 0)
+        if need_upd:
+            current_id = obtain_connection_time.delay(ct_fpath_lock_mq,
+                                                      ",".join(tank_set),
+                                                      trg_host, trg_port)
+            with open(ct_fpath_lock, "wb") as f:
+                pickle.dump((current_id, ctimes), f)
+        tank_host = ""
+        if s.st_size:
+            with open(ct_fpath_lock, "rb") as f:
+                (current_id, ctimes) = pickle.load(f)
+                if ctimes:
+                    from collections import OrderedDict
+                    ord_ctimes = OrderedDict(sorted(ctimes.items(),
+                                                    key=lambda t: t[1]))
+                    for host_name in ord_ctimes:
+                        tank_id = extanks[host_name]
+                        if not active_shootings.filter(tank_id=tank_id):
+                            tank_host = host_name
+                            break
+        os.rename(ct_fpath_lock, ct_fpath)
+        if not tank_host:
+            return default_result
+        return {"id": extanks[tank_host], "name": tank_host}
+
     def get_test_status(self, request):
         b_value = request_get_value(request, 'b')
         scen_ids = []
@@ -313,10 +376,17 @@ class ScenarioRunView(View):
         tanks = self.get_active_tanks(request.META["HTTP_HOST"])
         for s in scenarios:
             values = {}
-            values['id'] = s.id
-            values['test_name'] = ini_manager.get_scenario_name(s.scenario_path)
-            values['default_data'] = self.get_default_data(s.scenario_path)
-            values['last'] = {}
+            values["id"] = s.id
+            values["test_name"] = ini_manager.get_scenario_name(s.scenario_path)
+            values["default_data"] = self.get_default_data(s.scenario_path)
+            trg_host, trg_port = ("", "")
+            if values["default_data"]:
+                trg_host = values["default_data"].get("target", "")
+                trg_port = values["default_data"].get("port", "")
+            sel_tank_host = self.select_tank_host(tanks, active_sh,
+                                                  trg_host, trg_port)
+            values["tank_host"] = sel_tank_host
+            values["last"] = {}
             shs = sh_max.filter(scenario_id=s.id)
             trs = tr_max.filter(scenario_path=s.scenario_path)
             if shs and trs:
@@ -326,9 +396,9 @@ class ScenarioRunView(View):
                 values['last'] = {'tr_id': trs[0].id,
                                   'finish': shs[0]['max_finish']}
             results.append(values)
-        response_dict['rows'] = results
-        response_dict['tanks'] = self.adapt_tanks_list(tanks, active_sh,
+        response_dict["rows"] = results
+        response_dict["tanks"] = self.adapt_tanks_list(tanks, active_sh,
                                                        request.user)
         response = HttpResponse(json.dumps(response_dict),
-                                content_type='application/json')
+                                content_type="application/json")
         return response
