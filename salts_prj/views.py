@@ -518,6 +518,7 @@ def show_trends_page(request):
 
 
 def user_filter(request, results):
+    scenario_id = request_get_value(request, "scid")
     scenario_path = request_get_value(request, "scpath")
     target = request_get_value(request, "trg")
     gen_type = request_get_value(request, "gt")
@@ -530,6 +531,13 @@ def user_filter(request, results):
     from_time = request_get_value(request, "from")
     to_time = request_get_value(request, "to")
     rps_value = request_get_value(request, "rps")
+    if scenario_id:
+        try:
+            s = Scenario.objects.get(id=scenario_id)
+            scenario_path = s.scenario_path
+        except Scenario.DoesNotExist:
+            log.warning("The scid=%s parameter from request does not exist.",
+                        scenario_id)
     if scenario_path:
         results = results.filter(scenario_path=scenario_path)
     if target:
