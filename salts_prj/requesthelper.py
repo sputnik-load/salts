@@ -55,6 +55,7 @@ def test_connection(target, port, hname=None):
             s.settimeout(1)
             st = time.time()
             s.connect((target, port))
+            s.close()
             return time.time() - st
     except Exception, exc:
         if not hname:
