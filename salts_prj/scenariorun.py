@@ -305,13 +305,10 @@ class ScenarioRunView(View):
         if s.st_size:
             with open(ct_fpath_lock, "rb") as f:
                 (current_id, ctimes) = pickle.load(f)
-        old_tank_set = set(ctimes)
         cr_date = os.path.getmtime(ct_fpath_lock)
         ctime = time.time()
-        need_upd = (not current_id) and \
-                   (tank_set != old_tank_set or \
-                   ctime - cr_date > 30 or s.st_size == 0)
-        if need_upd:
+        need_upd = (ctime - cr_date > 30) or (not s.st_size)
+        if need_upd and (not current_id) and tank_set:
             current_id = obtain_connection_time.delay(ct_fpath_lock_mq,
                                                       ",".join(tank_set),
                                                       trg_host, trg_port)
