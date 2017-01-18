@@ -34,6 +34,16 @@ function updateTestNameEditable(divItem) {
 			displayStartButton(divItem.parents('tr'));
 		}
 	});
+	aItem.on("shown", function(ev, editable) {
+		clearInterval(updateIntervalId);
+		updateIntervalId = 0;
+	});
+	aItem.on("hidden", function(ev, editable) {
+		if (updateIntervalId == undefined)
+			return;
+		if (!updateIntervalId)
+			updateIntervalFunc();
+	});
 }
 
 function updateTankHostEditable(divItem) {
