@@ -16,7 +16,6 @@ from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 
 CELERY_BROKER_URL = "amqp://salts:salts@salt-dev.dev.ix.km:5672/salts"
 CELERY_ACCEPT_CONTENT = ["json"]
-# CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite'
 CELERY_RESULT_BACKEND = "db+postgresql://salts:salts@salt-dev.dev.ix.km/salts"
 CELERY_TASK_SERIALIZER = "json"
 CELERY_BROKER_VHOST="salts"
@@ -29,7 +28,10 @@ TEMPLATE_CONTEXT_PROCESSORS += (
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
+QUNIT_TEST_DIRECTORY = os.path.join(BASE_DIR, 'js_tests')
+TEMPLATE_DIRS = [os.path.join(BASE_DIR, "templates"),
+                 QUNIT_TEST_DIRECTORY]
+QUNIT_INDEX_HTML = "tests.html"
 
 # List of callables that know how to import templates from various sources.import
 TEMPLATE_LOADERS = (
@@ -71,6 +73,7 @@ INSTALLED_APPS = (
     'rest_framework.authtoken',
     'djangobower',
     'django_extensions',
+    'django_qunit'
 )
 
 ROOT_URLCONF = 'salts_prj.urls'
@@ -134,12 +137,13 @@ STATICFILES_FINDERS = (
 )
 
 BOWER_INSTALLED_APPS = (
-    'bootstrap-table#1.9.1',
-    'x-editable#1.5.1',
-    'purl#2.3.1',
-    'bootstrap#3.3.6',
-    'https://github.com/burthen/dygraphs.git#1.1.2',
-    'moment#2.11.2',
+    "bootstrap-table#1.9.1",
+    "x-editable#1.5.1",
+    "purl#2.3.1",
+    "bootstrap#3.3.6",
+    "https://github.com/burthen/dygraphs.git#1.1.2",
+    "moment#2.11.2",
+    "qunit#2.1.1"
 )
 
 DEBUG_TOOLBAR_PATCH_SETTINGS = False

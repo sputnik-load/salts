@@ -14,7 +14,6 @@ from salts_prj.views import gitsync, edit_testresult, update_testresult
 from salts_prj.shooter import ShooterView
 from salts_prj.scenariorun import ScenarioRunView
 
-
 admin.autodiscover()
 
 import settings
@@ -46,6 +45,7 @@ urlpatterns = patterns('',
     url(r'^update/$', update_testresult),
     url(r'^shoot/$', ShooterView.as_view()),
     url(r'^run/$', ScenarioRunView.as_view(), name='run_test'),
+    url(r'^qunit/', include('django_qunit.urls')),
 )
 
 if settings.DEBUG:
