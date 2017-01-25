@@ -13,3 +13,4 @@ simplejson
 django-bower
 django-pgjsonb==0.0.23
 django-extensions==1.7.4
+django-qunit==0.2.1.1
