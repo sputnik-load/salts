@@ -3,8 +3,14 @@
 <head>
 	<title>SALTS QUnit Test Suite</title>
   {% load staticfiles %}
-  <link rel="stylesheet" href="{% static "qunit/qunit/qunit.css" %}" type="text/css" media="screen">
+  <link href="{% static "bootstrap/dist/css/bootstrap.min.css" %}" rel="stylesheet" />
+  <link href="{% static "x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css" %}" rel="stylesheet" />
+  <link href="{% static "qunit/qunit/qunit.css" %}" rel="stylesheet" type="text/css" media="screen">
   <script type="text/javascript" src="{% static "qunit/qunit/qunit.js" %}"></script>
+  <script type="text/javascript" src="{% static "jquery/dist/jquery.min.js" %}"></script>
+  <script type="text/javascript" src="{% static "bootstrap/dist/js/bootstrap.min.js" %}"></script>
+  <script type="text/javascript" src="{% static "x-editable/dist/bootstrap3-editable/js/bootstrap-editable.js" %}"></script>
+  <script type="text/javascript" src="{% static "salts/js/customdata.js" %}"></script>
   {% for url in suite.extra_urls %}
     <script type="text/javascript" src="{{ url }}"></script>
   {% endfor %}
@@ -32,5 +38,6 @@
   {% endif %}
 	<h2 id="qunit-userAgent"></h2>
 	<ol id="qunit-tests"></ol>
+	<div id="qunit-fixture" style="margin: 100px"></div>
 </body>
 </html>
