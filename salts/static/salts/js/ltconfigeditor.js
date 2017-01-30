@@ -13,16 +13,16 @@ function jsonstr2bin(jsonStr) {
 (function ($) {
 	"use strict";
 
-	var CustomData = function (options) {
-		this.init('customdata', options, CustomData.defaults);
+	var LTConfigEditor = function (options) {
+		this.init("ltconfigeditor", options, LTConfigEditor.defaults);
 	};
 
-	$.fn.editableutils.inherit(CustomData, $.fn.editabletypes.abstractinput);
+	$.fn.editableutils.inherit(LTConfigEditor, $.fn.editabletypes.abstractinput);
 
-	$.extend(CustomData.prototype, {
+	$.extend(LTConfigEditor.prototype, {
 
 		render: function() {
-			this.$input = this.$tpl.find('input');
+			this.$input = this.$tpl.find("input");
 		},
         
 		value2html: function(value, element) {
@@ -46,14 +46,14 @@ function jsonstr2bin(jsonStr) {
 			}
 			var changed = JSON.parse(bin2jsonstr(value));
 			var ms2sec = function(ms) { return ms / 1000; }
-			this.$input.filter("[name='test_name']").val(changed['test_name']);
-			this.$input.filter("[name='rps']").val(changed['rps']);
-			this.$input.filter("[name='rampup']").val(ms2sec(changed['rampup']));
-			this.$input.filter("[name='testlen']").val(ms2sec(changed['testlen']));
-			this.$input.filter("[name='rampdown']").val(ms2sec(changed['rampdown']));
-			this.$input.filter("[name='target']").val(changed['target']);
-			this.$input.filter("[name='port']").val(changed['port']);
-			this.target_port = changed['s'];
+			this.$input.filter("[name='test_name']").val(changed["test_name"]);
+			this.$input.filter("[name='rps']").val(changed["rps"]);
+			this.$input.filter("[name='rampup']").val(ms2sec(changed["rampup"]));
+			this.$input.filter("[name='testlen']").val(ms2sec(changed["testlen"]));
+			this.$input.filter("[name='rampdown']").val(ms2sec(changed["rampdown"]));
+			this.$input.filter("[name='target']").val(changed["target"]);
+			this.$input.filter("[name='port']").val(changed["port"]);
+			this.target_port = changed["s"];
 		},
        
 		input2value: function() {
@@ -76,7 +76,7 @@ function jsonstr2bin(jsonStr) {
 		}
 	});
 
-	CustomData.defaults = $.extend({},
+	LTConfigEditor.defaults = $.extend({},
 		$.fn.editabletypes.abstractinput.defaults, {
 			tpl: "<div><label><span>Имя теста: </span></label><input type='text' name='test_name'></label></div>" +
 				 "<div><label><span>RPS: </span></label><input type='text' name='rps'></label></div>" +
@@ -88,6 +88,6 @@ function jsonstr2bin(jsonStr) {
 			inputclass: ""
 	});
 
-	$.fn.editabletypes.customdata = CustomData;
+	$.fn.editabletypes.ltconfigeditor = LTConfigEditor;
 
 }(window.jQuery));
