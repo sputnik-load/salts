@@ -1,15 +1,3 @@
-/**
-Custom data for scenario editable input.
-**/
-
-function bin2jsonstr(binStr) {
-  return decodeURIComponent(atob(binStr));
-}
-
-function jsonstr2bin(jsonStr) {
-  return btoa(encodeURIComponent(jsonStr));
-}
-
 (function ($) {
 	"use strict";
 
@@ -45,7 +33,6 @@ function jsonstr2bin(jsonStr) {
 				return;
 			}
 			var changed = JSON.parse(bin2jsonstr(value));
-			var ms2sec = function(ms) { return ms / 1000; }
 			this.$input.filter("[name='test_name']").val(changed["test_name"]);
 			this.$input.filter("[name='rps']").val(changed["rps"]);
 			this.$input.filter("[name='rampup']").val(ms2sec(changed["rampup"]));
@@ -57,7 +44,6 @@ function jsonstr2bin(jsonStr) {
 		},
        
 		input2value: function() {
-			var sec2ms = function(sec) { return sec * 1000; }
 			var changed = {
 				test_name: this.$input.filter("[name='test_name']").val(),
 				rps: this.$input.filter("[name='rps']").val(),
@@ -72,7 +58,7 @@ function jsonstr2bin(jsonStr) {
 		},
        
 		activate: function() {
-			this.$input.filter('[name="test_name"]').focus();
+			this.$input.filter("[name='test_name']").focus();
 		}
 	});
 
