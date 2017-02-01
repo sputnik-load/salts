@@ -1,8 +1,9 @@
 (function ($) {
 	"use strict";
 
-	var valueTemplate = /const for (\d+) rps for (\d\d:\d\d:\d\d)/;
-	var titleTemplate = /Constant Load For (\d+) rps/;
+	var timeRegex = "(\\d\\d:\\d\\d:\\d\\d)";
+	var valueTemplate = "constant for {rps} rps for {duration}";
+	var titleTemplate = "Constant Load For {rps} rps";
 
 	var LTConstEditor = function (options) {
 		this.init("ltconsteditor", options, LTConstEditor.defaults);
@@ -34,15 +35,20 @@
 		value2input: function(value) {
 			if (!value)
 				return;
-			var result = value.match(valueTemplate);
+			var templ = valueTemplate.replace("{rps}", "(\\d+)");
+			templ = templ.replace("{duration}", timeRegex);
+			var result = value.match(templ);
 			if (result == null)
 				return;
+			this.rps = parseInt(result[1], 10);
 			this.$input.filter("[name='testlen']").val(fromHHMMSS(result[2]));
 		},
        
 		input2value: function() {
-			var testlen = sec2ms(this.$input.filter("[name='testlen']")).val();
-			return testlen;
+			var value = valueTemplate.replace("{rps}", this.rps);
+			value = value.replace("{duration}",
+								  toHHMMSS(this.$input.filter("[name='testlen']").val()));
+			return value;
 		},
        
 		activate: function() {
@@ -58,13 +64,15 @@
 
 	$.fn.editabletypes.ltconsteditor = LTConstEditor;
 
+	$.htmlCodeLTConstEditor = function(id, rps, seconds) {
+		var value = valueTemplate.replace("{rps}", rps);
+		value = value.replace("{duration}", toHHMMSS(seconds));
+		var title = titleTemplate.replace("{rps}", rps);;
+		return "<a href='#' id='" + id + "' data-type='ltconsteditor' " +
+			   "data-value='" + value + "' " +
+			   "data-title='" + title + "' " +
+			   "></a>";
+	}
+
 }(window.jQuery));
 
-function htmlCodeLTConstEditor(id, rps, seconds) {
-	var value = "const for " + rps + " rps for " + toHHMMSS(seconds);
-	var title = "Constant Load For " + rps + " rps";
-	return "<a href='#' id='" + id + "' data-type='ltconsteditor' " +
-		   "data-value='" + value + "' " +
-		   "data-title='" + title + "' " +
-		   "></a>";
-}
