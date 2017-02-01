@@ -1,25 +1,3 @@
-QUnit.test("Test 1", function(assert) {
-	assert.ok(true, "Test 1 passes.");
-	assert.ok(true, "Test 1 passes again.");
-});
-
-
-QUnit.test("Text Element Test From X-Editable", function(assert) {
-	var done = assert.async();
-	var htmlCode = "<a href='#' id='a' data-type='text' data-placeholder='abc' data-value='xyz'></a>";
-	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
-	e.click();
-	var p = e.data("editableContainer").tip();
-	assert.ok(p.is(":visible"), "popover was visible");
-	assert.equal(p.find("input[type=text]").attr("placeholder"), "abc", "placeholder exists");
-	p.find(".editable-cancel").click();
-	setTimeout(function() {
-		assert.ok(!p.is(":visible"), "popover was removed");
-		done();
-	}, 300);
-});
-
-
 QUnit.test("LT Config Editor Test", function(assert) {
 	var done = assert.async();
 	var testData = {
