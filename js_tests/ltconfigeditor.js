@@ -33,7 +33,6 @@ QUnit.test("LT Config Editor Test", function(assert) {
 	simpleTest("test_name", "Test Name displays");
 	simpleTest("rps", "RPS displays");
 	simpleTest("rampup", "Ramp Up displays");
-	simpleTest("testlen", "Const Len displays");
 	simpleTest("rampdown", "Ramp Down displays");
 	simpleTest("target", "Target displays");
 	simpleTest("port", "Port displays");
