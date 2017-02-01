@@ -64,13 +64,13 @@
 
 	LTConfigEditor.defaults = $.extend({},
 		$.fn.editabletypes.abstractinput.defaults, {
-			tpl: "<div><label><span>Имя теста: </span></label><input type='text' name='test_name'></label></div>" +
-				 "<div><label><span>RPS: </span></label><input type='text' name='rps'></label></div>" +
-				 "<div><label><span>Ramp Up: </span></label><input type='text' name='rampup'></label></div>" +
-				 "<div><label><span>Const Len: </span></label><input type='text' name='testlen'></label></div>" +
-				 "<div><label><span>Ramp Down: </span></label><input type='text' name='rampdown'></label></div>" +
-				 "<div><label><span>Target: </span></label><input type='text' name='target'></label>" +
-				 "<label><span>Port: </span></label><input type='text' name='port'></label></div>",
+			tpl: "<div><label><span>Имя теста: </span></label><input type='text' name='test_name'></input></div>" +
+				 "<div><label><span>RPS: </span></label><input type='text' name='rps'></input></div>" +
+				 "<div><label><span>Ramp Up: </span></label><input type='text' name='rampup'></input></div>" +
+				 "<div><label><span>Const Len: </span></label><input type='text' name='testlen'></input></div>" +
+				 "<div><label><span>Ramp Down: </span></label><input type='text' name='rampdown'></input></div>" +
+				 "<div><label><span>Target: </span></label><input type='text' name='target'></input>" +
+				 "<label><span>Port: </span></label><input type='text' name='port'></input></div>",
 			inputclass: ""
 	});
 

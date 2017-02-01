@@ -1,7 +1,6 @@
 (function ($) {
 	"use strict";
 
-	var timeRegex = "(\\d\\d:\\d\\d:\\d\\d)";
 	var valueTemplate = "constant for {rps} rps for {duration}";
 	var titleTemplate = "Constant Load For {rps} rps";
 
@@ -35,6 +34,7 @@
 		value2input: function(value) {
 			if (!value)
 				return;
+			var timeRegex = "(\\d\\d:\\d\\d:\\d\\d)";
 			var templ = valueTemplate.replace("{rps}", "(\\d+)");
 			templ = templ.replace("{duration}", timeRegex);
 			var result = value.match(templ);
@@ -52,13 +52,12 @@
 		},
        
 		activate: function() {
-			this.$input.filter("[name='test_name']").focus();
 		}
 	});
 
 	LTConstEditor.defaults = $.extend({},
 		$.fn.editabletypes.abstractinput.defaults, {
-			tpl: "<div><label><span>Const Len: </span></label><input type='text' name='testlen'></label></div>",
+			tpl: "<div><label><span>Const Len: </span></label><input type='text' name='testlen'></input></div>",
 			inputclass: ""
 	});
 
