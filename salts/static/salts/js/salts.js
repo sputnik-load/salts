@@ -60,3 +60,21 @@ function ms2sec(ms) {
 function sec2ms(sec) {
 	return sec * 1000;
 }
+
+function valueFromObject(obj, key) {
+	var objects = [];
+	for (var i in obj) {
+		if (!obj.hasOwnProperty(i))
+			continue;
+		if (i == key)
+			return obj[key];
+		if (typeof obj[i] == "object") {
+			var v = valueFromObject(obj[i], key);
+			if (v == null)
+				continue;
+			else
+				return v
+		}
+	}
+	return null;
+}
