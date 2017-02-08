@@ -188,3 +188,7 @@
 .salts-table-title {
 	font-family: "Play script=cyrillic rev=2";
 }
+
+tr.salts-load-row > td {
+	border: none;
+}
