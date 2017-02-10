@@ -21,6 +21,8 @@ var expected = {
 	port: testData.port,
 };
 
+var timeout = 300;
+
 
 QUnit.test("LT Config Editor: No User Load", function(assert) {
 	var done = assert.async();
@@ -51,7 +53,7 @@ QUnit.test("LT Config Editor: No User Load", function(assert) {
 	setTimeout(function() {
 		assert.ok(!p.is(":visible"), "popover was removed");
 		done();
-	}, 300);
+	}, timeout);
 });
 
 
@@ -103,4 +105,9 @@ QUnit.test("LT Config Editor: the 'Add/Remove' Button", function(assert) {
 	$button.click(); // to remove corresponding row
 	$load = p.find("div#load tr");
 	assert.equal($load.size(), 1, "the load items' count is 1 after click on the 'Remove' button");
+
+	p.find(".editable-cancel").click();
+	setTimeout(function() {
+		done();
+	}, timeout);
 });
