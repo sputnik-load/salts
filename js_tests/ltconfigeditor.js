@@ -21,6 +21,7 @@ var expected = {
 	port: testData.port,
 };
 
+
 QUnit.test("LT Config Editor: No User Load", function(assert) {
 	var done = assert.async();
 	var binTestData = jsonstr2bin(JSON.stringify(testData));
@@ -53,25 +54,53 @@ QUnit.test("LT Config Editor: No User Load", function(assert) {
 	}, 300);
 });
 
-QUnit.test("LT Config Editor: the 'Plus' Button", function(assert) {
+
+QUnit.test("LT Config Editor: the 'Add/Remove' Button", function(assert) {
 	var done = assert.async();
 	var binTestData = jsonstr2bin(JSON.stringify(testData));
 	var htmlCode = "<a href=# id=a data-type=ltconfigeditor " +
 				   "data-value='" + binTestData + "' data-title=xyz></a>";
+
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
-	e.click();
+	e.click(); // to open configeditor
+
 	var p = e.data("editableContainer").tip();
-	var $load = p.find("div#load");
+	var $load = p.find("div#load tr");
+	assert.equal($load.size(), 1, "the load items' count is 1 after click on the 'Plus' button");
 	var $button = $load.find("button");
-	assert.ok($button, "the 'Plus' button shows");
+	assert.ok($button.is(".btn-plus"), "the 'Plus' button shown");
 	assert.ok($button.attr("disabled"), "the 'Plus' button must be disabled");
+
 	var $select = $load.find("a");
-	$select.click();
+	$select.click(); // to open ltscheduleselect
 
 	var $selectEditable = $select.data("editableContainer").tip();
-	$selectEditable.find("select").val("const");
-	$selectEditable.find(".editable-submit");
+	$selectEditable.find("select").val("const"); // select const schedule
+
+	// to confirm selection and close ltselectschedule
+	$selectEditable.find(".editable-submit").click();
 
 	$button = $load.find("button");
 	assert.ok(!$button.attr("disabled"), "the 'Plus' button must be enabled");
+
+	$select.click(); // to open ltselectschedule
+	$selectEditable = $select.data("editableContainer").tip();
+	var $opt = $selectEditable.find("#schedule option");
+	assert.equal($opt.size(), 2, "the options' count is 2 after selection");
+
+	// to close ltselectschedule without change
+	$selectEditable.find(".editable-cancel").click();
+
+
+	$button = $load.find("button");
+	$button.click(); // to add current schedule
+
+	$load = p.find("div#load tr");
+	assert.equal($load.size(), 2, "the load items' count is 2 after click on the 'Plus' button");
+	assert.ok($button.hasClass("btn-sm"), "the 'Remove' button shown");
+
+	// $button = $load.find("button");
+	$button.click(); // to remove corresponding row
+	$load = p.find("div#load tr");
+	assert.equal($load.size(), 1, "the load items' count is 1 after click on the 'Remove' button");
 });
