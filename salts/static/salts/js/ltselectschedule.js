@@ -32,9 +32,9 @@
 							 "</div>");
 		this.$stepParam = $("<div id=param>" +
 							"<label><span>Finish RPS: </span></label>" +
-								"<input type=text name=finish-rps></input>" +
+								"<input type=text name=finish-rps></input><br>" +
 							"<label><span>Step Length: </span></label>" +
-								"<input type=text name=step-len></input>" +
+								"<input type=text name=step-len></input><br>" +
 							"<label><span>Duration: </span></label>" +
 								"<input type=text name=duration></input>" +
 							 "</div>");
