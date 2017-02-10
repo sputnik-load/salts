@@ -1,46 +1,66 @@
 (function ($) {
 	"use strict";
 
-	var addLoad = function(option, rps) {
+	var newLoad = function(option, rps) {
 		var $tbl = $("div#load table");
+		var nextId = 0;
+		$.each($tbl.find("tr"), function() {
+			var thisId = parseInt($(this).attr("id"), 10);
+			if (nextId <= thisId)
+				nextId = thisId + 1;
+		});
 		var labelCode = "<label><span>Load: </span></label>";
 		var aCode = $.htmlCodeLTSelectSchedule(option, rps);
 		var butCode = "<button type=button class='btn btn-plus' disabled>" +
 						"<span class='glyphicon glyphicon-plus'></span>" +
 					  "</button>";
-		$tbl.append("<tr class=salts-load-row><td>" + labelCode + "</td><td>" +
+		$tbl.append("<tr class=salts-load-row id=" + nextId + ">" +
+					"<td>" + labelCode + "</td><td>" +
 					aCode + "</td><td>" + butCode + "</td></tr>");
 		return $tbl.find("tr:last");
 	}
 
 	var LTConfigEditor = function (options) {
-		console.log("Init LTConfigEditor. Options: " + JSON.stringify(options));
 		var value = valueFromObject(options.scope, "value");
 		var data = JSON.parse(bin2jsonstr(value));
 		this.rps = data.rps;
-		console.log("Init LTConfigEditor. RPS: " + this.rps);
 		this.init("ltconfigeditor", options, LTConfigEditor.defaults);
+		this.loads = [];
 	};
 
 	$.fn.editableutils.inherit(LTConfigEditor, $.fn.editabletypes.abstractinput);
 
 	$.extend(LTConfigEditor.prototype, {
 
-		render: function() {
-			this.$input = this.$tpl.find("input");
-			var $row = addLoad("no", this.rps);
-			this.$load = $row.find("a");
-			var $load = this.$load;
-			this.$load.editable({
+		addLoad: function(option) {
+			var $row = newLoad(option, this.rps);
+			var $a = $row.find("a");
+			this.loads.push($a);
+			$a.editable({
 				display: function(value) {
-					console.log("Load. value: " + value);
-					$load.text(value);
+					$a.text(value);
 				}
 			});
-			this.$load.on("save", function(e, params) {
+			$a.on("save", function(e, params) {
 				var disabled = (params.newValue == $.LTSelectOptions.no);
 				$row.find("button").attr("disabled", disabled);
 			});
+			var configEditor = this;
+			var $but = $row.find("button");
+			$but.on("click", function() {
+				configEditor.addLoad("no");
+				$but.toggleClass("btn-sm");
+				$but.find("span").toggleClass("glyphicon-remove");
+				$but.off("click");
+				$but.on("click", function() {
+					$row.remove();
+				});
+			});
+		},
+
+		render: function() {
+			this.$input = this.$tpl.find("input");
+			this.addLoad("no");
 		},
         
 		value2html: function(value, element) {
