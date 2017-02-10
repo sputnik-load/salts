@@ -37,6 +37,7 @@
 			var $a = $row.find("a");
 			this.loads.push($a);
 			$a.editable({
+				showbuttons: "bottom",
 				display: function(value) {
 					$a.text(value);
 				}
