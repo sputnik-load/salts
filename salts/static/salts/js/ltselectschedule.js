@@ -8,6 +8,8 @@
 	$.htmlCodeLTSelectSchedule = function(option, rps) {
 		var srcData = [];
 		for (var k in $.LTSelectOptions) {
+			if (k == "no" && option != k)
+				continue;
 			srcData.push([k,
 						  $.LTSelectOptions[k].replace("{rps}", rps)]);
 		}
@@ -43,13 +45,35 @@
 	$.extend(LTSelectSchedule.prototype, {
 
 		render: function() {
-			console.log("LTSelectSchedule: render");
+		},
+
+		value2html: function(value, element) {
+		},
+
+		html2value: function(html) {
+			return null;
+		},
+
+		value2str: function(value) {
+			return value;
+		},
+
+		str2value: function(str) {
+			return str;
+		},
+
+		value2input: function(value) {
+			if (!value)
+				return;
+			$("#schedule option").remove();
 			for (var i = 0; i < this.source.length; i++) {
 				var item = this.source[i];
+				if (item[0] == "no" && item[1] != value)
+					continue;
 				$("#schedule").append($("<option></option>")
 										.attr("value", item[0])
 										.text(item[1]));
-				if (this.value == item[1])
+				if (item[1] == value)
 					$("#schedule").val(item[0]);
 			}
 			var $constParam = this.$constParam;
@@ -69,32 +93,9 @@
 				}
 			});
 		},
-        
-		value2html: function(value, element) {
-		},
-        
-		html2value: function(html) {
-			return null;
-		},
-      
-		value2str: function(value) {
-			return value;
-		},
-       
-		str2value: function(str) {
-			return str;
-		},
-
-		value2input: function(value) {
-			// console.log("value2input: value: " + value);
-			// console.log("value2input: this.rps: " + this.rps);
-			// console.log("value2input: this.source: " + this.source);
-			if (!value)
-				return;	
-		},
        
 		input2value: function() {
-			return $("#schedule option:selected").text(); 
+			return $("#schedule option:selected").text();
 		},
        
 		activate: function() {
