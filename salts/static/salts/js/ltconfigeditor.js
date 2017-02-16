@@ -1,21 +1,22 @@
 (function ($) {
 	"use strict";
 
-	var newLoad = function(option, rps) {
+	var newLoad = function(option, rps, params) {
 		var $tbl = $("div#load table");
 		var nextId = 0;
-		$.each($tbl.find("tr"), function() {
+		var $rows = $tbl.find("tr");
+		$.each($rows, function() {
 			var thisId = parseInt($(this).attr("id"), 10);
 			if (nextId <= thisId)
 				nextId = thisId + 1;
 		});
-		var labelCode = "<label><span>Load: </span></label>";
-		var aCode = $.htmlCodeLTSelectSchedule(option, rps);
+		var labelCode = "<label><span>Load #{number}: </span></label>";
+		var aCode = $.htmlCodeLTSelectSchedule(option, rps, params);
 		var butCode = "<button type=button class='btn btn-plus' disabled>" +
 						"<span class='glyphicon glyphicon-plus'></span>" +
 					  "</button>";
 		$tbl.append("<tr class=salts-load-row id=" + nextId + ">" +
-					"<td>" + labelCode + "</td><td>" +
+					"<td>" + labelCode.replace("{number}", $rows.length + 1) + "</td><td>" +
 					aCode + "</td><td>" + butCode + "</td></tr>");
 		return $tbl.find("tr:last");
 	}
@@ -26,20 +27,34 @@
 		this.rps = data.rps;
 		this.init("ltconfigeditor", options, LTConfigEditor.defaults);
 		this.loads = [];
+		this.rps_values = [];
 	};
 
 	$.fn.editableutils.inherit(LTConfigEditor, $.fn.editabletypes.abstractinput);
 
 	$.extend(LTConfigEditor.prototype, {
 
-		addLoad: function(option) {
-			var $row = newLoad(option, this.rps);
+		addLoad: function(option, rps, params) {
+			var $row = newLoad(option, rps, params);
 			var $a = $row.find("a");
 			this.loads.push($a);
 			$a.editable({
 				showbuttons: "bottom",
 				display: function(value) {
-					$a.text(value);
+					var step = JSON.parse(bin2jsonstr(value));
+					if (value == $a.attr("data-value") && $a.text())
+						return;
+					var desc = "";
+					if (step.loadtype == "line")
+						desc = "linear load from " + step.params.a + " to " +
+							   step.params.b + " rps";
+					else if (step.loadtype == "const")
+						desc = "constant load for " + step.params.a + " rps";
+					else if (step.loadtype == "step")
+						desc = "stepped load from " + step.params.a + " to " +
+							   step.params.b + " rps";
+					$a.attr("data-value", value);
+					$a.text(desc);
 				}
 			});
 			$a.on("save", function(e, params) {
@@ -61,7 +76,6 @@
 
 		render: function() {
 			this.$input = this.$tpl.find("input");
-			this.addLoad("no");
 		},
         
 		value2html: function(value, element) {
@@ -80,27 +94,35 @@
 		},
 
 		value2input: function(value) {
-			if (!value) {
+			if (!value)
 				return;
-			}
+			$("div#load table").find("tr").remove();
 			var changed = JSON.parse(bin2jsonstr(value));
-			this.$input.filter("[name='test_name']").val(changed["test_name"]);
-			this.$input.filter("[name='rps']").val(changed["rps"]);
-			this.$input.filter("[name='rampup']").val(ms2sec(changed["rampup"]));
-			/*this.$input.filter("[name='testlen']").val(ms2sec(changed["testlen"]));*/
-			this.$input.filter("[name='rampdown']").val(ms2sec(changed["rampdown"]));
-			this.$input.filter("[name='target']").val(changed["target"]);
-			this.$input.filter("[name='port']").val(changed["port"]);
+			this.loads = [];
+			this.rps_values = [];
+			this.$input.filter("[name=test_name]").val(changed["test_name"]);
+			var rps = 1;
+			for (var i = 0; i < changed.steps.length; i++) {
+				var lt = changed.steps[i].loadtype;
+				var params = changed.steps[i].params;
+				this.addLoad(lt, rps, params);
+				rps = (lt == "const" ? params.a : params.b);
+				this.rps_values.push(rps);
+			}
+			this.$input.filter("[name=target]").val(changed["target"]);
+			this.$input.filter("[name=port]").val(changed["port"]);
 			this.target_port = changed["s"];
 		},
        
 		input2value: function() {
+			var steps = [];
+			$.each(this.loads, function() {
+				var step = JSON.parse(bin2jsonstr($(this).attr("data-value")));
+				steps.push(step);
+			});
 			var changed = {
 				test_name: this.$input.filter("[name='test_name']").val(),
-				rps: this.$input.filter("[name='rps']").val(),
-				rampup: sec2ms(this.$input.filter("[name='rampup']").val()),
-				/*testlen: sec2ms(this.$input.filter("[name='testlen']").val()),*/
-				rampdown: sec2ms(this.$input.filter("[name='rampdown']").val()),
+				steps: steps,
 				target: this.$input.filter("[name='target']").val(),
 				port: this.$input.filter("[name='port']").val(),
 				s: this.target_port
@@ -117,16 +139,10 @@
 		$.fn.editabletypes.abstractinput.defaults, {
 			tpl: "<div><label><span>Имя теста: </span></label>" +
 					"<input type='text' name='test_name'></input></div>" +
-				 "<div><label><span>RPS: </span></label>" +
-					"<input type='text' name='rps'></input></div>" +
-				 "<div><label><span>Ramp Up: </span></label>" +
-			     "<input type='text' name='rampup'></input></div>" +
 				 "<div id=load>" +
 					"<table>" +
 					"</table>" +
 				 "</div>" +
-				 "<div><label><span>Ramp Down: </span></label>" +
-					"<input type='text' name='rampdown'></input></div>" +
 				 "<div><label><span>Target: </span></label>" +
 					"<input type='text' name='target'></input>" +
 				 	"<label><span>Port: </span></label>" +

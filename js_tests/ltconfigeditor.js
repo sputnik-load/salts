@@ -111,3 +111,20 @@ QUnit.test("LT Config Editor: the 'Add/Remove' Button", function(assert) {
 		done();
 	}, timeout);
 });
+
+
+/*
+QUnit.test("LT Config Editor: the 'Add/Remove' Button", function(assert) {
+	var done = assert.async();
+	var binTestData = jsonstr2bin(JSON.stringify(testData));
+	var htmlCode = "<a href=# id=a data-type=ltconfigeditor " +
+				   "data-value='" + binTestData + "' data-title=xyz></a>";
+
+	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
+	e.click(); // to open configeditor
+	p.find(".editable-cancel").click();
+	setTimeout(function() {
+		done();
+	}, timeout);
+});
+*/

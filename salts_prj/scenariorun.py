@@ -24,15 +24,15 @@ from salts.tankmanager import remainedtime
 from salts_prj.celery import obtain_active_tanks, obtain_connection_time
 
 
-SCENARIO_RPS_DEFAULT = '2'
-SCENARIO_DURATIONS_DEFAULT = {'rampup': '5000',
-                              'testlen': '90000',
-                              'rampdown': '5000'}
+SCENARIO_RPS_DEFAULT = 1
+SCENARIO_DURATIONS_DEFAULT = {"rampup": 5000,
+                              "testlen": 90000,
+                              "rampdown": 5000}
 
 
 def duration2ms(line):
-    ts = [('h', 3600000), ('m[^s]', 60000),
-          ('s', 1000), ('ms', 1), ('', 1000)]
+    ts = [("h", 3600000), ("m[^s]", 60000),
+          ("s", 1000), ("ms", 1), ("", 1000)]
     total = 0
     for (unit, ms) in ts:
         pat = re.compile("^(\d+)%s" % unit)
@@ -42,58 +42,41 @@ def duration2ms(line):
         if not unit and total:
             break
         total += ms * int(m.groups()[0])
-        line = pat.sub('', line)
+        line = pat.sub("", line)
     return total
 
 
 def phantom_rps_schedule(scenario_path):
-    dd = {'test_name': ini_manager.get_option_value(scenario_path,
-                                                    'sputnikreport',
-                                                    'test_name')}
-    sample = ['line', 'const', 'line']
-    rps_line = ini_manager.get_option_value(scenario_path, 'phantom',
-                                            'rps_schedule')
-    rps_line = re.sub('\n|\t| ', '', rps_line)
-    pat = re.compile("(line|const|step)\(.*?\)")
-    m = pat.findall(rps_line)
-    rps = 0
-    durs = {}
-    valid = m == sample
-    if valid:
-        pat = re.compile("^line\((\d+),(\d+),(.*?)\).*")
-        m = pat.findall(rps_line)
-        valid = m and len(m[0]) == 3 and m[0][0] == '1'
-        if valid:
-            rps = m[0][1]
-            durs['rampup'] = duration2ms(m[0][2])
-        if valid:
-            pat = re.compile(".*const\((\d+),(.*?)\).*")
-            m = pat.findall(rps_line)
-            valid = m and len(m[0]) == 2 and m[0][0] == rps
-            if valid:
-                durs['testlen'] = duration2ms(m[0][1])
-                pat = re.compile(".*line\((\d+),(\d+),(.*?)\)$")
-                m = pat.findall(rps_line)
-                valid = m and len(m[0]) == 3 and m[0][0] == rps and m[0][1] == '1'
-                if valid:
-                    durs['rampdown'] = duration2ms(m[0][2])
-    if valid:
-        log.info("Phantom Durations (ms): %s" % durs)
-        dd.update({'rps': rps})
-        dd.update(durs)
-        return dd
-    else:
-        log.info("RPS Schedule will be replaced with default.")
-        dd.update({'rps': SCENARIO_RPS_DEFAULT})
-        dd.update(SCENARIO_DURATIONS_DEFAULT)
-        return dd
+    def parse_phantom_schedule(rps_line):
+        steps = []
+        for step in " ".join(rps_line.split("\n")).split(")"):
+            line = step.strip()
+            if not line:
+                continue
+            (name, params) = line.split("(")
+            keys = {"step": ["a", "b", "step", "dur"],
+                    "line": ["a", "b", "dur"],
+                    "const": ["a", "dur"]}
+            params = dict(zip(keys[name], params.split(",")))
+            params["dur"] = duration2ms(params["dur"])
+            steps.append({"loadtype": name, "params": params})
+        return steps
+
+    dd = {"test_name": ini_manager.get_option_value(scenario_path,
+                                                    "sputnikreport",
+                                                    "test_name")}
+    rps_line = ini_manager.get_option_value(scenario_path, "phantom",
+                                            "rps_schedule")
+    dd["steps"] = parse_phantom_schedule(rps_line)
+    return dd
 
 
 def phantom_target_info(scenario_path):
     def_values = {"target": "", "port": 8000}
-    target_info = ini_manager.get_option_value(scenario_path, "phantom", "address", "")
+    target_info = ini_manager.get_option_value(scenario_path,
+                                               "phantom", "address", "")
     if not target_info:
-        return  def_values
+        return def_values
     targ = target_info.split(":")
     if len(targ) >= 2:
         return {"target": targ[0], "port": targ[1]}
@@ -102,17 +85,24 @@ def phantom_target_info(scenario_path):
 
 def jmeter_rps_schedule(scenario_path):
     def jmeter_duration(key):
-        return str(1000 * int(ini_manager.get_option_value(scenario_path, 'jmeter', key,
-                                int(SCENARIO_DURATIONS_DEFAULT[key]) / 1000)))
-    return {'test_name': ini_manager.get_option_value(scenario_path,
-                                                       'sputnikreport',
-                                                       'test_name'),
-            'rampup': jmeter_duration('rampup'),
-            'testlen': jmeter_duration('testlen'),
-            'rampdown': jmeter_duration('rampdown'),
-            'rps': ini_manager.get_option_value(scenario_path, 'jmeter', 'rps1',
-                                                SCENARIO_RPS_DEFAULT)
-           }
+        default_value = SCENARIO_DURATIONS_DEFAULT[key] / 1000
+        return 1000 * int(ini_manager.get_option_value(scenario_path,
+                                                       "jmeter", key,
+                                                       default_value))
+    rps = ini_manager.get_option_value(scenario_path, "jmeter", "rps1",
+                                       SCENARIO_RPS_DEFAULT)
+    return {"test_name": ini_manager.get_option_value(scenario_path,
+                                                      "sputnikreport",
+                                                      "test_name"),
+            "steps": [{"loadtype": "line",
+                       "params": {"a": 1, "b": rps,
+                                  "dur": jmeter_duration("rampup")}},
+                      {"loadtype": "const",
+                       "params": {"a": rps,
+                                  "dur": jmeter_duration("testlen")}},
+                      {"loadtype": "line",
+                       "params": {"a": rps, "b": 1,
+                                  "dur": jmeter_duration("rampdown")}}]}
 
 
 def jmeter_target_info(scenario_path):
@@ -127,8 +117,7 @@ def jmeter_target_info(scenario_path):
             result['port'] = ini_manager.get_option_value(scenario_path,
                                                           'jmeter', 'port',
                                                           result['port'])
-            result['s'] = '1' # target и port д.б.
-                              # сохранены в разных опциях
+            result['s'] = '1'  # target и port д.б. сохранены в разных опциях
         else:
             result['port'] = targ[1]
     return result
@@ -136,7 +125,7 @@ def jmeter_target_info(scenario_path):
 
 class ScenarioRunView(View):
 
-    MAX_TESTRUN_DURATION=60*60*24
+    MAX_TESTRUN_DURATION = 60*60*24
 
     def __init__(self, *args, **kwargs):
         super(ScenarioRunView, self).__init__(*args, **kwargs)
@@ -184,8 +173,8 @@ class ScenarioRunView(View):
             else:
                 planned_finish = s.start + ScenarioRunView.MAX_TESTRUN_DURATION
             if current_time > planned_finish:
-                log.warning("Likely the shooting (id=%s) is not running " \
-                            "at this time, but its status is 'Running'." \
+                log.warning("Likely the shooting (id=%s) is not running "
+                            "at this time, but its status is 'Running'."
                             % s.id)
                 invalid.append(s.id)
         return shootings.exclude(id__in=invalid)
@@ -222,15 +211,16 @@ class ScenarioRunView(View):
         rps_default_section = ini_manager.scenario_type(scenario_path)
         if not rps_default_section:
             return {}
-        if rps_default_section not in ini_manager.get_rps_sections(scenario_path):
+        if rps_default_section not in \
+                ini_manager.get_rps_sections(scenario_path):
             log.warning("'%s' section is required." % rps_default_section)
             return {}
-        rps_schedule = {'phantom': phantom_rps_schedule,
-                        'jmeter': jmeter_rps_schedule}
-        target_info = {'phantom': phantom_target_info,
-                       'jmeter': jmeter_target_info}
+        rps_schedule = {"phantom": phantom_rps_schedule,
+                        "jmeter": jmeter_rps_schedule}
+        target_info = {"phantom": phantom_target_info,
+                       "jmeter": jmeter_target_info}
         dd = rps_schedule[rps_default_section](scenario_path)
-        dd['gen_type'] = rps_default_section
+        dd["gen_type"] = rps_default_section
         dd.update(target_info[rps_default_section](scenario_path))
         self._default_data[scenario_path] = dd
         return dd
@@ -266,9 +256,9 @@ class ScenarioRunView(View):
                                        "scenario_id": shooting.scenario_id,
                                        "username": shooting.user.username,
                                        "default_data": default_data,
-                                       "custom_data": jsonstr2bin(str(shooting.custom_data)),
-                                       "can_stop": can_stop
-                                    }
+                                       "custom_data": jsonstr2bin(
+                                           str(shooting.custom_data)),
+                                       "can_stop": can_stop}
                 self._actual_tanks_info[request_user.id].append(rec)
             # records.append(json.dumps(rec))
         return [json.dumps(r)

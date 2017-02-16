@@ -189,36 +189,41 @@ function b64ScenarioChanges(aItem, ltConfigMutableData) {
 
 
 function toScenarioFormat(aItem) {
-	var gen_type = aItem.attr('data-gen-type');
-	var data_value = JSON.parse(bin2jsonstr(aItem.attr('data-value')));
+	var gen_type = aItem.attr("data-gen-type");
+	var data_value = JSON.parse(bin2jsonstr(aItem.attr("data-value")));
 	var scenario = {
 		sputnikreport: {
-			test_name: data_value['test_name']
+			test_name: data_value.test_name
 		}
 	};
-	var ms2sec = function(ms) { return ms / 1000; }
-	if (gen_type == 'phantom') {
-		scenario['phantom'] = {};
-		scenario['phantom']['rps_schedule'] = "line(1," + data_value['rps'] +
-			"," + ms2sec(data_value['rampup']) + "s) " +
-			"const("+ data_value['rps'] + "," + ms2sec(data_value['testlen']) + "s) " +
-			"line(" + data_value['rps'] + ",1," + ms2sec(data_value['rampdown']) + "s)";
-		scenario['phantom']['address'] = data_value['target'] + ":" + data_value['port']
+	if (gen_type == "phantom") {
+		scenario.phantom = {};
+		scenario.phantom.rps_schedule = "";
+		for (var i = 0; i < data_value.steps.length; i++) {
+			var step = data_value.steps[i];
+			var scheduleDesc = step.loadtype + "(" + step.params.a + ",";
+			if (step.loadtype == "line")
+				scheduleDesc += step.params.b + ",";
+			else if (step.loadtype == "step")
+				scheduleDesc += step.params.b + "," + step.params.step + ",";
+			scenario.phantom.rps_schedule += scheduleDesc +
+											 ms2sec(step.params.dur) + "s) ";
+		}
 	}
 	else {
-		scenario['jmeter'] = {};
-		scenario['jmeter']['rps1'] = data_value['rps'];
-		scenario['jmeter']['rps2'] = data_value['rps'];
-		scenario['jmeter']['rampup'] = ms2sec(data_value['rampup']);
-		scenario['jmeter']['testlen'] = ms2sec(data_value['testlen']);
-		scenario['jmeter']['rampdown'] = ms2sec(data_value['rampdown']);
-		if (data_value['s']) {
-			scenario['jmeter']['hostname'] = data_value['target'];
-			scenario['jmeter']['port'] = data_value['port'];
+		scenario.jmeter = {};
+		scenario.jmeter.rps1 = data_value.steps[0].params.b;
+		scenario.jmeter.rps2 = scenario.jmeter.rps1;
+		scenario.jmeter.rampup = ms2sec(data_value.steps[0].params.dur);
+		scenario.jmeter.testlen = ms2sec(data_value.steps[1].params.dur);
+		scenario.jmeter.rampdown = ms2sec(data_value.steps[2].params.dur);
+		if (data_value.s) {
+			scenario.jmeter.hostname = data_value.target;
+			scenario.jmeter.port = data_value.port;
 		}
 		else
-			scenario['jmeter']['hostname'] = data_value['target'] + ":" +
-											 data_value['port']
+			scenario.jmeter.hostname = data_value.target + ":" +
+									   data_value.port;
 	}
 	return jsonstr2bin(JSON.stringify(scenario));	
 }
