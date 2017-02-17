@@ -49,8 +49,6 @@
 		var data = JSON.parse(bin2jsonstr(value));
 		this.rps = data.rps;
 		this.init("ltconfigeditor", options, LTConfigEditor.defaults);
-		this.loads = [];
-		this.rps_values = [];
 	};
 
 	$.fn.editableutils.inherit(LTConfigEditor, $.fn.editabletypes.abstractinput);
@@ -62,7 +60,6 @@
 				params = {};
 			var $row = newLoad(option, id, rps, params);
 			var $a = $row.find("a");
-			this.loads.push($a);
 			$a.editable({
 				showbuttons: "bottom",
 				display: function(value) {
@@ -126,8 +123,6 @@
 				return;
 			$("div#load table").find("tr").remove();
 			var changed = JSON.parse(bin2jsonstr(value));
-			this.loads = [];
-			this.rps_values = [];
 			this.$input.filter("[name=test_name]").val(changed["test_name"]);
 			var rps = 1;
 			for (var i = 0; i < changed.steps.length; i++) {
@@ -135,7 +130,6 @@
 				var params = changed.steps[i].params;
 				this.addLoad(loadtype, i, rps, params);
 				rps = (loadtype == "const" ? params.a : params.b);
-				this.rps_values.push(rps);
 			}
 			this.$input.filter("[name=target]").val(changed["target"]);
 			this.$input.filter("[name=port]").val(changed["port"]);
@@ -144,15 +138,16 @@
        
 		input2value: function() {
 			var steps = [];
-			$.each(this.loads, function() {
+			var $tbl = $("div#load table");
+			$.each($tbl.find("tr a"), function() {
 				var step = JSON.parse(bin2jsonstr($(this).attr("data-value")));
 				steps.push(step);
 			});
 			var changed = {
-				test_name: this.$input.filter("[name='test_name']").val(),
+				test_name: this.$input.filter("[name=test_name]").val(),
 				steps: steps,
-				target: this.$input.filter("[name='target']").val(),
-				port: this.$input.filter("[name='port']").val(),
+				target: this.$input.filter("[name=target]").val(),
+				port: this.$input.filter("[name=port]").val(),
 				s: this.target_port
 			};
 			return jsonstr2bin(JSON.stringify(changed));
