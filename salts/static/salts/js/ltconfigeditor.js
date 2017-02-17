@@ -1,24 +1,47 @@
 (function ($) {
 	"use strict";
 
-	var newLoad = function(option, rps, params) {
+	var assignLoadLabels = function() {
 		var $tbl = $("div#load table");
-		var nextId = 0;
-		var $rows = $tbl.find("tr");
-		$.each($rows, function() {
-			var thisId = parseInt($(this).attr("id"), 10);
-			if (nextId <= thisId)
-				nextId = thisId + 1;
-		});
 		var labelCode = "<label><span>Load #{number}: </span></label>";
+		var i = 1;
+		$.each($tbl.find("tr"), function() {
+			$(this).find("td:first").html(labelCode.replace("{number}", i));
+			i += 1;
+		});
+	}
+
+	var newLoad = function(option, id, rps, params) {
+		var $tbl = $("div#load table");
+		var $rows = $tbl.find("tr");
+		var $row = $tbl.find("tr#" + id);
+		var newId = 0;
+		if (!$row.length)
+			newId = id;
+		else {
+			$.each($rows, function() {
+				var thisId = parseInt($(this).attr("id"), 10);
+				if (newId <= thisId)
+					newId = thisId + 1;
+			});
+		}
 		var aCode = $.htmlCodeLTSelectSchedule(option, rps, params);
-		var butCode = "<button type=button class='btn btn-plus' disabled>" +
-						"<span class='glyphicon glyphicon-plus'></span>" +
+		var plusCode = "<button type=button name=add class='btn btn-plus'>" +
+					   "<span class='glyphicon glyphicon-plus'></span>" +
+					   "</button>";
+		var delCode = "<button type=button name=del class='btn btn-sm'>" +
+					  "<span class='glyphicon glyphicon-remove'></span>" +
 					  "</button>";
-		$tbl.append("<tr class=salts-load-row id=" + nextId + ">" +
-					"<td>" + labelCode.replace("{number}", $rows.length + 1) + "</td><td>" +
-					aCode + "</td><td>" + butCode + "</td></tr>");
-		return $tbl.find("tr:last");
+		var rowCode = "<tr class=salts-load-row id=" + newId + "><td></td>" +
+					  "<td>" + aCode + "</td><td>" + plusCode + "</td>" +
+					  "<td>" + delCode + "</td></tr>"
+		if ($row.length)
+			$(rowCode).insertAfter($row);
+		else
+			$tbl.append(rowCode);
+		assignLoadLabels();
+
+		return $tbl.find("tr#" + newId);
 	}
 
 	var LTConfigEditor = function (options) {
@@ -34,8 +57,10 @@
 
 	$.extend(LTConfigEditor.prototype, {
 
-		addLoad: function(option, rps, params) {
-			var $row = newLoad(option, rps, params);
+		addLoad: function(option, id, rps, params) {
+			if (!params)
+				params = {};
+			var $row = newLoad(option, id, rps, params);
 			var $a = $row.find("a");
 			this.loads.push($a);
 			$a.editable({
@@ -44,7 +69,7 @@
 					var step = JSON.parse(bin2jsonstr(value));
 					if (value == $a.attr("data-value") && $a.text())
 						return;
-					var desc = "";
+					var desc = "select to add new scheme";
 					if (step.loadtype == "line")
 						desc = "linear load from " + step.params.a + " to " +
 							   step.params.b + " rps";
@@ -62,15 +87,18 @@
 				$row.find("button").attr("disabled", disabled);
 			});
 			var configEditor = this;
-			var $but = $row.find("button");
-			$but.on("click", function() {
-				configEditor.addLoad("no");
-				$but.toggleClass("btn-sm");
-				$but.find("span").toggleClass("glyphicon-remove");
-				$but.off("click");
-				$but.on("click", function() {
-					$row.remove();
-				});
+			$row.find("button[name=add]").on("click", function() {
+				var new_rps = rps;
+				if (params) {
+					new_rps = params.b;
+					if (option == "const")
+						new_rps = params.a;
+				}
+				configEditor.addLoad("no", $row.attr("id"), rps);
+			});
+			$row.find("button[name=del]").on("click", function() {
+				$row.remove();
+				assignLoadLabels();
 			});
 		},
 
@@ -103,10 +131,10 @@
 			this.$input.filter("[name=test_name]").val(changed["test_name"]);
 			var rps = 1;
 			for (var i = 0; i < changed.steps.length; i++) {
-				var lt = changed.steps[i].loadtype;
+				var loadtype = changed.steps[i].loadtype;
 				var params = changed.steps[i].params;
-				this.addLoad(lt, rps, params);
-				rps = (lt == "const" ? params.a : params.b);
+				this.addLoad(loadtype, i, rps, params);
+				rps = (loadtype == "const" ? params.a : params.b);
 				this.rps_values.push(rps);
 			}
 			this.$input.filter("[name=target]").val(changed["target"]);

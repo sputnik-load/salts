@@ -100,11 +100,12 @@
 			var $schedule = $("#schedule");
 			$schedule.on("change", function() {
 				loadScheduleParam(th, $("#select-schedule"));
+				th.$input = th.$tpl.find("div#param input");
 			});
 			var step = JSON.parse(bin2jsonstr(value));
 			for (var i = 0; i < this.source.length; i++) {
 				var item = this.source[i];
-				if (item.value == "no" && step.params)
+				if (item.value == "no" && !$.isEmptyObject(step.params))
 					continue;
 				$("#schedule").append($("<option></option>")
 										.attr("value", item.value)
