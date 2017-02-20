@@ -1,54 +1,82 @@
 var testData = {
 	test_name: "LT Config",
-	rps: 5,
-	rampup: 15000,
-	testlen: 60000,
-	load: {"const": 60000,
-		   "step" : [10, 2, 10000]},
-	rampdown: 10000,
+	steps: [{loadtype: "line", params: {a: 1, b: 5, dur: 15000}},
+		    {loadtype: "const", params: {a: 5, dur: 60000}},
+		    {loadtype: "line", params: {a: 5, b: 1, dur: 10000}}],
 	target: "xyz",
 	port: 7654,
 	s: 1
 };
 
-var expected = {
-	test_name: testData.test_name,
-	rps: testData.rps,
-	rampup: testData.rampup / 1000,
-	testlen: testData.testlen / 1000,
-	rampdown: testData.rampdown / 1000,
-	target: testData.target,
-	port: testData.port,
-};
+var isParamsValidAndEqual = function(a, b) {
+	var keys = ["test_name", "steps", "target", "port", "s"];
+	var stepKeys = ["loadtype", "params"];
+	for (var i = 0; i < keys.length; i++) {
+		var k = keys[i];
+		if ( !(k in a) || !(k in b) )
+			return 1;
+		if (k == "steps") {
+			if (a.steps.length != b.steps.length)
+				return 2;
+			for (var j = 0; j < a.steps.length; j++) {
+				var sk = "loadtype";
+				if ( !(sk in a.steps[j]) || !(sk in b.steps[j]) )
+					return 3;
+				if ( a.steps[j][sk] != b.steps[j][sk] )
+					return 4;
+				sk = "params";
+				if ( !(sk in a.steps[j]) || !(sk in b.steps[j]) )
+					return 5;
+				for (var p in a.steps[j].params) {
+					if ( !(p in b.steps[j].params) )
+						return 6;
+					if ( a.steps[j].params[p] != b.steps[j].params[p] )
+						return 7;
+				}
+			}
+		}
+	}
+	return 0;
+}
 
 var timeout = 300;
 
 
 QUnit.test("LT Config Editor: No User Load", function(assert) {
+	var expectedData = {
+		test_name: testData.test_name,
+		rps: testData.rps,
+		target: testData.target,
+		port: testData.port,
+	};
 	var done = assert.async();
 	var binTestData = jsonstr2bin(JSON.stringify(testData));
 	var htmlCode = "<a href=# id=a data-type=ltconfigeditor " +
 				   "data-value='" + binTestData + "' data-title=xyz></a>";
+
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
 	e.click();
 	var p = e.data("editableContainer").tip();
+
 	assert.ok(p.is(":visible"), "popover was visible");
 	simpleTest = function(name, comment) {
 		assert.equal(p.find("input[name=" + name + "]").val(),
-					 expected[name], comment);	
+					 expectedData[name], comment);
 	};
 	simpleTest("test_name", "Test Name displays");
-	simpleTest("rps", "RPS displays");
-	simpleTest("rampup", "Ramp Up displays");
-	simpleTest("rampdown", "Ramp Down displays");
 	simpleTest("target", "Target displays");
 	simpleTest("port", "Port displays");
-	var $load = p.find("div#load");
-	var $select = $load.find("a");
-	assert.equal($select.text(), "Select To Add New Scheme",
-				 "new user load: the initial value of rps is correct");
-	assert.equal($select.attr("data-rps"), testData.rps,
-				 "new user load: value view");
+
+	var $load = p.find("div#load a");
+	assert.equal($load.size(), 3, "The count of load schedules is 3");
+	assert.equal($load[0].text, "linear load from 1 to 5 rps",
+				 "Rampup line load.");
+	assert.equal($load[1].text, "constant load for 5 rps",
+				 "Const line load.");
+	assert.equal($load[2].text, "linear load from 5 to 1 rps",
+				 "Rampdown line load.");
+	assert.equal($($load[0]).attr("data-rps"), 1,
+				 "base rps");
 	p.find(".editable-cancel").click();
 	setTimeout(function() {
 		assert.ok(!p.is(":visible"), "popover was removed");
@@ -57,7 +85,18 @@ QUnit.test("LT Config Editor: No User Load", function(assert) {
 });
 
 
-QUnit.test("LT Config Editor: the 'Add/Remove' Button", function(assert) {
+QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
+	var expectedData = {
+		test_name: "LT Config",
+		steps: [{loadtype: "line", params: {a: 1, b: 5, dur: 15000}},
+				{loadtype: "step", params: {a: 4, b: 20, step: 4, dur: 4000}},
+				{loadtype: "const", params: {a: 5, dur: 60000}},
+				{loadtype: "line", params: {a: 5, b: 1, dur: 10000}}],
+		target: "xyz",
+		port: 7654,
+		s: 1
+	};
+
 	var done = assert.async();
 	var binTestData = jsonstr2bin(JSON.stringify(testData));
 	var htmlCode = "<a href=# id=a data-type=ltconfigeditor " +
@@ -67,54 +106,63 @@ QUnit.test("LT Config Editor: the 'Add/Remove' Button", function(assert) {
 	e.click(); // to open configeditor
 
 	var p = e.data("editableContainer").tip();
-	var $load = p.find("div#load tr");
-	assert.equal($load.size(), 1, "the load items' count is 1 after click on the 'Plus' button");
-	var $button = $load.find("button");
-	assert.ok($button.is(".btn-plus"), "the 'Plus' button shown");
-	assert.ok($button.attr("disabled"), "the 'Plus' button must be disabled");
+	var $load = $(p.find("div#load tr")[0]);
+	var $addbut = $load.find("button[name=add]");
+	assert.ok($addbut.is(".btn-plus"), "the 'Plus' button shown");
+	assert.ok(!$addbut.prop("disabled"), "the 'Plus' button is enabled");
 
-	var $select = $load.find("a");
-	$select.click(); // to open ltscheduleselect
+	var $delbut = $load.find("button[name=del]");
+	assert.ok($delbut.is(".btn-sm"), "the 'Delete' button shown");
+	assert.ok(!$delbut.prop("disabled"), "the 'Delete' button is enabled");
 
-	var $selectEditable = $select.data("editableContainer").tip();
-	$selectEditable.find("select").val("const"); // select const schedule
-
-	// to confirm selection and close ltselectschedule
-	$selectEditable.find(".editable-submit").click();
-
-	$button = $load.find("button");
-	assert.ok(!$button.attr("disabled"), "the 'Plus' button must be enabled");
-
-	$select.click(); // to open ltselectschedule
-	$selectEditable = $select.data("editableContainer").tip();
-	var $opt = $selectEditable.find("#schedule option");
-	assert.equal($opt.size(), 2, "the options' count is 2 after selection");
-
-	// to close ltselectschedule without change
-	$selectEditable.find(".editable-cancel").click();
-
-
-	$button = $load.find("button");
-	$button.click(); // to add current schedule
-
+	$addbut.click();
 	$load = p.find("div#load tr");
-	assert.equal($load.size(), 2, "the load items' count is 2 after click on the 'Plus' button");
-	assert.ok($button.hasClass("btn-sm"), "the 'Remove' button shown");
+	assert.equal($load.size(), 4, "the row count was incremented, now 4");
 
-	// $button = $load.find("button");
-	$button.click(); // to remove corresponding row
-	$load = p.find("div#load tr");
-	assert.equal($load.size(), 1, "the load items' count is 1 after click on the 'Remove' button");
+	var $aNewLoad = $($load.get(1)).find("a");
+	assert.equal($aNewLoad.text(), "select to add new scheme",
+				 "New Load Item text value");
+	$aNewLoad.click(); // to open load schedule editor
 
-	p.find(".editable-cancel").click();
+	var $loadEditable = $aNewLoad.data("editableContainer").tip();
+	var $select = $loadEditable.find("select#schedule");
+	assert.equal($select.size(), 1, "Select Item was obtained.");
+	assert.equal($select.val(), "no", "No Items are selected.");
+	$select.val("step");
+	$select.trigger("change");
+	assert.equal($select.val(), "step", "Step Option are selected.");
+
+	var $inputs = $loadEditable.find("div#param input");
+	$inputs.filter("[name=a]").val("4");
+	$inputs.filter("[name=b]").val("20");
+	$inputs.filter("[name=step]").val("4");
+	$inputs.filter("[name=dur]").val("4000");
+	$loadEditable.find(".editable-submit").click();
+
+	assert.equal($aNewLoad.text(), "stepped load from 4 to 20 rps",
+				 "New Stepped Load text value");
+
+	p.find(".editable-submit").click();
 	setTimeout(function() {
+		var binData = e.editable("getValue", true);
+		var decodeData = JSON.parse(bin2jsonstr(binData));
+		assert.equal(isParamsValidAndEqual(expectedData, decodeData), 0,
+					 "The changes are corrected");
 		done();
 	}, timeout);
 });
 
 
-/*
-QUnit.test("LT Config Editor: the 'Add/Remove' Button", function(assert) {
+QUnit.test("LT Config Editor: the 'Delete' Button", function(assert) {
+	var expectedData = {
+		test_name: "LT Config",
+		steps: [{loadtype: "line", params: {a: 1, b: 5, dur: 15000}},
+				{loadtype: "line", params: {a: 5, b: 1, dur: 10000}}],
+		target: "xyz",
+		port: 7654,
+		s: 1
+	};
+
 	var done = assert.async();
 	var binTestData = jsonstr2bin(JSON.stringify(testData));
 	var htmlCode = "<a href=# id=a data-type=ltconfigeditor " +
@@ -122,9 +170,27 @@ QUnit.test("LT Config Editor: the 'Add/Remove' Button", function(assert) {
 
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
 	e.click(); // to open configeditor
-	p.find(".editable-cancel").click();
+
+	var p = e.data("editableContainer").tip();
+	var $load = $(p.find("div#load tr")[1]);
+	var $delbut = $load.find("button[name=del]");
+	assert.ok($delbut.is(".btn-sm"), "the 'Delete' button shown");
+	assert.ok(!$delbut.prop("disabled"), "the 'Delete' button is enabled");
+
+	var $delbut = $load.find("button[name=del]");
+	assert.ok($delbut.is(".btn-sm"), "the 'Delete' button shown");
+	assert.ok(!$delbut.prop("disabled"), "the 'Delete' button is enabled");
+
+	$delbut.click();
+	$load = p.find("div#load tr");
+	assert.equal($load.size(), 2, "the row count was decremented, now 2");
+
+	p.find(".editable-submit").click();
 	setTimeout(function() {
+		var binData = e.editable("getValue", true);
+		var decodeData = JSON.parse(bin2jsonstr(binData));
+		assert.equal(isParamsValidAndEqual(expectedData, decodeData), 0,
+					 "The changes are corrected");
 		done();
 	}, timeout);
 });
-*/

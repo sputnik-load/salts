@@ -98,6 +98,7 @@
 			$("#schedule option").remove();
 			var th = this;
 			var $schedule = $("#schedule");
+			$schedule.off("change");
 			$schedule.on("change", function() {
 				loadScheduleParam(th, $("#select-schedule"));
 				th.$input = th.$tpl.find("div#param input");
