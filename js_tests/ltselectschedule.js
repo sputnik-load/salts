@@ -2,15 +2,20 @@ QUnit.test("LT Select Schedule: New Schedule Without Change", function(assert) {
 	var done = assert.async();
 	var timeout = 300;
 	var rps = 100;
+	var expectedValue = {
+		loadtype: "no",
+		params: {}
+	};
 	var expected = {
-		view: $.LTSelectOptions.no,
+		view: jsonstr2bin(JSON.stringify(expectedValue)),
 		title: "Set the load profile",
-		opt_count: 3
+		opt_count: 4
 	};
 	var htmlCode = $.htmlCodeLTSelectSchedule("no", rps);
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
 	assert.equal(e.data("editable").value,
-				 expected.view, "value view before popover");
+				 expected.view,
+				 "value view before popover");
 	e.click();
 	var p = e.data("editableContainer").tip();
 	assert.ok(p.is(":visible"), "popover was visible");

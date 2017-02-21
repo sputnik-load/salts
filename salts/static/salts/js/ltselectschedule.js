@@ -9,8 +9,10 @@
 	$.htmlCodeLTSelectSchedule = function(option, rps, params) {
 		var srcData = [];
 		var selectedValue = "";
+		if (!params)
+			params = {};
 		for (var k in $.LTSelectOptions) {
-			if (!params)
+			if ((k == "no") && (!$.isEmptyObject(params)))
 				continue;
 			var desc = $.LTSelectOptions[k].replace("{rps}", rps);
 			srcData.push({value: k, text: desc});
