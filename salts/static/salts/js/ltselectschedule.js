@@ -2,9 +2,9 @@
 	"use strict";
 
 	$.LTSelectOptions = {no: "Select To Add New Scheme",
-						 line: "Linear Load From {rps} RPS",
-						 const: "Constant Load For {rps} RPS",
-						 step: "Stepped Load From {rps} RPS"};
+						 line: "Linear Load",
+						 const: "Constant Load",
+						 step: "Stepped Load"};
 
 	var ms2hhmmss = function(ms) {
 		var sec = ms2sec(ms);
@@ -51,8 +51,7 @@
 		for (var k in $.LTSelectOptions) {
 			if ((k == "no") && (!$.isEmptyObject(params)))
 				continue;
-			var desc = $.LTSelectOptions[k].replace("{rps}", rps);
-			srcData.push({value: k, text: desc});
+			srcData.push({value: k, text: $.LTSelectOptions[k]});
 			if (k == option) {
 				var s = JSON.stringify({loadtype: option,
 										params: params})
