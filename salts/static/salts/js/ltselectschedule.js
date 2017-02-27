@@ -6,6 +6,43 @@
 						 const: "Constant Load For {rps} RPS",
 						 step: "Stepped Load From {rps} RPS"};
 
+	var ms2hhmmss = function(ms) {
+		var sec = ms2sec(ms);
+		if (sec < 60)
+			return sec;
+		if (sec >= 60 && sec < 3600)
+			return Math.floor(sec / 60) + ":" +
+				   pad(sec % 60);
+		else {
+			var hh = Math.floor(sec / 3600);
+			sec = sec % 3600;
+			var mm = Math.floor(sec / 60);
+			return hh + ":" + pad(mm) + ":" + pad(sec % 60)
+		}
+	}
+
+	var hhmmss2ms = function(line) {
+		try {
+			var values = line.split(":");
+			if (values.length == 1)
+				return sec2ms(parseInt(values[0], 10));
+			else if (values.length == 2) {
+				var mm = parseInt(values[0], 10);
+				var ss = parseInt(values[1], 10);
+				return sec2ms(60 * mm + ss);
+			}
+			else if (values.length == 3) {
+				var hh = parseInt(values[0], 10);
+				var mm = parseInt(values[1], 10);
+				var ss = parseInt(values[2], 10);
+				return sec2ms(3600 * hh + 60 * mm + ss);
+			}
+		} catch (err) {
+			console.log(err);
+		}
+		return 0;
+	}
+
 	$.htmlCodeLTSelectSchedule = function(option, rps, params) {
 		var srcData = [];
 		var selectedValue = "";
@@ -103,7 +140,6 @@
 			$schedule.off("change");
 			$schedule.on("change", function() {
 				loadScheduleParam(th, $("#select-schedule"));
-				th.$input = th.$tpl.find("div#param input");
 			});
 			var step = JSON.parse(bin2jsonstr(value));
 			for (var i = 0; i < this.source.length; i++) {
@@ -118,18 +154,32 @@
 					loadScheduleParam(th, $("#select-schedule"));
 				}
 			}
-			this.$input = this.$tpl.find("div#param input");
+			if ($.isEmptyObject(step.params))
+				return;
+			step.params.dur = ms2hhmmss(step.params.dur);
 			for (var name in step.params) {
-				this.$input.filter("[name=" + name + "]").val(step.params[name]);
+				this.$tpl.find("div#param input")
+					.filter("[name=" + name + "]")
+					.val(step.params[name]);
 			}
 		},
        
 		input2value: function() {
 			var $schedule = $("#schedule");
 			var params = {};
-			$.each(this.$input, function() {
-				params[$(this).attr("name")] = $(this).val();
+			$.each(this.$tpl.find("div#param input"), function() {
+				var k = $(this).attr("name");
+				params[k] = $(this).val();
+				if (k != "dur")
+					try {
+						params[k] = parseInt(params[k], 10);
+					} catch(err) {
+						console.log("Warning: " + err);
+						params[k] = 1;
+					}
 			});
+			if ("dur" in params)
+				params.dur = hhmmss2ms(params.dur);
 			var changed = {
 				loadtype: $schedule.val(),
 				params: params
