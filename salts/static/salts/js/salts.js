@@ -1,13 +1,14 @@
-function toHHMMSS(seconds) {
-	var pad = function(num) {
-		if (isNaN(num)) {
-			throw "Incorrect input";
-		}
-		if (num < 10) {
-			num = "0" + num;
-		}
-		return num;
+function pad(num) {
+	if (isNaN(num)) {
+		throw "Incorrect input";
 	}
+	if (num < 10) {
+		num = "0" + num;
+	}
+	return num;
+}
+
+function toHHMMSS(seconds) {
 	try {
 		var hh = Math.floor(seconds / 3600);
 		var mm = Math.floor((seconds - (hh * 3600)) / 60);
