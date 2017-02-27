@@ -104,7 +104,7 @@
 									"<input type=text name=b></input><br>" +
 								"<label><span>Step Length: </span></label>" +
 									"<input type=text name=step></input><br>" +
-								"<label><span>Duration: </span></label>" +
+								"<label><span>Duration For 1 Step: </span></label>" +
 									"<input type=text name=dur></input>" +
 							 "</div>");
 	};
