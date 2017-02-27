@@ -136,7 +136,7 @@ QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
 	$inputs.filter("[name=a]").val("4");
 	$inputs.filter("[name=b]").val("20");
 	$inputs.filter("[name=step]").val("4");
-	$inputs.filter("[name=dur]").val("4000");
+	$inputs.filter("[name=dur]").val("4");
 	$loadEditable.find(".editable-submit").click();
 
 	assert.equal($aNewLoad.text(), "stepped load from 4 to 20 rps",
