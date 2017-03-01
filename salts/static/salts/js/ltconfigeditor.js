@@ -44,10 +44,22 @@
 		return $tbl.find("tr#" + newId);
 	}
 
+
+	$.htmlCodeLTConfigEditor = function(id, title, data, text) {
+		return "<a href=# id='" + id + "'" +
+			   "data-type=ltconfigeditor " +
+			   "data-gen-type='" + data["gen_type"] + "' " +
+			   "data-placement=right " +
+			   "data-value='" +
+			   jsonstr2bin(JSON.stringify(data)) + "'" +
+			   "data-title='" + title + "'>" + text + "</a>";
+	}
+
 	var LTConfigEditor = function (options) {
 		var value = valueFromObject(options.scope, "value");
 		var data = JSON.parse(bin2jsonstr(value));
 		this.rps = data.rps;
+		this.gen = data.gen_type;
 		this.init("ltconfigeditor", options, LTConfigEditor.defaults);
 	};
 

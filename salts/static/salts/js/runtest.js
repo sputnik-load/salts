@@ -378,17 +378,12 @@ $(document).ready(function() {
 });
 
 function test_name_formatter(v, row, index) {
-	var dataValue = jsonstr2bin(JSON.stringify(row['default_data']));
-	var codeSelect = "<a href='#' id='test_name' " +
-						"data-type='ltconfigeditor' " +
-						"data-gen-type='" + row['default_data']['gen_type'] + "' " +
-						"data-placement='right' " +
-						"data-value='" + dataValue + "'" +
-						"data-title='Изменяемые параметры'>" +
-						row['test_name'] + "</a>";
-	return "<div name='test_name'>" + codeSelect + "</div>" +
-				"<div name='ltconfigeditor' " +
-				"style='font-family:courier;font-size:70%'></div>";
+	return "<div name=test_name>" +
+		   $.htmlCodeLTConfigEditor(index,
+									"Редактирование параметров сценария",
+									row.default_data, row.test_name) +
+		   "</div><div name=ltconfigeditor " +
+		   "style='font-family:courier;font-size:70%'></div>";
 }
 
 function availTankHostFormatter(v, row, index) {

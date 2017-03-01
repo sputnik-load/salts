@@ -1,3 +1,4 @@
+
 var testData = {
 	test_name: "LT Config",
 	steps: [{loadtype: "line", params: {a: 1, b: 5, dur: 15000}},
@@ -6,6 +7,12 @@ var testData = {
 	target: "xyz",
 	port: 7654,
 	s: 1
+};
+var inp = {
+	id: 1,
+	data: testData,
+	title: "Config Title",
+	text: "Config Editor"
 };
 
 var isParamsValidAndEqual = function(a, b) {
@@ -50,10 +57,8 @@ QUnit.test("LT Config Editor: No User Load", function(assert) {
 		port: testData.port,
 	};
 	var done = assert.async();
-	var binTestData = jsonstr2bin(JSON.stringify(testData));
-	var htmlCode = "<a href=# id=a data-type=ltconfigeditor " +
-				   "data-value='" + binTestData + "' data-title=xyz></a>";
-
+	var htmlCode = $.htmlCodeLTConfigEditor(inp.id, inp.title,
+											inp.data, inp.text);
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
 	e.click();
 	var p = e.data("editableContainer").tip();
@@ -98,10 +103,8 @@ QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
 	};
 
 	var done = assert.async();
-	var binTestData = jsonstr2bin(JSON.stringify(testData));
-	var htmlCode = "<a href=# id=a data-type=ltconfigeditor " +
-				   "data-value='" + binTestData + "' data-title=xyz></a>";
-
+	var htmlCode = $.htmlCodeLTConfigEditor(inp.id, inp.title,
+											inp.data, inp.text);
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
 	e.click(); // to open configeditor
 
@@ -164,10 +167,8 @@ QUnit.test("LT Config Editor: the 'Delete' Button", function(assert) {
 	};
 
 	var done = assert.async();
-	var binTestData = jsonstr2bin(JSON.stringify(testData));
-	var htmlCode = "<a href=# id=a data-type=ltconfigeditor " +
-				   "data-value='" + binTestData + "' data-title=xyz></a>";
-
+	var htmlCode = $.htmlCodeLTConfigEditor(inp.id, inp.title,
+											inp.data, inp.text);
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
 	e.click(); // to open configeditor
 
