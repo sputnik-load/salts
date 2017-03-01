@@ -232,7 +232,7 @@ function toScenarioFormat(aItem) {
 function displayStartButton(trItem) {
 	var scenarioId = trItem.find("td:eq(0)").text();
 	var onclickHandler = "";
-	var butItem = trItem.find("button");
+	var butItem = trItem.find("button#action_btn");
 	var tankId = trItem.find("a[name='tank_host']").attr("data-value");
 	disabled = true;
 	if (tankId > 0) {
