@@ -1,15 +1,18 @@
 (function ($) {
 	"use strict";
 
-	var assignLoadLabels = function() {
+	var assignLoadLabels = function(gen) {
 		var $tbl = $("div#load table");
-		var labelCode = "<label><span>Load #{number}: </span></label>";
+		var titleTemplate = "Load #{number}";
+		var labelCode = "<label><span>{title}: </span></label>";
 		var i = 1;
 		$.each($tbl.find("tr"), function() {
-			$(this).find("td:first").html(labelCode.replace("{number}", i));
+			var title = titleTemplate.replace("{number}", i);
+			$(this).find("td:first").html(labelCode.replace("{title}", title));
+			$(this).find("a").attr("data-title", title + " (" + gen + ")");
 			i += 1;
 		});
-	}
+	};
 
 	var newLoad = function(option, id, rps, gen, params) {
 		var $tbl = $("div#load table");
@@ -39,20 +42,21 @@
 			$(rowCode).insertAfter($row);
 		else
 			$tbl.append(rowCode);
-		assignLoadLabels();
+		assignLoadLabels(gen);
 
 		return $tbl.find("tr#" + newId);
 	}
 
 
 	$.htmlCodeLTConfigEditor = function(id, title, data, text) {
+		var gen = data.gen_type;
 		return "<a href=# id='" + id + "'" +
 			   "data-type=ltconfigeditor " +
-			   "data-gen-type='" + data["gen_type"] + "' " +
+			   "data-gen-type='" + gen + "' " +
 			   "data-placement=right " +
 			   "data-value='" +
 			   jsonstr2bin(JSON.stringify(data)) + "'" +
-			   "data-title='" + title + "'>" + text + "</a>";
+			   "data-title='" + title + " (" + gen + ")'>" + text + "</a>";
 	}
 
 	var LTConfigEditor = function (options) {
