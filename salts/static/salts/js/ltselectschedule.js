@@ -43,7 +43,7 @@
 		return 0;
 	}
 
-	$.htmlCodeLTSelectSchedule = function(option, rps, params) {
+	$.htmlCodeLTSelectSchedule = function(option, rps, gen, params) {
 		var srcData = [];
 		var selectedValue = "";
 		if (!params)
@@ -60,6 +60,7 @@
 		}
 		return "<a href=# data-type=ltselectschedule " +
 				"data-rps=" + rps + " " +
+				"data-gen=" + gen + " " +
 				"data-value='" + selectedValue + "' " +
 				"data-source='" + JSON.stringify(srcData) + "'></a>";
 	}
@@ -81,6 +82,7 @@
 	var LTSelectSchedule = function (options) {
 		this.init("ltselectschedule", options, LTSelectSchedule.defaults);
 		this.rps = valueFromObject(this.options.scope, "rps");
+		this.gen = valueFromObject(this.options.scope, "gen");
 		this.source = valueFromObject(this.options.scope, "source");
 		this.$lineParam = $("<div id=param>" +
 								"<label><span>Start RPS: </span></label>" +
@@ -153,6 +155,7 @@
 					loadScheduleParam(th, $("#select-schedule"));
 				}
 			}
+			$schedule.attr("disabled", this.gen == "jmeter");
 			if ($.isEmptyObject(step.params))
 				return;
 			step.params.dur = ms2hhmmss(step.params.dur);

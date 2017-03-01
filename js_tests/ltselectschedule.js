@@ -1,3 +1,6 @@
+var gen = "phantom";
+
+
 QUnit.test("LT Select Schedule: New Schedule Without Change", function(assert) {
 	var done = assert.async();
 	var timeout = 300;
@@ -11,7 +14,7 @@ QUnit.test("LT Select Schedule: New Schedule Without Change", function(assert) {
 		title: "Set the load profile",
 		opt_count: 4
 	};
-	var htmlCode = $.htmlCodeLTSelectSchedule("no", rps);
+	var htmlCode = $.htmlCodeLTSelectSchedule("no", rps, gen);
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
 	assert.equal(e.data("editable").value,
 				 expected.view,
@@ -64,7 +67,9 @@ QUnit.test("LT Select Schedule: Const Load", function(assert) {
 		a: [initial.params.a, change.params.a],
 		dur: [ms2sec(initial.params.dur), ms2sec(change.params.dur)]
 	};
-	var htmlCode = $.htmlCodeLTSelectSchedule(initial.loadtype, initial.params.a, initial.params);
+	var htmlCode = $.htmlCodeLTSelectSchedule(initial.loadtype,
+											  initial.params.a,
+											  gen, initial.params);
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
 	assert.equal(e.data("editable").value, expected.view[0],
 				 "Value view before popover: " + JSON.stringify(initial));
@@ -132,7 +137,9 @@ QUnit.test("LT Select Schedule: Line Load", function(assert) {
 		b: [initial.params.b, change.params.b],
 		dur: [ms2sec(initial.params.dur), ms2sec(change.params.dur)]
 	};
-	var htmlCode = $.htmlCodeLTSelectSchedule(initial.loadtype, initial.params.a, initial.params);
+	var htmlCode = $.htmlCodeLTSelectSchedule(initial.loadtype,
+											  initial.params.a,
+											  gen, initial.params);
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
 	assert.equal(e.data("editable").value, expected.view[0],
 				 "Value view before popover: " + JSON.stringify(initial));
@@ -202,7 +209,9 @@ QUnit.test("LT Select Schedule: Step Load", function(assert) {
 		step: [initial.params.step, change.params.step],
 		dur: [ms2sec(initial.params.dur), ms2sec(change.params.dur)]
 	};
-	var htmlCode = $.htmlCodeLTSelectSchedule(initial.loadtype, initial.params.a, initial.params);
+	var htmlCode = $.htmlCodeLTSelectSchedule(initial.loadtype,
+											  initial.params.a,
+											  gen, initial.params);
 	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
 	assert.equal(e.data("editable").value, expected.view[0],
 				 "Value view before popover: " + JSON.stringify(initial));
@@ -241,6 +250,35 @@ QUnit.test("LT Select Schedule: Step Load", function(assert) {
 				     "New duration value saved");
 		assert.equal(e.data("editable").value, expected.view[1],
 					 "New value view: " + JSON.stringify(change));
+		done();
+	}, timeout);
+});
+
+
+QUnit.test("LT Select Schedule: Jmeter Generator Type", function(assert) {
+	var done = assert.async();
+	var jmeter = "jmeter";
+	var initial = {
+		loadtype: "const",
+		params: {
+			a: 5,
+			dur: 12000
+		}
+	};
+	var htmlCode = $.htmlCodeLTSelectSchedule(initial.loadtype,
+											  initial.params.a,
+											  jmeter, initial.params);
+	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
+	e.click();
+	var p = e.data("editableContainer").tip();
+	assert.ok(p.is(":visible"), "popover was visible");
+
+	var $schedule = p.find("div#select-schedule select#schedule");
+	assert.ok($schedule.attr("disabled"), "Select Item is disabled.");
+
+	p.find(".editable-cancel").click();
+	setTimeout(function() {
+		assert.ok(!p.is(":visible"), "popover was removed");
 		done();
 	}, timeout);
 });

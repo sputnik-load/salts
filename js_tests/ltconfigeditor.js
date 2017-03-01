@@ -1,6 +1,6 @@
-
 var testData = {
 	test_name: "LT Config",
+	gen_type: "phantom",
 	steps: [{loadtype: "line", params: {a: 1, b: 5, dur: 15000}},
 		    {loadtype: "const", params: {a: 5, dur: 60000}},
 		    {loadtype: "line", params: {a: 5, b: 1, dur: 10000}}],
@@ -192,6 +192,28 @@ QUnit.test("LT Config Editor: the 'Delete' Button", function(assert) {
 		var decodeData = JSON.parse(bin2jsonstr(binData));
 		assert.equal(isParamsValidAndEqual(expectedData, decodeData), 0,
 					 "The changes are corrected");
+		done();
+	}, timeout);
+});
+
+
+QUnit.test("LT Config Editor: JMeter Generator Type", function(assert) {
+	var done = assert.async();
+	inp.data.gen_type = "jmeter";
+	var htmlCode = $.htmlCodeLTConfigEditor(inp.id, inp.title,
+											inp.data, inp.text);
+	var e = $(htmlCode).appendTo("#qunit-fixture").editable();
+	e.click(); // to open configeditor
+
+	var p = e.data("editableContainer").tip();
+	$.each(p.find("div#load tr"), function() {
+		assert.ok($(this).find("button[name=add]").prop("disabled"),
+				  "The 'Add' button disabled");
+		assert.ok($(this).find("button[name=del]").prop("disabled"),
+				  "The 'Del' button disabled");
+	});
+	p.find(".editable-cancel").click();
+	setTimeout(function() {
 		done();
 	}, timeout);
 });

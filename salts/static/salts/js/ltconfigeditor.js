@@ -11,7 +11,7 @@
 		});
 	}
 
-	var newLoad = function(option, id, rps, params) {
+	var newLoad = function(option, id, rps, gen, params) {
 		var $tbl = $("div#load table");
 		var $rows = $tbl.find("tr");
 		var $row = $tbl.find("tr#" + id);
@@ -25,7 +25,7 @@
 					newId = thisId + 1;
 			});
 		}
-		var aCode = $.htmlCodeLTSelectSchedule(option, rps, params);
+		var aCode = $.htmlCodeLTSelectSchedule(option, rps, gen, params);
 		var plusCode = "<button type=button name=add class='btn btn-plus'>" +
 					   "<span class='glyphicon glyphicon-plus'></span>" +
 					   "</button>";
@@ -70,7 +70,7 @@
 		addLoad: function(option, id, rps, params) {
 			if (!params)
 				params = {};
-			var $row = newLoad(option, id, rps, params);
+			var $row = newLoad(option, id, rps, this.gen, params);
 			var $a = $row.find("a");
 			$a.editable({
 				showbuttons: "bottom",
@@ -92,11 +92,14 @@
 				}
 			});
 			$a.on("save", function(e, params) {
-				var disabled = (params.newValue == $.LTSelectOptions.no);
+				var decoded = bin2jsonstr(params.newValue);
+				var disabled = (decoded.loadtype == $.LTSelectOptions.no);
 				$row.find("button").attr("disabled", disabled);
 			});
 			var configEditor = this;
-			$row.find("button[name=add]").on("click", function() {
+			var $buts = $row.find("button");
+			$buts.attr("disabled", this.gen == "jmeter");
+			$buts.filter("[name=add]").on("click", function() {
 				var new_rps = rps;
 				if (params) {
 					new_rps = params.b;
@@ -105,7 +108,7 @@
 				}
 				configEditor.addLoad("no", $row.attr("id"), rps);
 			});
-			$row.find("button[name=del]").on("click", function() {
+			$buts.filter("[name=del]").on("click", function() {
 				$row.remove();
 				assignLoadLabels();
 			});
