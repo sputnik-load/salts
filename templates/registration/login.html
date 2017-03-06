@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 {% load url from future %}
 {% block title_content %}
-  <title>SALTS: нагрузочные тесты, результаты, графики</title>
+	<title></title>
 {% endblock title_content %}
 
 {% block container %}
 
 {% if form.errors %}
-<p style="color:red;">Неверное имя пользователя или пароль. Проверьте правильность введенных данных.</p>
+<p style="color:red;" name="login_fail"></p>
 {% endif %}
 
 {% if info %}
-<p style="color:green;">{{ info }}</p>
+<p style="color:green;" name="exit_ok">{{ info }}</p>
 {% endif %}
 
-<form method="post" action="{% url 'django.contrib.auth.views.login' %}">
+<form method="post" action="{% url 'django.contrib.auth.views.login' %}" name=auth>
   {% csrf_token %}
   <table>
     <tr>
@@ -27,7 +27,19 @@
     </tr>
   </table>
 
-  <input type="submit" value="Войти"/>
+  <input type="submit" value="" name="login_but"/>
   <input type="hidden" name="next" value="{{ next }}" />
 </form>
+<script>
+	$(document).ready(function() {
+		// menuChangeLocale();
+		$("title").text("SALTS: " + Lang.tr.auth.title);
+		$("form[name=auth]").find("input[name=login_but]").val(Lang.tr.auth.login_but);
+		$("p[name=login_fail]").text(Lang.tr.auth.login_fail);
+		$("p[name=exit_ok]").text(Lang.tr.auth.exit_ok);
+		var $form = $("form[name=auth]");
+		$form.find("label[for=id_username]").text(Lang.tr.auth.user_name + ":");
+		$form.find("label[for=id_password]").text(Lang.tr.auth.password + ":");
+	});
+</script>
 {% endblock %}

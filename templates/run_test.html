@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title_content %}
-  <title>SALTS: запуск тестов</title>
+  <title></title>
 {% endblock title_content %}
 {% block ext_static_files %}
   {% load staticfiles %}
@@ -12,7 +12,7 @@
 {% block container %}
 
 	<div id="run-table-toolbar">
-		<h3 class="salts-table-title">Запущенные тесты:</h3>
+		<h3 class="salts-table-title"></h3>
 	</div>
 	<table id="run-table"
 		data-toggle="table"
@@ -29,25 +29,22 @@
 		data-search="false">
 		<thead style="background-color: Bisque"><tr>
 			<th class="col-sm-1" data-field="shooting_id" data-sortable="true"
-			  data-visible="false" title="ID стрельбы">ID</th>
+			  data-visible="false"></th>
 			<th class="col-sm-1" data-field="id" data-sortable="true"
-			  data-visible="true" title="ID">ID</th>
+			  data-visible="true"></th>
 			<th class="col-sm-2" data-field="test_name"
-				data-formatter="test_name_formatter"
-				title="Имя теста">Имя теста</th>
-			<th class="col-sm-2" data-field="tank_host"
-				title="Имя хоста">Имя хоста</th>
+				data-formatter="test_name_formatter"></th>
+			<th class="col-sm-2" data-field="tank_host"></th>
 			<th class="col-sm-2" data-field="action"
-				data-formatter="action_formatter"
-				title="Действие">Действие</th>
+				data-formatter="action_formatter"></th>
 			<th class="col-sm-2" data-field="status"
-				data-formatter="statusFormatter" title="Статус">Статус</th>
+				data-formatter="statusFormatter"></th>
 		</tr></thead>
 	</table>
 
 	<p id="linker" align="right"></p>
 	<div id="avail-table-toolbar">
-		<h3 class="salts-table-title">Доступные тесты:</h3>
+		<h3 class="salts-table-title"></h3>
 	</div>
 	<table id="avail-table"
 		data-toggle="table"
@@ -67,16 +64,15 @@
 		data-search="false">
 		<thead style="background-color: Bisque"><tr>
 			<th class="col-sm-1" data-field="id" data-sortable="true"
-				data-visible="true" title="ID">ID</th>
-			<th class="col-sm-2" data-field="test_name" title="Имя теста"
-				data-formatter="test_name_formatter">Имя теста</th>
-			<th class="col-sm-2" data-field="tank_host" title="Имя хоста"
-				data-formatter="availTankHostFormatter">Имя хоста</th>
+				data-visible="true"></th>
+			<th class="col-sm-2" data-field="test_name"
+				data-formatter="test_name_formatter"></th>
+			<th class="col-sm-2" data-field="tank_host"
+				data-formatter="availTankHostFormatter"></th>
 			<th class="col-sm-2" data-field="action"
-				data-formatter="action_formatter"
-				title="Действие">Действие</th>
+				data-formatter="action_formatter"></th>
 			<th class="col-sm-2" data-field="status"
-				data-formatter="statusFormatter" title="Статус">Статус</th>
+				data-formatter="statusFormatter"></th>
         </tr></thead>
 	</table>
 	<script type="text/javascript" src="{% static "salts/js/runtest.js" %}"></script>

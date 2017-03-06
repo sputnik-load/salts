@@ -1,10 +1,10 @@
 (function ($) {
 	"use strict";
 
-	$.LTSelectOptions = {no: "Select To Add New Scheme",
-						 line: "Linear Load",
-						 const: "Constant Load",
-						 step: "Stepped Load"};
+	$.LTSelectOptions = {no: Lang.tr.run_page.test_name.select_schedule.options.no,
+						 line: Lang.tr.run_page.test_name.select_schedule.options.line,
+						 const: Lang.tr.run_page.test_name.select_schedule.options.const,
+						 step: Lang.tr.run_page.test_name.select_schedule.options.step};
 
 	var ms2hhmmss = function(ms) {
 		var sec = ms2sec(ms);
@@ -84,30 +84,43 @@
 		this.rps = valueFromObject(this.options.scope, "rps");
 		this.gen = valueFromObject(this.options.scope, "gen");
 		this.source = valueFromObject(this.options.scope, "source");
-		this.$lineParam = $("<div id=param>" +
-								"<label><span>Start RPS: </span></label>" +
-									"<input type=text name=a></input><br>" +
-								"<label><span>Finish RPS: </span></label>" +
-									"<input type=text name=b></input><br>" +
-								"<label><span>Duration: </span></label>" +
-									"<input type=text name=dur></input>" +
-							"</div>");
-		this.$constParam = $("<div id=param>" +
-								 "<label><span>Start RPS: </span></label>" +
-									"<input type=text name=a></input><br>" +
-								 "<label><span>Duration: </span></label>" +
-									"<input type=text name=dur></input>" +
-							 "</div>");
-		this.$stepParam = $("<div id=param>" +
-								"<label><span>Start RPS: </span></label>" +
-									"<input type=text name=a></input><br>" +
-								"<label><span>Finish RPS: </span></label>" +
-									"<input type=text name=b></input><br>" +
-								"<label><span>Step Length: </span></label>" +
-									"<input type=text name=step></input><br>" +
-								"<label><span>Duration For 1 Step: </span></label>" +
-									"<input type=text name=dur></input>" +
-							 "</div>");
+		var tr_load = Lang.tr.run_page.test_name.config_editor.load;
+		var htmlCode = "<div id=param>" +
+					   "<label><span>{a}</span></label>" +
+					   "<input type=text name=a></input><br>" +
+					   "<label><span>{b}</span></label>" +
+					   "<input type=text name=b></input><br>" +
+					   "<label><span>{dur}</span></label>" +
+					   "<input type=text name=dur></input>" +
+					   "</div>";
+		htmlCode = htmlCode.replace("{a}", tr_load.line.a + ":");
+		htmlCode = htmlCode.replace("{b}", tr_load.line.b + ":");
+		htmlCode = htmlCode.replace("{dur}", tr_load.line.dur + ":");
+		this.$lineParam = $(htmlCode);
+		htmlCode = "<div id=param>" +
+				   "<label><span>{a}</span></label>" +
+				   "<input type=text name=a></input><br>" +
+				   "<label><span>{dur}</span></label>" +
+				   "<input type=text name=dur></input>" +
+				   "</div>";
+		htmlCode = htmlCode.replace("{a}", tr_load.const.a + ":");
+		htmlCode = htmlCode.replace("{dur}", tr_load.const.dur + ":");
+		this.$constParam = $(htmlCode);
+		htmlCode = "<div id=param>" +
+				   "<label><span>{a}</span></label>" +
+				   "<input type=text name=a></input><br>" +
+				   "<label><span>{b}</span></label>" +
+				   "<input type=text name=b></input><br>" +
+				   "<label><span>{step_rps}</span></label>" +
+				   "<input type=text name=step></input><br>" +
+				   "<label><span>{step_dur}</span></label>" +
+				   "<input type=text name=dur></input>" +
+				   "</div>";
+		htmlCode = htmlCode.replace("{a}", tr_load.step.a + ":");
+		htmlCode = htmlCode.replace("{b}", tr_load.step.b + ":");
+		htmlCode = htmlCode.replace("{step_rps}", tr_load.step.step_rps + ":");
+		htmlCode = htmlCode.replace("{step_dur}", tr_load.step.step_dur + ":");
+		this.$stepParam = $(htmlCode);
 	};
 
 	$.fn.editableutils.inherit(LTSelectSchedule, $.fn.editabletypes.abstractinput);

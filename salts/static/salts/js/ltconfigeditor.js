@@ -3,7 +3,8 @@
 
 	var assignLoadLabels = function(gen) {
 		var $tbl = $("div#load table");
-		var titleTemplate = "Load #{number}";
+		var titleTemplate = Lang.tr.run_page.test_name.config_editor.label +
+							" #{number}";
 		var labelCode = "<label><span>{title}: </span></label>";
 		var i = 1;
 		$.each($tbl.find("tr"), function() {
@@ -82,15 +83,18 @@
 					var step = JSON.parse(bin2jsonstr(value));
 					if (value == $a.attr("data-value") && $a.text())
 						return;
-					var desc = "select to add new scheme";
-					if (step.loadtype == "line")
-						desc = "linear load from " + step.params.a + " to " +
-							   step.params.b + " rps";
+					var tr_load = Lang.tr.run_page.test_name.config_editor.load;
+					var desc = tr_load.no.desc;
+					if (step.loadtype == "line") {
+						desc = tr_load.line.desc.replace("{a}", step.params.a);
+						desc = desc.replace("{b}", step.params.b);
+					}
 					else if (step.loadtype == "const")
-						desc = "constant load for " + step.params.a + " rps";
-					else if (step.loadtype == "step")
-						desc = "stepped load from " + step.params.a + " to " +
-							   step.params.b + " rps";
+						desc = tr_load.const.desc.replace("{a}", step.params.a);
+					else if (step.loadtype == "step") {
+						desc = tr_load.step.desc.replace("{a}", step.params.a);
+						desc = desc.replace("{b}", step.params.b);
+					}
 					$a.attr("data-value", value);
 					$a.text(desc);
 				}
@@ -120,6 +124,10 @@
 
 		render: function() {
 			this.$input = this.$tpl.find("input");
+			var tr_config_editor = Lang.tr.run_page.test_name.config_editor;
+			this.$tpl.find("label[name=test-name] span").text(tr_config_editor.test_name + ":");
+			this.$tpl.find("label[name=target] span").text(tr_config_editor.target + ":");
+			this.$tpl.find("label[name=port] span").text(tr_config_editor.port + ":");
 		},
         
 		value2html: function(value, element) {
@@ -179,15 +187,15 @@
 
 	LTConfigEditor.defaults = $.extend({},
 		$.fn.editabletypes.abstractinput.defaults, {
-			tpl: "<div><label><span>Имя теста: </span></label>" +
+			tpl: "<div><label name=test-name><span></span></label>" +
 					"<input type='text' name='test_name'></input></div>" +
 				 "<div id=load>" +
 					"<table>" +
 					"</table>" +
 				 "</div>" +
-				 "<div><label><span>Target: </span></label>" +
+				 "<div><label name=target><span></span></label>" +
 					"<input type='text' name='target'></input>" +
-				 	"<label><span>Port: </span></label>" +
+					"<label name=port><span></span></label>" +
 					"<input type='text' name='port'></input></div>",
 			inputclass: ""
 	});

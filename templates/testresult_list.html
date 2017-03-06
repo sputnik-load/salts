@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% block title_content %}
-  <title>SALTS: результаты тестов</title>
+  <title></title>
 {% endblock title_content %}
 {% block container %}
-  <h1>Результаты тестов:</h1>
-  <a href="https://wiki.ptnik.su/pages/viewpage.action?pageId=27040006" target="_blank">Справка</a>
   <p id="linker" align="right"></p>
+  <div id="results-table-toolbar">
+	<h3 class="salts-table-title"></h3>
+	<a href="https://wiki.ptnik.su/pages/viewpage.action?pageId=27040006" target="_blank" name=help></a>
+  </div>
   <table id="table"
          data-toggle="table"
          data-url="/get_results/"
@@ -23,35 +25,47 @@
          data-search="false">
       <thead style="background-color: Bisque">
         <tr>
-          <th data-field="id" data-visible="false" title="ID">ID</th>
-          <th data-field="test_name" data-sortable="true" data-formatter="test_name_formatter" title="Тест">Тест</th>
-          <th data-field="user" data-sortable="true" title="Пользователь">Пользователь</th>
-          <th data-field="test_status" data-sortable="true" data-formatter="test_status_formatter" title="Статус">Статус</th>
-          <th data-field="scenario_id" data-sortable="true" data-visible="false" title="ID сценария">Сценарий</th>
-          <th data-field="target" data-sortable="true" title="Нагружаемый сервис">Target</th>
-          <th data-field="version" data-sortable="true" title="Версия">Версия</th>
-          <th data-field="rps" data-sortable="true" title="RPS">RPS</th>
-          <th data-field="q99" data-sortable="true" title="99%">99%</th>
-          <th data-field="q90" data-sortable="true" title="90%">90%</th>
-          <th data-field="q50" data-sortable="true" title="50%">50%</th>
-          <th data-field="http_net" title="% ошибок http/net">Ошибки</th>
-          <th data-field="duration" data-sortable="true" title="Длительность">Время</th>
-          <th data-field="dt_finish" data-sortable="true" title="Время окончания">Окончание</th>
-          <th data-field="graph_url" data-formatter="graph_url_formatter" title="График">График</th>
-          <th data-field="generator" data-sortable="true" title="Нагрузочная станция">Генератор</th>
-          <th data-field="test_id" data-visible="false" data-sortable="true" title="ID теста">ID теста</th>
-          <th data-field="ticket_id" data-sortable="true" data-formatter="ticket_id_formatter" title="Задача">Задача</th>
-          <th data-field="comment" title="Комментарий">Комментарий</th>
+          <th data-field="id" data-visible="false"></th>
+          <th data-field="test_name" data-sortable="true" data-formatter="test_name_formatter"></th>
+          <th data-field="user" data-sortable="true"></th>
+          <th data-field="test_status" data-sortable="true" data-formatter="test_status_formatter"></th>
+          <th data-field="scenario_id" data-sortable="true" data-visible="false"></th>
+          <th data-field="target" data-sortable="true"></th>
+          <th data-field="version" data-sortable="true"></th>
+          <th data-field="rps" data-sortable="true"></th>
+          <th data-field="q99" data-sortable="true"></th>
+          <th data-field="q90" data-sortable="true"></th>
+          <th data-field="q50" data-sortable="true"></th>
+          <th data-field="http_net"></th>
+          <th data-field="duration" data-sortable="true"></th>
+          <th data-field="dt_finish" data-sortable="true"></th>
+          <th data-field="graph_url" data-formatter="graph_url_formatter"></th>
+          <th data-field="generator" data-sortable="true"></th>
+          <th data-field="test_id" data-visible="false" data-sortable="true"></th>
+          <th data-field="ticket_id" data-sortable="true" data-formatter="ticket_id_formatter"></th>
+          <th data-field="comment"></th>
       </tr>
       </thead>
   </table>
+  <script>
+	$(document).ready(function() {
+		menuChangeLocale();
+		$("title").text("SALTS: " + Lang.tr.results_page.title);
+		var $toolbar = $("div#results-table-toolbar");
+		$toolbar.find("h3").text(Lang.tr.results_page.table.title);
+		$toolbar.find("a[name=help]").text(Lang.tr.results_page.help);
+		var $tbl = $("#table");
+		$tbl.bootstrapTable("changeLocale", Lang.current);
+		$tbl.bootstrapTable("changeTitle", Lang.tr.results_page.table.columns);
+	});
+  </script>
 {% endblock container %}
 {% block scripts_blk %}
     get_args = location.search;
     var a = document.createElement('a');
-    var linkText = document.createTextNode("Динамика результатов");
+    var linkText = document.createTextNode(Lang.tr.results_page.dynamics.link);
     a.appendChild(linkText);
-    a.title = "Графики трендов времён отклика";
+    a.title = Lang.tr.results_page.dynamics.title;
     a.href = "/results/graph/" + get_args;    
     var parent = document.getElementById("linker");      
     parent.appendChild(a);      
@@ -79,7 +93,10 @@
       if (value === "") {
         return "-";
       }
-      return "<a href='" + value + "'>График</a>";
+	  var aItem = "<a href='{link}'>{desc}</a>";
+	  aItem = aItem.replace("{link}", value);
+	  aItem = aItem.replace("{desc}", Lang.tr.results_page.table.columns.graph_url);
+	  return aItem
     }
 
     function ticket_id_formatter(value) {

@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 {% block title_content %}
-  <title>SALTS: мониторинг танков</title>
+  <title></title>
 {% endblock title_content %}
 {% block container %}
-  <h1>Мониторинг танков:</h1>
   <p id="linker" align="right"></p>
+  <div id="monitoring-table-toolbar">
+	<h3 class="salts-table-title"></h3>
+  </div>
   <table id="table"
          data-toggle="table"
          data-url="/get_tank_status/"
@@ -23,43 +25,47 @@
       <thead style="background-color: Bisque">
         <tr>
           <th class="col-sm-1" data-field="id" data-sortable="true"
-              data-visible="true" title="ID">ID</th>
-          <th class="col-sm-2" data-field="host" title="Имя">Имя</th>
-          <th class="col-sm-2" data-field="username"
-              title="Имя пользователя">Пользователь</th>
+              data-visible="true"></th>
+          <th class="col-sm-2" data-field="host"></th>
+          <th class="col-sm-2" data-field="username"></th>
           <th class="col-sm-2" data-field="scenario_name"
-              data-formatter="scenario_name_formatter"
-              title="Сценарий">Сценарий</th>
+              data-formatter="scenario_name_formatter"></th>
           <th class="col-sm-2" data-field="status"
-              data-formatter="status_formatter" 
-              title="Статус">Статус</th>
+              data-formatter="status_formatter"></th>
           <th class="col-sm-3" data-field="countdown"
-              data-formatter="countdown_formatter"
-              title="Осталось">Осталось</th>
+              data-formatter="countdown_formatter"></th>
           <th class="col-sm-3" data-field="ticket_url"
-              data-formatter="ticket_url_formatter"
-              title="Осталось">Тикет</th>
+              data-formatter="ticket_url_formatter"></th>
           <th class="col-sm-3" data-field="webconsole"
-              data-formatter="webconsole_formatter"
-              title="Web-консоль танка">WEB-консоль</th>
+              data-formatter="webconsole_formatter"></th>
           <th class="col-sm-3" data-field="test_result"
-              data-formatter="test_result_formatter"
-              title="Ссылка на результат теста">Результат теста</th>
+              data-formatter="test_result_formatter"></th>
         </tr>
       </thead>
   </table>
 {% endblock container %}
 {% block scripts_blk %}
+
+	$(document).ready(function() {
+		menuChangeLocale();
+		$("title").text("SALTS: " + Lang.tr.tanks_page.title);
+		$("div#monitoring-table-toolbar h3").text(Lang.tr.tanks_page.table.title);
+		var $tbl = $("#table");
+		$tbl.bootstrapTable("changeLocale", Lang.current);
+		$tbl.bootstrapTable("changeTitle", Lang.tr.tanks_page.table.columns);
+	});
+
   function ajax_request(params) {
     var resp = $.ajax(params);       
   }
 
   function status_formatter(st) {
+	var choices = Lang.tr.tanks_page.status.choices;
     var status_values = {
-      'P': 'Готовится к старту',
-      'R': 'Выполняется',
-      'I': 'Прерван',
-      'F': 'Закончен'
+      "P": choices.starting,
+      "R": choices.running,
+      "I": choices.interrupted,
+      "F": choices.finished
     }
     return status_values[st];
   }

@@ -12,8 +12,11 @@
     <script type="text/javascript" src="{% static "bootstrap/dist/js/bootstrap.min.js" %}"></script>
     <script type="text/javascript" src="{% static "bootstrap-table/dist/bootstrap-table.min.js" %}"></script>
     <script type="text/javascript" src="{% static "bootstrap-table/src/extensions/key-events/bootstrap-table-key-events.js" %}"></script>
-    <script type="text/javascript" src="{% static "bootstrap-table/dist/locale/bootstrap-table-ru-RU.js" %}"></script>
+    <script type="text/javascript" src="{% static "bootstrap-table/dist/extensions/i18n-enhance/bootstrap-table-i18n-enhance.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "bootstrap-table/dist/locale/bootstrap-table-ru-RU.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "bootstrap-table/dist/locale/bootstrap-table-en-US.min.js" %}"></script>
     <script type="text/javascript" src="{% static "x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "salts/js/dict.js" %}"></script>
     <script type="text/javascript" src="{% static "salts/js/salts.js" %}"></script>
     {% block ext_static_files %}{% endblock %} 
   </head>
@@ -33,26 +36,26 @@
         <ul class="nav navbar-nav">
           <li>
             {% if is_superuser or is_staff %}
-              <a href="{% url 'run_test' %}">Запуск</a>
+				<a href="{% url 'run_test' %}" name=run></a>
             {% endif %}
           </li>
           <li>
-            <a href="{% url 'test_results' %}">Результаты</a>
+			<a href="{% url 'test_results' %}" name=results></a>
           </li>
           <li>
-            <a href="{% url 'tank_monitoring' %}">Танки</a>
+			<a href="{% url 'tank_monitoring' %}" name=tanks></a>
           </li>
           <li>
             {% if is_superuser or is_staff %}
-              <a href="{% url 'admin:index' %}">CMS</a>
+              <a href="{% url 'admin:index' %}" name=cms></a>
             {% endif %}
           </li>
         </ul>  
         <!-- <p align="right">Хост: {{ host }}. БД: {{ name }}.</p> -->
         {% if username %}
-          <div align="right">
-            <p style="color:white">Пользователь: {{ username }}</p>
-            <a style="color:grey" href="{% url 'logout' %}">Выйти</a>
+          <div align="right" name="user-mgr-auth">
+			  <p name="user-label" style="color:white">{{ username }}</p>
+            <a name=exit-link style="color:grey" href="{% url 'logout' %}"></a>
           </div>
         {% endif %}
       </nav>
@@ -62,6 +65,20 @@
       {% block container %}{% endblock %}
     </div>
     <script>
+	  function menuChangeLocale() {
+		var navItems = $(".nav a");
+		$.each(navItems, function() {
+			var opt = $(this).attr("name");
+			$(this).text(Lang.tr.menu[opt]);
+		});
+		var divAuth = $("div[name=user-mgr-auth]");
+		if (divAuth.size()) {
+			var username = $("p[name=user-label]").text();
+			divAuth.find("p[name=user-label]").text(Lang.tr.auth.user_label +
+													": " + username);
+			divAuth.find("a[name=exit-link]").text(Lang.tr.auth.exit);
+		}
+	  }
       {% block scripts_blk %}{% endblock %}
     </script>
   </body>

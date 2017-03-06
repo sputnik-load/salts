@@ -70,27 +70,6 @@ function updateRowIndexes() {
 	});
 }
 
-/*
-function displayCustomData(customData) {
-	var jsonStr = "";
-    var htmlCode = "<ul>";
-    if (customData != undefined)
-    	jsonStr = bin2jsonstr(customData);
-	else
-    	jsonStr = "{}";
-    $.each(JSON.parse(jsonStr), function(key, params) {
-        htmlCode += "<li>" + key + "</li>";
-        htmlCode += "<ul>";
-        $.each(params, function(p, value) {
-            htmlCode += "<li>" + p + ": " + value + "</li>";
-        });
-        htmlCode += "</ul>";
-    });
-    htmlCode += "</ul>";
-    return htmlCode;
-}
-*/
-
 function displayTestNameCell(divItem) {
 	if (divItem.find('a').size() > 0) {
 		updateTestNameEditable(divItem);
@@ -111,17 +90,21 @@ function updateScenarioStatus(scenarioRow, values) {
 	var aContent = "<a href='" + testResultUrl + "' target='_blank'>" +
 					values['tr_id'] + "</a>";
 	var dateContent = "<p>" + moment.unix(values['finish']).format('YYYY-MM-DD HH:mm:ss') + "</p>";
-	divContent = "Последний тест " + aContent + " был завершен " + dateContent;
+	divContent = Lang.tr.run_page.status.info;
+	divContent = divContent.replace("{id}", aContent);
+	divContent = divContent.replace("{date}", dateContent);
 	div.html(divContent);
 }
 
 function updateShootingStatus(shootingRow, values) {
-	var statusContent = "Выполняется тест. ID сессии " + values['session'] +
-						". Запущен " +
-						moment.unix(values['start']).format('YYYY-MM-DD HH:mm:ss') +
-						" пользователем <i>" + values['username'] + "</i>. ";
-	statusContent += "Осталось - " + toHHMMSS(values['remained']) + ".";
-	shootingRow.find('div[name=status]').html(statusContent);
+	var statusContent = Lang.tr.run_page.status.run;
+	statusContent = statusContent.replace("{session}", values["session"]);
+	statusContent = statusContent.replace("{date}",
+										  moment.unix(values["start"])
+												.format("YYYY-MM-DD HH:mm:ss"));
+	statusContent = statusContent.replace("{user}", values["username"]);
+	statusContent = statusContent.replace("{remained}", toHHMMSS(values['remained']));
+	shootingRow.find("div[name=status]").html(statusContent);
 	runTable.bootstrapTable("resetWidth");
 }
 
@@ -141,7 +124,7 @@ function displayTankHostCell(divItem) {
 					id: scenarioId,
 					test_name: shooting["default_data"]["test_name"],
 					tank_host: tank["text"],
-					action_text: "Остановить",
+					action_text: Lang.tr.run_page.action.stop_but,
 					action_click_handler: onclickHandler,
 					status: "",
 					default_data: shooting["default_data"]
@@ -167,25 +150,6 @@ function displayTankHostCell(divItem) {
 		});
 	}
 }
-
-
-/*
-function b64ScenarioChanges(aItem, ltConfigMutableData) {
-	if (aItem.size() == 0)
-		return ltConfigMutableData;
-	if (!aItem.hasClass("editable-unsaved"))
-		return ltConfigMutableData;
-	var initial = JSON.parse(bin2jsonstr(aItem.attr("data-old-value")));
-	var current = JSON.parse(bin2jsonstr(aItem.attr("data-value")));
-	var changes = {};
-	$.each(current, function(name, value) {
-		if (initial[name] != value) {
-			changes[name] = value;
-		}
-	});
-	return jsonstr2bin(JSON.stringify(changes));
-}
-*/
 
 
 function toScenarioFormat(aItem) {
@@ -243,7 +207,7 @@ function displayStartButton(trItem) {
 	}
 	butItem.prop("disabled", disabled);
 	butItem.attr("onclick", onclickHandler);
-	butItem.text("Запустить");
+	butItem.text(Lang.tr.run_page.action.run_but);
 }
 
 function mutationHandler(mutationRecords) {
@@ -321,7 +285,7 @@ function updateVisibleRows(scenBinStr) {
 }
 
 function setGlobalTanks(t) {
-	tanks = {na: [{value: "-1", text: "Нет доступных танков"}],
+	tanks = {na: [{value: "-1", text: Lang.tr.run_page.tank_host.no_tanks}],
 				active: []};
 	$.each(t, function(ix, js_str) {
 		var tank = JSON.parse(js_str);
@@ -353,12 +317,27 @@ function ajax_request(params) {
 	});
 }
 
+
+function runChangeLocale() {
+	menuChangeLocale();
+	$("title").text("SALTS: " + Lang.tr.run_page.title);
+	runTable.bootstrapTable("changeLocale", Lang.current);
+	availTable.bootstrapTable("changeLocale", Lang.current);
+	runTable.bootstrapTable("changeTitle",
+							Lang.tr.run_page.run_table.columns);
+	availTable.bootstrapTable("changeTitle",
+							  Lang.tr.run_page.avail_table.columns);
+	$("div#run-table-toolbar h3").text(Lang.tr.run_page.run_table.title);
+	$("div#avail-table-toolbar h3").text(Lang.tr.run_page.avail_table.title);
+}
+
 $(document).ready(function() {
 	availTable.each(function() {
 		myObserver.observe(this, obsConfig);
 	});
 	var parentRunTable = runTable.parents("div.bootstrap-table");
 	parentRunTable.hide();
+	runChangeLocale();
 	$.fn.editable.defaults.mode = 'popup';
 	$(document).on('visibilitychange', function() {
 		if (document.visibilityState == 'hidden') {
@@ -380,7 +359,7 @@ $(document).ready(function() {
 function test_name_formatter(v, row, index) {
 	return "<div name=test_name>" +
 		   $.htmlCodeLTConfigEditor(index,
-									"Редактирование параметров сценария",
+			   						Lang.tr.run_page.test_name.config_editor.title,
 									row.default_data, row.test_name) +
 		   "</div><div name=ltconfigeditor " +
 		   "style='font-family:courier;font-size:70%'></div>";
@@ -390,8 +369,7 @@ function availTankHostFormatter(v, row, index) {
 	var codeSelect = "<a href='#' name='tank_host'" +
 						"data-source='' " +
 						"data-type='select' data-value='' " +
-						"data-placement='right' " +
-						"data-title='Имя хоста с танком'></a>";
+						"data-placement='right'" + "></a>";
 	return "<div name='tank_host' id='scenario_" + row['id'] + "'>" +
 			codeSelect + "</div>";
 }
@@ -465,5 +443,7 @@ function action_formatter(v, row, index) {
 }
 
 function statusFormatter(v, row, index) {
-	return "<div name='status' update='true'><a></a>Нет результатов</div>";
+	return "<div name='status' update='true'><a></a>" +
+		   Lang.tr.run_page.status.no_results +
+		   "</div>";
 }
