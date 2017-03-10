@@ -74,11 +74,11 @@ QUnit.test("LT Config Editor: No User Load", function(assert) {
 
 	var $load = p.find("div#load a");
 	assert.equal($load.size(), 3, "The count of load schedules is 3");
-	assert.equal($load[0].text, "linear load from 1 to 5 rps",
+	assert.equal($load[0].text, "линейная нагрузка от 1 до 5 rps",
 				 "Rampup line load.");
-	assert.equal($load[1].text, "constant load for 5 rps",
+	assert.equal($load[1].text, "постоянная нагрузка 5 rps",
 				 "Const line load.");
-	assert.equal($load[2].text, "linear load from 5 to 1 rps",
+	assert.equal($load[2].text, "линейная нагрузка от 5 до 1 rps",
 				 "Rampdown line load.");
 	assert.equal($($load[0]).attr("data-rps"), 1,
 				 "base rps");
@@ -123,7 +123,7 @@ QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
 	assert.equal($load.size(), 4, "the row count was incremented, now 4");
 
 	var $aNewLoad = $($load.get(1)).find("a");
-	assert.equal($aNewLoad.text(), "select to add new scheme",
+	assert.equal($aNewLoad.text(), "добавить новую схему нагрузки",
 				 "New Load Item text value");
 	$aNewLoad.click(); // to open load schedule editor
 
@@ -142,7 +142,7 @@ QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
 	$inputs.filter("[name=dur]").val("4");
 	$loadEditable.find(".editable-submit").click();
 
-	assert.equal($aNewLoad.text(), "stepped load from 4 to 20 rps",
+	assert.equal($aNewLoad.text(), "ступенчатая нагрузка от 4 до 20 rps",
 				 "New Stepped Load text value");
 
 	p.find(".editable-submit").click();
