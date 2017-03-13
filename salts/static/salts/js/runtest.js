@@ -348,7 +348,8 @@ $(document).ready(function() {
 			if (updateIntervalId == undefined)
 				return;
 			if (!updateIntervalId)
-				updateIntervalFunc();
+				if (updateIntervalFunc)
+					updateIntervalFunc();
 		}
 	});
 	$(window).resize(function() {

@@ -48,7 +48,9 @@ var Lang = function() {
 					label: "Шаг",
 					target: "Цель",
 					port: "Порт",
+					load_param_title: "Профиль нагрузки",
 					load: {
+						param_title: "Параметры",
 						no: {
 							desc: "добавить новую схему нагрузки"
 						},
@@ -203,7 +205,9 @@ var Lang = function() {
 					label: "Step",
 					target: "Target",
 					port: "Port",
+					load_param_title: "RPS Schedule",
 					load: {
+						param_title: "Parameters",
 						no: {
 							desc: "select to add new scheme"
 						},

@@ -192,3 +192,38 @@
 tr.salts-load-row > td {
 	border: none;
 }
+
+fieldset.salts-load-editor {
+	border: 1px groove #ddd;
+	padding: 10px 10px 10px 10px;
+	margin: 0 0 0 0;
+}
+
+legend.salts-load-editor {
+	font-size: 100%;
+	font-weight: bold;
+	text-align: left;
+	width: auto;
+	padding: 0 0;
+	border: none;
+	margin: 0 0 0 0;
+}
+
+.circleBase {
+	border-radius: 50%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.rps-schedule-nn {
+	width: 30px;
+	height: 30px;
+	background: radial-gradient(white, #00a1dd);
+}
+
+.popover-title {
+	background: #358fe4;
+	font-family: Arial, Helvetica, sans-serif;
+	color: white;
+}

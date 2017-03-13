@@ -77,6 +77,7 @@
 			th.$stepParam.appendTo("#select-schedule");
 		else
 			$("<div id=param></div>").appendTo("#select-schedule");
+		$("legend[name=schedule-step-editor]").text(Lang.tr.run_page.test_name.config_editor.load.param_title);
 	}
 
 	var LTSelectSchedule = function (options) {
@@ -85,42 +86,39 @@
 		this.gen = valueFromObject(this.options.scope, "gen");
 		this.source = valueFromObject(this.options.scope, "source");
 		var tr_load = Lang.tr.run_page.test_name.config_editor.load;
-		var htmlCode = "<div id=param>" +
-					   "<label><span>{a}</span></label>" +
+		var divWithTitle = "<div id=param><fieldset class=salts-load-editor>" +
+						   "<legend name=schedule-step-editor class=salts-load-editor></legend>" +
+						   "{paramlist}</fieldset></div>";
+		var htmlCode = "<label><span>{a}</span></label>" +
 					   "<input type=text name=a></input><br>" +
 					   "<label><span>{b}</span></label>" +
 					   "<input type=text name=b></input><br>" +
 					   "<label><span>{dur}</span></label>" +
-					   "<input type=text name=dur></input>" +
-					   "</div>";
+					   "<input type=text name=dur></input>";
 		htmlCode = htmlCode.replace("{a}", tr_load.line.a + ":");
 		htmlCode = htmlCode.replace("{b}", tr_load.line.b + ":");
 		htmlCode = htmlCode.replace("{dur}", tr_load.line.dur + ":");
-		this.$lineParam = $(htmlCode);
-		htmlCode = "<div id=param>" +
-				   "<label><span>{a}</span></label>" +
+		this.$lineParam = $(divWithTitle.replace("{paramlist}", htmlCode));
+		htmlCode = "<label><span>{a}</span></label>" +
 				   "<input type=text name=a></input><br>" +
 				   "<label><span>{dur}</span></label>" +
-				   "<input type=text name=dur></input>" +
-				   "</div>";
+				   "<input type=text name=dur></input>";
 		htmlCode = htmlCode.replace("{a}", tr_load.const.a + ":");
 		htmlCode = htmlCode.replace("{dur}", tr_load.const.dur + ":");
-		this.$constParam = $(htmlCode);
-		htmlCode = "<div id=param>" +
-				   "<label><span>{a}</span></label>" +
+		this.$constParam = $(divWithTitle.replace("{paramlist}", htmlCode));
+		htmlCode = "<label><span>{a}</span></label>" +
 				   "<input type=text name=a></input><br>" +
 				   "<label><span>{b}</span></label>" +
 				   "<input type=text name=b></input><br>" +
 				   "<label><span>{step_rps}</span></label>" +
 				   "<input type=text name=step></input><br>" +
 				   "<label><span>{step_dur}</span></label>" +
-				   "<input type=text name=dur></input>" +
-				   "</div>";
+				   "<input type=text name=dur></input>";
 		htmlCode = htmlCode.replace("{a}", tr_load.step.a + ":");
 		htmlCode = htmlCode.replace("{b}", tr_load.step.b + ":");
 		htmlCode = htmlCode.replace("{step_rps}", tr_load.step.step_rps + ":");
 		htmlCode = htmlCode.replace("{step_dur}", tr_load.step.step_dur + ":");
-		this.$stepParam = $(htmlCode);
+		this.$stepParam = $(divWithTitle.replace("{paramlist}", htmlCode));
 	};
 
 	$.fn.editableutils.inherit(LTSelectSchedule, $.fn.editabletypes.abstractinput);
