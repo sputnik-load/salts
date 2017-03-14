@@ -31,10 +31,11 @@
 			});
 		}
 		var aCode = $.htmlCodeLTSelectSchedule(option, rps, gen, params);
-		var butCode = "<button type=button name=add class='btn btn-plus'>" +
+		var butCode = "<button type=button name=add class='btn btn-sm add-load'>" +
 					   "<span class='glyphicon glyphicon-plus'></span>" +
 					   "</button>";
-		butCode += "<button type=button name=del class='btn btn-sm'>" +
+		butCode += "<span style='padding-left: 10px;'></span>";
+		butCode += "<button type=button name=del class='btn btn-sm del-load'>" +
 				   "<span class='glyphicon glyphicon-remove'></span>" +
 				   "</button>";
 		var rowCode = "<div class=row id=" + newId + ">";
@@ -206,11 +207,11 @@
 				 "<div name=target>" +
 					"<fieldset class=salts-load-editor>" +
 					"<legend name=target class=salts-load-editor></legend>" +
-						"<div name=hostname class=row>" +
+						"<div name=hostname class='row'>" +
 							"<label name=hostname class=col-sm-4><span></span></label>" +
 							"<input type=text name=hostname class=col-sm-7></input>" +
 						"</div>" +
-						"<div name=port class=row>" +
+						"<div name=port class='row top-buffer'>" +
 							"<label name=port class=col-sm-4><span></span></label>" +
 							"<input type=text name=port class=col-sm-7></input>" +
 						"</div>" +

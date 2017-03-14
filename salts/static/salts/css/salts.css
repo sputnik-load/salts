@@ -227,3 +227,22 @@ legend.salts-load-editor {
 	font-family: Arial, Helvetica, sans-serif;
 	color: white;
 }
+
+.popover {
+	font-family: "Open Sans", Calibri, Arial, Helvetica, sans-serif;
+	background: linear-gradient(135deg, rgba(212,228,239,1) 0%, rgba(228,235,240,1) 100%);;
+}
+
+.add-load {
+	color: white;
+	background-color: #347ab6;
+}
+
+.del-load {
+	color: white;
+	background-color: #347ab6;
+}
+
+.top-buffer {
+	margin-top: 5px;
+}
