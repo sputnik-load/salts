@@ -5,7 +5,8 @@
 		var $tbl = $("div#load");
 		var titleTemplate = Lang.tr.run_page.test_name.config_editor.label +
 							" #{number}";
-		var labelCode = "<label class='circleBase rps-schedule-nn'><span>{title}</span></label>";
+		// var labelCode = "<label class='circleBase rps-schedule-nn'><span>{title}</span></label>";
+		var labelCode = "<label class=badge><span>{title}</span></label>";
 		var i = 1;
 		$.each($tbl.find("div.row"), function() {
 			var title = titleTemplate.replace("{number}", i);
@@ -30,17 +31,16 @@
 			});
 		}
 		var aCode = $.htmlCodeLTSelectSchedule(option, rps, gen, params);
-		var plusCode = "<button type=button name=add class='btn btn-plus'>" +
+		var butCode = "<button type=button name=add class='btn btn-plus'>" +
 					   "<span class='glyphicon glyphicon-plus'></span>" +
 					   "</button>";
-		var delCode = "<button type=button name=del class='btn btn-sm'>" +
-					  "<span class='glyphicon glyphicon-remove'></span>" +
-					  "</button>";
+		butCode += "<button type=button name=del class='btn btn-sm'>" +
+				   "<span class='glyphicon glyphicon-remove'></span>" +
+				   "</button>";
 		var rowCode = "<div class=row id=" + newId + ">";
 		rowCode += "<div name=nn class='col-sm-2 salts-load-row' align=right></div>";
 		rowCode += "<div name=editable class='col-sm-6' align=left>" + aCode + "</div>";
-		rowCode += "<div name=plus class='col-sm-2' align=right>" + plusCode + "</div>";
-		rowCode += "<div name=del class='col-sm-2' align=left>" + delCode + "</div>";
+		rowCode += "<div name=buttons class='col-sm-4' align=left>" + butCode + "</div>";
 		rowCode += "</div>";
 		if ($row.length)
 			$(rowCode).insertAfter($row);
@@ -82,6 +82,7 @@
 			var $a = $row.find("a");
 			$a.editable({
 				showbuttons: "bottom",
+				placement: "right",
 				display: function(value) {
 					var step = JSON.parse(bin2jsonstr(value));
 					if (value == $a.attr("data-value") && $a.text())
@@ -129,9 +130,10 @@
 			this.$input = this.$tpl.find("input");
 			var tr_config_editor = Lang.tr.run_page.test_name.config_editor;
 			this.$tpl.find("label[name=test-name] span").text(tr_config_editor.test_name + ":");
-			this.$tpl.find("label[name=target] span").text(tr_config_editor.target + ":");
-			this.$tpl.find("label[name=port] span").text(tr_config_editor.port + ":");
+			this.$tpl.find("label[name=hostname] span").text(tr_config_editor.target.hostname + ":");
+			this.$tpl.find("label[name=port] span").text(tr_config_editor.target.port + ":");
 			$("legend[name=schedule-editor]").text(tr_config_editor.load_param_title);
+			$("legend[name=target]").text(tr_config_editor.target_title);
 		},
         
 		value2html: function(value, element) {
@@ -152,7 +154,7 @@
 		value2input: function(value) {
 			if (!value)
 				return;
-			$("div#load table").find("tr").remove();
+			$("div#load div.row").remove();
 			var changed = JSON.parse(bin2jsonstr(value));
 			this.$input.filter("[name=test_name]").val(changed["test_name"]);
 			var rps = 1;
@@ -162,22 +164,22 @@
 				this.addLoad(loadtype, i, rps, params);
 				rps = (loadtype == "const" ? params.a : params.b);
 			}
-			this.$input.filter("[name=target]").val(changed["target"]);
+			this.$input.filter("[name=hostname]").val(changed["hostname"]);
 			this.$input.filter("[name=port]").val(changed["port"]);
 			this.target_port = changed["s"];
 		},
        
 		input2value: function() {
 			var steps = [];
-			var $tbl = $("div#load table");
-			$.each($tbl.find("tr a"), function() {
+			var $tbl = $("div#load");
+			$.each($tbl.find("div.row a"), function() {
 				var step = JSON.parse(bin2jsonstr($(this).attr("data-value")));
 				steps.push(step);
 			});
 			var changed = {
 				test_name: this.$input.filter("[name=test_name]").val(),
 				steps: steps,
-				target: this.$input.filter("[name=target]").val(),
+				hostname: this.$input.filter("[name=hostname]").val(),
 				port: this.$input.filter("[name=port]").val(),
 				s: this.target_port
 			};
@@ -185,27 +187,34 @@
 		},
        
 		activate: function() {
-			this.$input.filter("[name='test_name']").focus();
+			this.$input.filter("[name=test_name]").focus();
 		}
 	});
 
 	LTConfigEditor.defaults = $.extend({},
 		$.fn.editabletypes.abstractinput.defaults, {
-			tpl: "<div><label name=test-name><span></span></label>" +
-					"<input type='text' name='test_name'></input></div>" +
-				 "<fieldset class=salts-load-editor>" +
-				 "<legend name=schedule-editor class=salts-load-editor></legend>" +
-				 "<div id=load>" +
-
-					"<table>" +
-					"</table>" +
-
+			tpl: "<div name=test-name class=row>" +
+					"<label name=test-name class=col-sm-4><span align=right></span></label>" +
+					"<input type=text name=test_name class=col-sm-7 align=left></input></div>" +
 				 "</div>" +
-				 "</fieldset>" +
-				 "<div><label name=target><span></span></label>" +
-					"<input type='text' name='target'></input>" +
-					"<label name=port><span></span></label>" +
-					"<input type='text' name='port'></input></div>",
+				 "<div name=rps-schedule>" +
+					"<fieldset class=salts-load-editor>" +
+					"<legend name=schedule-editor class=salts-load-editor></legend>" +
+					"<div id=load>" +
+					"</div>" +
+				 "</fieldset></div>" +
+				 "<div name=target>" +
+					"<fieldset class=salts-load-editor>" +
+					"<legend name=target class=salts-load-editor></legend>" +
+						"<div name=hostname class=row>" +
+							"<label name=hostname class=col-sm-4><span></span></label>" +
+							"<input type=text name=hostname class=col-sm-7></input>" +
+						"</div>" +
+						"<div name=port class=row>" +
+							"<label name=port class=col-sm-4><span></span></label>" +
+							"<input type=text name=port class=col-sm-7></input>" +
+						"</div>" +
+					"</fieldset></div>",
 			inputclass: ""
 	});
 

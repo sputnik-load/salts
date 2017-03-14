@@ -182,11 +182,11 @@ function toScenarioFormat(aItem) {
 		scenario.jmeter.testlen = ms2sec(data_value.steps[1].params.dur);
 		scenario.jmeter.rampdown = ms2sec(data_value.steps[2].params.dur);
 		if (data_value.s) {
-			scenario.jmeter.hostname = data_value.target;
+			scenario.jmeter.hostname = data_value.hostname;
 			scenario.jmeter.port = data_value.port;
 		}
 		else
-			scenario.jmeter.hostname = data_value.target + ":" +
+			scenario.jmeter.hostname = data_value.hostname + ":" +
 									   data_value.port;
 	}
 	return jsonstr2bin(JSON.stringify(scenario));	

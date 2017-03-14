@@ -46,8 +46,6 @@ var Lang = function() {
 					title: "Редактирование параметров сценария",
 					test_name: "Имя теста",
 					label: "Шаг",
-					target: "Цель",
-					port: "Порт",
 					load_param_title: "Профиль нагрузки",
 					load: {
 						param_title: "Параметры",
@@ -72,6 +70,11 @@ var Lang = function() {
 							step_rps: "Шаг",
 							step_dur: "Длительность 1-го шага"
 						}
+					},
+					target_title: "Цель",
+					target: {
+						hostname: "Имя хоста",
+						port: "Порт",
 					}
 				},
 				select_schedule: {
@@ -203,8 +206,6 @@ var Lang = function() {
 					title: "Scenario Parameters Edit",
 					test_name: "Test Name",
 					label: "Step",
-					target: "Target",
-					port: "Port",
 					load_param_title: "RPS Schedule",
 					load: {
 						param_title: "Parameters",
@@ -226,9 +227,14 @@ var Lang = function() {
 							desc: "step load from {a} to {b} rps",
 							a: "From",
 							b: "To",
-							step: "Step",
-							dur: "Duration for one step"
+							step_rps: "Step",
+							step_dur: "Duration for one step"
 						}
+					},
+					target_title: "Target",
+					target: {
+						hostname: "Host Name",
+						port: "Port",
 					}
 				},
 				select_schedule: {

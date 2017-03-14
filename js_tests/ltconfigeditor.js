@@ -4,7 +4,7 @@ var testData = {
 	steps: [{loadtype: "line", params: {a: 1, b: 5, dur: 15000}},
 		    {loadtype: "const", params: {a: 5, dur: 60000}},
 		    {loadtype: "line", params: {a: 5, b: 1, dur: 10000}}],
-	target: "xyz",
+	hostname: "xyz",
 	port: 7654,
 	s: 1
 };
@@ -16,7 +16,7 @@ var inp = {
 };
 
 var isParamsValidAndEqual = function(a, b) {
-	var keys = ["test_name", "steps", "target", "port", "s"];
+	var keys = ["test_name", "steps", "hostname", "port", "s"];
 	var stepKeys = ["loadtype", "params"];
 	for (var i = 0; i < keys.length; i++) {
 		var k = keys[i];
@@ -53,7 +53,7 @@ QUnit.test("LT Config Editor: No User Load", function(assert) {
 	var expectedData = {
 		test_name: testData.test_name,
 		rps: testData.rps,
-		target: testData.target,
+		hostname: testData.hostname,
 		port: testData.port,
 	};
 	var done = assert.async();
@@ -69,7 +69,7 @@ QUnit.test("LT Config Editor: No User Load", function(assert) {
 					 expectedData[name], comment);
 	};
 	simpleTest("test_name", "Test Name displays");
-	simpleTest("target", "Target displays");
+	simpleTest("hostname", "Target displays");
 	simpleTest("port", "Port displays");
 
 	var $load = p.find("div#load a");
@@ -97,7 +97,7 @@ QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
 				{loadtype: "step", params: {a: 4, b: 20, step: 4, dur: 4000}},
 				{loadtype: "const", params: {a: 5, dur: 60000}},
 				{loadtype: "line", params: {a: 5, b: 1, dur: 10000}}],
-		target: "xyz",
+		hostname: "xyz",
 		port: 7654,
 		s: 1
 	};
@@ -109,7 +109,7 @@ QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
 	e.click(); // to open configeditor
 
 	var p = e.data("editableContainer").tip();
-	var $load = $(p.find("div#load tr")[0]);
+	var $load = $(p.find("div#load div.row")[0]);
 	var $addbut = $load.find("button[name=add]");
 	assert.ok($addbut.is(".btn-plus"), "the 'Plus' button shown");
 	assert.ok(!$addbut.prop("disabled"), "the 'Plus' button is enabled");
@@ -119,7 +119,7 @@ QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
 	assert.ok(!$delbut.prop("disabled"), "the 'Delete' button is enabled");
 
 	$addbut.click();
-	$load = p.find("div#load tr");
+	$load = p.find("div#load div.row");
 	assert.equal($load.size(), 4, "the row count was incremented, now 4");
 
 	var $aNewLoad = $($load.get(1)).find("a");
@@ -161,7 +161,7 @@ QUnit.test("LT Config Editor: the 'Delete' Button", function(assert) {
 		test_name: "LT Config",
 		steps: [{loadtype: "line", params: {a: 1, b: 5, dur: 15000}},
 				{loadtype: "line", params: {a: 5, b: 1, dur: 10000}}],
-		target: "xyz",
+		hostname: "xyz",
 		port: 7654,
 		s: 1
 	};
@@ -173,7 +173,7 @@ QUnit.test("LT Config Editor: the 'Delete' Button", function(assert) {
 	e.click(); // to open configeditor
 
 	var p = e.data("editableContainer").tip();
-	var $load = $(p.find("div#load tr")[1]);
+	var $load = $(p.find("div#load div.row")[1]);
 	var $delbut = $load.find("button[name=del]");
 	assert.ok($delbut.is(".btn-sm"), "the 'Delete' button shown");
 	assert.ok(!$delbut.prop("disabled"), "the 'Delete' button is enabled");
@@ -183,7 +183,7 @@ QUnit.test("LT Config Editor: the 'Delete' Button", function(assert) {
 	assert.ok(!$delbut.prop("disabled"), "the 'Delete' button is enabled");
 
 	$delbut.click();
-	$load = p.find("div#load tr");
+	$load = p.find("div#load div.row");
 	assert.equal($load.size(), 2, "the row count was decremented, now 2");
 
 	p.find(".editable-submit").click();
@@ -206,7 +206,7 @@ QUnit.test("LT Config Editor: JMeter Generator Type", function(assert) {
 	e.click(); // to open configeditor
 
 	var p = e.data("editableContainer").tip();
-	$.each(p.find("div#load tr"), function() {
+	$.each(p.find("div#load"), function() {
 		assert.ok($(this).find("button[name=add]").prop("disabled"),
 				  "The 'Add' button disabled");
 		assert.ok($(this).find("button[name=del]").prop("disabled"),

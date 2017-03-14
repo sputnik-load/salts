@@ -72,15 +72,15 @@ def phantom_rps_schedule(scenario_path):
 
 
 def phantom_target_info(scenario_path):
-    def_values = {"target": "", "port": 8000}
+    def_values = {"hostname": "", "port": 8000}
     target_info = ini_manager.get_option_value(scenario_path,
                                                "phantom", "address", "")
     if not target_info:
         return def_values
     targ = target_info.split(":")
     if len(targ) >= 2:
-        return {"target": targ[0], "port": targ[1]}
-    return {"target": targ[0], "port": def_values["port"]}
+        return {"hostname": targ[0], "port": targ[1]}
+    return {"hostname": targ[0], "port": def_values["port"]}
 
 
 def jmeter_rps_schedule(scenario_path):
@@ -106,20 +106,20 @@ def jmeter_rps_schedule(scenario_path):
 
 
 def jmeter_target_info(scenario_path):
-    result = {'target': '', 'port': 8000,
-              's': ''}
+    result = {"hostname": "", "port": 8000,
+              "s": ""}
     target_info = ini_manager.get_option_value(scenario_path,
-                                               'jmeter', 'hostname', '')
+                                               "jmeter", "hostname", "")
     if target_info:
-        targ = target_info.split(':')
-        result['target'] = targ[0]
+        targ = target_info.split(":")
+        result["hostname"] = targ[0]
         if len(targ) == 1:
-            result['port'] = ini_manager.get_option_value(scenario_path,
-                                                          'jmeter', 'port',
-                                                          result['port'])
-            result['s'] = '1'  # target и port д.б. сохранены в разных опциях
+            result["port"] = ini_manager.get_option_value(scenario_path,
+                                                          "jmeter", "port",
+                                                          result["port"])
+            result["s"] = "1"  # target и port д.б. сохранены в разных опциях
         else:
-            result['port'] = targ[1]
+            result["port"] = targ[1]
     return result
 
 
