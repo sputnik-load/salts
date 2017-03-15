@@ -81,15 +81,15 @@ function updateScenarioStatus(scenarioRow, values) {
 	if (div.attr("update") == "false")
 		return;
 	var trId = parseInt(div.find('a').text());
-	if ($.isEmptyObject(values) || trId == values['tr_id'])
+	if ($.isEmptyObject(values) || trId == values.tr_id)
 		return;
 	var testResultUrl = window.location.protocol + "//" +
 						window.location.host +
 						"/admin/salts/testresult/?id=" +
-						values['tr_id'];
+						values.tr_id;
 	var aContent = "<a href='" + testResultUrl + "' target='_blank'>" +
-					values['tr_id'] + "</a>";
-	var dateContent = "<p>" + moment.unix(values['finish']).format('YYYY-MM-DD HH:mm:ss') + "</p>";
+					values.tr_id + "</a>";
+	var dateContent = moment.unix(values.finish).format("YYYY-MM-DD HH:mm:ss");
 	divContent = Lang.tr.run_page.status.info;
 	divContent = divContent.replace("{id}", aContent);
 	divContent = divContent.replace("{date}", dateContent);
@@ -98,12 +98,12 @@ function updateScenarioStatus(scenarioRow, values) {
 
 function updateShootingStatus(shootingRow, values) {
 	var statusContent = Lang.tr.run_page.status.run;
-	statusContent = statusContent.replace("{session}", values["session"]);
+	statusContent = statusContent.replace("{session}", values.session);
 	statusContent = statusContent.replace("{date}",
-										  moment.unix(values["start"])
+										  moment.unix(values.start)
 												.format("YYYY-MM-DD HH:mm:ss"));
-	statusContent = statusContent.replace("{user}", values["username"]);
-	statusContent = statusContent.replace("{remained}", toHHMMSS(values['remained']));
+	statusContent = statusContent.replace("{user}", values.username);
+	statusContent = statusContent.replace("{remained}", toHHMMSS(values.remained));
 	shootingRow.find("div[name=status]").html(statusContent);
 	runTable.bootstrapTable("resetWidth");
 }

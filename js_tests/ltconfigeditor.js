@@ -94,7 +94,7 @@ QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
 	var expectedData = {
 		test_name: "LT Config",
 		steps: [{loadtype: "line", params: {a: 1, b: 5, dur: 15000}},
-				{loadtype: "step", params: {a: 4, b: 20, step: 4, dur: 4000}},
+				{loadtype: "step", params: {a: 4, b: 20, step_rps: 4, step_dur: 4000}},
 				{loadtype: "const", params: {a: 5, dur: 60000}},
 				{loadtype: "line", params: {a: 5, b: 1, dur: 10000}}],
 		hostname: "xyz",
@@ -111,11 +111,11 @@ QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
 	var p = e.data("editableContainer").tip();
 	var $load = $(p.find("div#load div.row")[0]);
 	var $addbut = $load.find("button[name=add]");
-	assert.ok($addbut.is(".btn-plus"), "the 'Plus' button shown");
+	assert.ok($addbut.is(".add-load"), "the 'Plus' button shown");
 	assert.ok(!$addbut.prop("disabled"), "the 'Plus' button is enabled");
 
 	var $delbut = $load.find("button[name=del]");
-	assert.ok($delbut.is(".btn-sm"), "the 'Delete' button shown");
+	assert.ok($delbut.is(".del-load"), "the 'Delete' button shown");
 	assert.ok(!$delbut.prop("disabled"), "the 'Delete' button is enabled");
 
 	$addbut.click();
@@ -138,9 +138,11 @@ QUnit.test("LT Config Editor: the 'Add' Button", function(assert) {
 	var $inputs = $loadEditable.find("div#param input");
 	$inputs.filter("[name=a]").val("4");
 	$inputs.filter("[name=b]").val("20");
-	$inputs.filter("[name=step]").val("4");
-	$inputs.filter("[name=dur]").val("4");
-	$loadEditable.find(".editable-submit").click();
+	$inputs.filter("[name=step_rps]").val("4");
+	$inputs.filter("[name=step_dur]").val("4");
+	var $el = $loadEditable.find(".editable-submit");
+	var sz = $el.size();
+	$el[0].click();
 
 	assert.equal($aNewLoad.text(), "ступенчатая нагрузка от 4 до 20 rps",
 				 "New Stepped Load text value");
@@ -175,11 +177,11 @@ QUnit.test("LT Config Editor: the 'Delete' Button", function(assert) {
 	var p = e.data("editableContainer").tip();
 	var $load = $(p.find("div#load div.row")[1]);
 	var $delbut = $load.find("button[name=del]");
-	assert.ok($delbut.is(".btn-sm"), "the 'Delete' button shown");
+	assert.ok($delbut.is(".del-load"), "the 'Delete' button shown");
 	assert.ok(!$delbut.prop("disabled"), "the 'Delete' button is enabled");
 
 	var $delbut = $load.find("button[name=del]");
-	assert.ok($delbut.is(".btn-sm"), "the 'Delete' button shown");
+	assert.ok($delbut.is(".del-load"), "the 'Delete' button shown");
 	assert.ok(!$delbut.prop("disabled"), "the 'Delete' button is enabled");
 
 	$delbut.click();

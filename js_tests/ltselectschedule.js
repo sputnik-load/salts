@@ -185,8 +185,8 @@ QUnit.test("LT Select Schedule: Step Load", function(assert) {
 		params: {
 			a: 5,
 			b: 10,
-			step: 2,
-			dur: 12000
+			step_rps: 2,
+			step_dur: 12000
 		}
 	};
 	var change = {
@@ -194,8 +194,8 @@ QUnit.test("LT Select Schedule: Step Load", function(assert) {
 		params: {
 			a: 7,
 			b: 17,
-			step: 3,
-			dur: 8000
+			step_rps: 3,
+			step_dur: 8000
 		}
 	};
 	var expected = {
@@ -206,8 +206,8 @@ QUnit.test("LT Select Schedule: Step Load", function(assert) {
 		opt_count: 3,
 		a: [initial.params.a, change.params.a],
 		b: [initial.params.b, change.params.b],
-		step: [initial.params.step, change.params.step],
-		dur: [ms2sec(initial.params.dur), ms2sec(change.params.dur)]
+		step_rps: [initial.params.step_rps, change.params.step_rps],
+		step_dur: [ms2sec(initial.params.step_dur), ms2sec(change.params.step_dur)]
 	};
 	var htmlCode = $.htmlCodeLTSelectSchedule(initial.loadtype,
 											  initial.params.a,
@@ -227,15 +227,15 @@ QUnit.test("LT Select Schedule: Step Load", function(assert) {
 				 "The RPS value A from initial load schedule");
 	assert.equal(p.find("input[name=b]").val(), expected.b[0],
 				 "The RPS value B from initial load schedule");
-	assert.equal(p.find("input[name=step]").val(), expected.step[0],
+	assert.equal(p.find("input[name=step_rps]").val(), expected.step_rps[0],
 				 "The STEP value from initial load schedule");
-	assert.equal(p.find("input[name=dur]").val(), expected.dur[0],
+	assert.equal(p.find("input[name=step_dur]").val(), expected.step_dur[0],
 				 "The duration value from initial load schedule");
 
 	p.find("input[name=a]").val(change.params.a);
 	p.find("input[name=b]").val(change.params.b);
-	p.find("input[name=step]").val(change.params.step);
-	p.find("input[name=dur]").val(ms2sec(change.params.dur));
+	p.find("input[name=step_rps]").val(change.params.step_rps);
+	p.find("input[name=step_dur]").val(ms2sec(change.params.step_dur));
 
 	p.find(".editable-submit").click();
 	setTimeout(function() {
@@ -244,9 +244,9 @@ QUnit.test("LT Select Schedule: Step Load", function(assert) {
 				     "New RPS value A saved");
 		assert.equal(p.find("input[name=b]").val(), expected.b[1],
 				     "New RPS value B saved");
-		assert.equal(p.find("input[name=step]").val(), expected.step[1],
+		assert.equal(p.find("input[name=step_rps]").val(), expected.step_rps[1],
 				     "New STEP value saved");
-		assert.equal(p.find("input[name=dur]").val(), expected.dur[1],
+		assert.equal(p.find("input[name=step_dur]").val(), expected.step_dur[1],
 				     "New duration value saved");
 		assert.equal(e.data("editable").value, expected.view[1],
 					 "New value view: " + JSON.stringify(change));

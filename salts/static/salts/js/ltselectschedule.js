@@ -81,6 +81,15 @@
 	}
 
 	var LTSelectSchedule = function (options) {
+		var appendRow = function(par_name, par_value, value) {
+			if (typeof value === "undefined")
+				value = ""
+			return "<div class='row top-buffer'>" +
+					"<label class='col-sm-4'><span>" + par_value + ":</span></label>" +
+					"<input class='col-sm-7' type=text name='" + par_name + "'>" +
+						value + "</input>" +
+				   "</div>";
+		};
 		this.init("ltselectschedule", options, LTSelectSchedule.defaults);
 		this.rps = valueFromObject(this.options.scope, "rps");
 		this.gen = valueFromObject(this.options.scope, "gen");
@@ -89,35 +98,17 @@
 		var divWithTitle = "<div id=param><fieldset class=salts-load-editor>" +
 						   "<legend name=schedule-step-editor class=salts-load-editor></legend>" +
 						   "{paramlist}</fieldset></div>";
-		var htmlCode = "<label><span>{a}</span></label>" +
-					   "<input type=text name=a></input><br>" +
-					   "<label><span>{b}</span></label>" +
-					   "<input type=text name=b></input><br>" +
-					   "<label><span>{dur}</span></label>" +
-					   "<input type=text name=dur></input>";
-		htmlCode = htmlCode.replace("{a}", tr_load.line.a + ":");
-		htmlCode = htmlCode.replace("{b}", tr_load.line.b + ":");
-		htmlCode = htmlCode.replace("{dur}", tr_load.line.dur + ":");
+		var htmlCode = appendRow("a", tr_load.line.a) +
+					   appendRow("b", tr_load.line.b) +
+					   appendRow("dur", tr_load.line.dur);
 		this.$lineParam = $(divWithTitle.replace("{paramlist}", htmlCode));
-		htmlCode = "<label><span>{a}</span></label>" +
-				   "<input type=text name=a></input><br>" +
-				   "<label><span>{dur}</span></label>" +
-				   "<input type=text name=dur></input>";
-		htmlCode = htmlCode.replace("{a}", tr_load.const.a + ":");
-		htmlCode = htmlCode.replace("{dur}", tr_load.const.dur + ":");
+		htmlCode = appendRow("a", tr_load.const.a) +
+				   appendRow("dur", tr_load.const.dur);
 		this.$constParam = $(divWithTitle.replace("{paramlist}", htmlCode));
-		htmlCode = "<label><span>{a}</span></label>" +
-				   "<input type=text name=a></input><br>" +
-				   "<label><span>{b}</span></label>" +
-				   "<input type=text name=b></input><br>" +
-				   "<label><span>{step_rps}</span></label>" +
-				   "<input type=text name=step></input><br>" +
-				   "<label><span>{step_dur}</span></label>" +
-				   "<input type=text name=dur></input>";
-		htmlCode = htmlCode.replace("{a}", tr_load.step.a + ":");
-		htmlCode = htmlCode.replace("{b}", tr_load.step.b + ":");
-		htmlCode = htmlCode.replace("{step_rps}", tr_load.step.step_rps + ":");
-		htmlCode = htmlCode.replace("{step_dur}", tr_load.step.step_dur + ":");
+		var htmlCode = appendRow("a", tr_load.step.a) +
+					   appendRow("b", tr_load.step.b) +
+					   appendRow("step_rps", tr_load.step.step_rps) +
+					   appendRow("step_dur", tr_load.step.step_dur);
 		this.$stepParam = $(divWithTitle.replace("{paramlist}", htmlCode));
 	};
 
@@ -169,7 +160,10 @@
 			$schedule.attr("disabled", this.gen == "jmeter");
 			if ($.isEmptyObject(step.params))
 				return;
-			step.params.dur = ms2hhmmss(step.params.dur);
+			if ("dur" in step.params)
+				step.params.dur = ms2hhmmss(step.params.dur);
+			if ("step_dur" in step.params)
+				step.params.step_dur = ms2hhmmss(step.params.step_dur);
 			for (var name in step.params) {
 				this.$tpl.find("div#param input")
 					.filter("[name=" + name + "]")
@@ -183,7 +177,7 @@
 			$.each(this.$tpl.find("div#param input"), function() {
 				var k = $(this).attr("name");
 				params[k] = $(this).val();
-				if (k != "dur")
+				if (k != "dur" && k != "step_dur")
 					try {
 						params[k] = parseInt(params[k], 10);
 					} catch(err) {
@@ -193,6 +187,8 @@
 			});
 			if ("dur" in params)
 				params.dur = hhmmss2ms(params.dur);
+			if ("step_dur" in params)
+				params.step_dur = hhmmss2ms(params.step_dur);
 			var changed = {
 				loadtype: $schedule.val(),
 				params: params
@@ -206,7 +202,7 @@
 
 	LTSelectSchedule.defaults = $.extend({},
 		$.fn.editabletypes.abstractinput.defaults, {
-			tpl: "<div id=select-schedule><select id=schedule>" +
+			tpl: "<div id=select-schedule style='width: 400px;'><select id=schedule>" +
 				 	  "</select>" +
 					  "<div id=param></div>" +
 				 "</div>",

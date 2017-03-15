@@ -38,7 +38,7 @@
 		butCode += "<button type=button name=del class='btn btn-sm del-load'>" +
 				   "<span class='glyphicon glyphicon-remove'></span>" +
 				   "</button>";
-		var rowCode = "<div class=row id=" + newId + ">";
+		var rowCode = "<div class='row top-buffer' id=" + newId + ">";
 		rowCode += "<div name=nn class='col-sm-2 salts-load-row' align=right></div>";
 		rowCode += "<div name=editable class='col-sm-6' align=left>" + aCode + "</div>";
 		rowCode += "<div name=buttons class='col-sm-4' align=left>" + butCode + "</div>";

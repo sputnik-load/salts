@@ -194,7 +194,7 @@ tr.salts-load-row > td {
 }
 
 fieldset.salts-load-editor {
-	border: 1px groove #ddd;
+	border: 1px groove #7c7c7c;
 	padding: 10px 10px 10px 10px;
 	margin: 0 0 0 0;
 }
@@ -245,4 +245,8 @@ legend.salts-load-editor {
 
 .top-buffer {
 	margin-top: 5px;
+}
+
+.left-buffer {
+	margin-left: 5px;
 }
