@@ -250,3 +250,20 @@ legend.salts-load-editor {
 .left-buffer {
 	margin-left: 5px;
 }
+
+.navbar {
+	background: #358fe4;
+	border-color: #358fe4;
+}
+
+ul.nav.navbar-nav > li > a {
+	color: black;
+}
+
+p[name=user-label] {
+	color: white;
+}
+
+a[name=exit-link] {
+	color: black;
+}

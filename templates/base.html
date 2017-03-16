@@ -54,8 +54,8 @@
         <!-- <p align="right">Хост: {{ host }}. БД: {{ name }}.</p> -->
         {% if username %}
           <div align="right" name="user-mgr-auth">
-			  <p name="user-label" style="color:white">{{ username }}</p>
-            <a name=exit-link style="color:grey" href="{% url 'logout' %}"></a>
+			  <p name="user-label">{{ username }}</p>
+            <a name=exit-link href="{% url 'logout' %}"></a>
           </div>
         {% endif %}
       </nav>
