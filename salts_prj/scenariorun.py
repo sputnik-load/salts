@@ -368,7 +368,7 @@ class ScenarioRunView(View):
             values["default_data"] = self.get_default_data(s.scenario_path)
             trg_host, trg_port = ("", "")
             if values["default_data"]:
-                trg_host = values["default_data"].get("target", "")
+                trg_host = values["default_data"].get("hostname", "")
                 trg_port = values["default_data"].get("port", "")
             sel_tank_host = self.select_tank_host(tanks, active_sh,
                                                   trg_host, trg_port)
