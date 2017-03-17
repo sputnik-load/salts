@@ -267,3 +267,18 @@ p[name=user-label] {
 a[name=exit-link] {
 	color: black;
 }
+
+thead.bs-tbl-title {
+	font-size: 12px;
+	background: azure;
+}
+
+.col-centered {
+	width: 80%;
+	float: none;
+	margin: 0 auto;
+}
+
+.lt-cell {
+	font-size: 12px;
+}
