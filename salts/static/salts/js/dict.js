@@ -304,7 +304,7 @@ var Lang = function() {
 					scenario_name: "Scenario",
 					status: "Status",
 					countdown: "Remained",
-					ticket_url: "ticket",
+					ticket_url: "Ticket",
 					webconsole: "WEB-console",
 					test_result: "Test Result"
 				}
