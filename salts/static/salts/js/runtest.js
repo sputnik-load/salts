@@ -448,3 +448,16 @@ function statusFormatter(v, row, index) {
 		   Lang.tr.run_page.status.no_results +
 		   "</div>";
 }
+
+function row_style(row, index) {
+	var clsline = "";
+	/*
+	  if (index % 2 === 0) {	
+		clsline = css_status_classes[row["test_status"]] + "_even";
+	  }
+	  else
+		clsline = css_status_classes[row["test_status"]] + "_odd";
+	*/
+	clsline += " lt-cell";
+	return {classes: clsline};
+}
