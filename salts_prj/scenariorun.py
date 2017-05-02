@@ -280,6 +280,8 @@ class ScenarioRunView(View):
         extanks = {t["fields"]["host"]: t["pk"] for t in tanks}
         tank_set = set([t["fields"]["host"] for t in tanks
                         if t["fields"]["host"].endswith(sfx) or t["fields"]["host"].endswith(".int.pv.km")])
+        if not tank_set:
+            tank_set = set([t["fields"]["host"] for t in tanks])
         while True:
             if not os.path.exists(ct_fpath_lock):
                 if not os.path.exists(ct_fpath):
