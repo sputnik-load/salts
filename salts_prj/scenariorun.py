@@ -315,7 +315,9 @@ class ScenarioRunView(View):
                     ord_ctimes = OrderedDict(sorted(ctimes.items(),
                                                     key=lambda t: t[1]))
                     for host_name in ord_ctimes:
-                        tank_id = extanks[host_name]
+                        if host_name not in extanks:
+                            continue
+                        tank_id = extanks.get(host_name)
                         if not active_shootings.filter(tank_id=tank_id):
                             tank_host = host_name
                             break
