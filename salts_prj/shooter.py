@@ -36,13 +36,12 @@ class ShooterView(View):
     def get(self, request):
         shooting_id = request_get_value(request, 'stop')
         if shooting_id:
-            return self.stop_shooting(shooting_id, request.user.username)
+            return self.stop_shooting(shooting_id, request)
 
         scenario_id = request_get_value(request, 's')
         tank_id = request_get_value(request, 't')
         custom_data = request_get_value(request, 'j')
-        return self.start_shooting(scenario_id, tank_id, custom_data,
-                                   request.user.username)
+        return self.start_shooting(scenario_id, tank_id, custom_data, request)
 
     def check_perm_start(self, config, scenario):
         username = config['salts']['api_user']
@@ -143,7 +142,6 @@ class ShooterView(View):
                                 status=434)
         return None
 
-
     def save_custom_data(self, shooting, custom_data, custom_saved):
         if not custom_saved and shooting:
             shooting.custom_data = custom_data
@@ -151,7 +149,8 @@ class ShooterView(View):
             custom_saved = True
         return custom_saved
 
-    def start_shooting(self, scenario_id, tank_id, custom_data, username):
+    def start_shooting(self, scenario_id, tank_id, custom_data, request):
+        username = request.user.username
         reqdata = {}
         err = self.obtain_scenario(scenario_id, reqdata)
         if err:
@@ -164,8 +163,11 @@ class ShooterView(View):
             json_str = bin2jsonstr(custom_data)
         config = json.loads(json_str)
         json_str = json.dumps(config)
-        if 'salts' not in config:
-            config['salts'] = {}
+        if "salts" not in config:
+            config["salts"] = {}
+            server_addr = "http://{addr}".format(addr=request.get_host())
+            config["salts"]["api_host"] = server_addr
+            config["salts"]["api_url"] = server_addr + "/api2"
         err = self.check_auth(username, config)
         if err:
             return err
@@ -216,7 +218,8 @@ class ShooterView(View):
             tank_manager.interrupt(shooting)
         return HttpResponse(status=408)
 
-    def stop_shooting(self, shooting_id, username):
+    def stop_shooting(self, shooting_id, request):
+        username = request.user.username
         err = self.check_perm_stop(username, shooting_id)
         if err:
             return err
