@@ -31,18 +31,24 @@ SCENARIO_DURATIONS_DEFAULT = {"rampup": 5000,
 
 
 def duration2ms(line):
-    ts = [("h", 3600000), ("m[^s]", 60000),
+    line = line.replace(" ", "")
+    ts = [("h", 3600000), ("m", 60000),
           ("s", 1000), ("ms", 1), ("", 1000)]
     total = 0
     for (unit, ms) in ts:
-        pat = re.compile("^(\d+)%s" % unit)
+        regex = unit
+        if unit == "m":
+            regex = "m([^s]|$)"
+        pat = re.compile("^(\d+){regex}".format(regex=regex))
         m = pat.match(line)
         if not m:
             continue
         if not unit and total:
             break
-        total += ms * int(m.groups()[0])
-        line = pat.sub("", line)
+        value = m.groups()[0]
+        total += ms * int(value)
+        line = line.replace("{value}{unit}".format(value=value, unit=unit),
+                            "", 1)
     return total
 
 
