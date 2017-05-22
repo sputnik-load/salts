@@ -219,7 +219,7 @@ class ScenarioRunView(View):
             rps_sections = ini_manager.get_rps_sections(scenario_path)
             if rps_default_section not in rps_sections:
                 msg = "The '{sec}' section is required " \
-                      "in the {path} config."
+                      "in the {scenario_path} config."
                 params = {"sec": rps_default_section,
                           "scenario_path": scenario_path}
                 raise IniCtrlWarning(msg, params)
