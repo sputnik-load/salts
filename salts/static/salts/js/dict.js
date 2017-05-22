@@ -101,8 +101,11 @@ var Lang = function() {
 					 "Осталось - {remained}.",
 				error: {
 					"title": "Ошибка: ",
+					"default": "неизвестная ошибка (имя ошибки {name})",
 					"no_load_gen": "генератор нагрузки не объявлен " +
-								   "в конфигурационном файле {scenario_path}."
+								   "в конфигурационном файле {scenario_path}",
+					"section_need": "в конфигурационном файле {scenario_path} " +
+								    "требуется секция '{section}'"
 				}
 			},
 		},
@@ -266,8 +269,11 @@ var Lang = function() {
 					 "{remained}.",
 				error: {
 					"title": "Error: ",
+					"default": "unknown error (the name of error - {name})",
 					"no_load_gen": "the load generator not declared in " +
-								   "the {scenario_path} config."
+								   "the {scenario_path} config",
+					"section_need": "the '{section}' section is required " +
+								    "in the {scenario_path} config"
 				}
 			}	
 		},

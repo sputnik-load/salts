@@ -83,9 +83,19 @@ function updateScenarioStatus(scenarioRow, info) {
 	var values = info["default_data"]
 	if ("error" in values) {
 		var divContent = Lang.tr.run_page.status.error.title;
-		divContent += Lang.tr.run_page.status.error[values.error.type];
-		divContent = divContent.replace("{scenario_path}",
-										values.error.scenario_path);
+		if (values.error.name in Lang.tr.run_page.status.error) {
+			divContent += Lang.tr.run_page.status.error[values.error.name];
+			var errorValues = values.error.params;
+			for (var key in errorValues) {
+				if (!errorValues.hasOwnProperty(key)) continue;
+				divContent = divContent.replace("{" + key + "}",
+												errorValues[key]);
+			}
+		}
+		else {
+			divContent += Lang.tr.run_page.status.error.default;
+			divContent = divContent.replace("{name}", values.error.name)
+		}
 		div.html("<span style='color:red;'>" + divContent + "</span>");
 		return;
 	}

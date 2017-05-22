@@ -46,10 +46,19 @@ class IniDuplicateError(Exception):
 
 
 class IniCtrlWarning(Exception):
-    def __init__(self, msg, params):
-        self.args = (msg, params)
+
+    messages = {
+        "no_load_gen": "The load generator not declared "
+                       "in the {scenario_path} config.",
+        "section_need": "The {scenario_path} config doesn't "
+                        "contain '{section}' section.",
+        "load_gen_not_suported": "The '{load_gen}' not supported."}
+
+    def __init__(self, name, params):
+        self.args = (name, params)
+        self.name = name
         self.params = params
-        log.warning(msg.format(**params))
+        log.warning(IniCtrlWarning.messages[name].format(**params))
 
 
 class IniCtrl(object):
@@ -186,19 +195,16 @@ class IniCtrl(object):
 
         config.read(ini_path)
         if "tank" not in config.sections():
-            log.warning("The {path} config doesn't contain 'tank' "
-                        "section.".format(path=ini_path))
-            return None
+            params = {"scenario_path": scenario_path, "section": "tank"}
+            raise IniCtrlWarning("section_need", params)
 
         opts = config.options("tank")
         if "plugin_phantom" in opts and config.get("tank", "plugin_phantom"):
             return "phantom"
         if "plugin_jmeter" in opts and config.get("tank", "plugin_jmeter"):
             return "jmeter"
-        msg = "The load generator not declared " \
-              "in the {scenario_path} config."
-        params = {"type": "no_load_gen", "scenario_path": scenario_path}
-        raise IniCtrlWarning(msg, params)
+        params = {"scenario_path": scenario_path}
+        raise IniCtrlWarning("no_load_gen", params)
 
     def get_scenario_name(self, scenario_path):
         config = ConfigParser()
@@ -236,10 +242,11 @@ class IniCtrl(object):
             return default_value
 
     def get_rps_sections(self, scenario_path):
-        avail_types = ['phantom', 'jmeter']
+        avail_types = ["phantom", "jmeter"]
         scen_type = self.scenario_type(scenario_path)
         if scen_type not in avail_types:
-            return []
+            params = {"load_gen": scen_type}
+            raise IniCtrlWarning("load_gen_not_suported", params)
         config = ConfigParser()
         ini_path = os.path.join(self.dir_path, scenario_path)
         config.read(ini_path)
@@ -249,6 +256,9 @@ class IniCtrl(object):
             m = pat.match(s)
             if m:
                 result.append(m.group())
+        if scen_type not in result:
+            params = {"section": "scen_type", "scenario_path": scenario_path}
+            raise IniCtrlWarning("section_need", params)
         return result
 
     def sync(self):

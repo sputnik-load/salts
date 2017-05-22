@@ -216,15 +216,9 @@ class ScenarioRunView(View):
         self._default_data[scenario_path] = {}
         try:
             rps_default_section = ini_manager.scenario_type(scenario_path)
-            rps_sections = ini_manager.get_rps_sections(scenario_path)
-            if rps_default_section not in rps_sections:
-                msg = "The '{sec}' section is required " \
-                      "in the {scenario_path} config."
-                params = {"sec": rps_default_section,
-                          "scenario_path": scenario_path}
-                raise IniCtrlWarning(msg, params)
+            ini_manager.get_rps_sections(scenario_path)
         except IniCtrlWarning, exc:
-            return {"error": exc.params}
+            return {"error": {"name": exc.name, "params": exc.params}}
         rps_schedule = {"phantom": phantom_rps_schedule,
                         "jmeter": jmeter_rps_schedule}
         target_info = {"phantom": phantom_target_info,
