@@ -76,10 +76,20 @@ function displayTestNameCell(divItem) {
 	}
 }
 
-function updateScenarioStatus(scenarioRow, values) {
+function updateScenarioStatus(scenarioRow, info) {
 	var div = scenarioRow.find("div[name=status]");
 	if (div.attr("update") == "false")
 		return;
+	var values = info["default_data"]
+	if ("error" in values) {
+		var divContent = Lang.tr.run_page.status.error.title;
+		divContent += Lang.tr.run_page.status.error[values.error.type];
+		divContent = divContent.replace("{scenario_path}",
+										values.error.scenario_path);
+		div.html("<span style='color:red;'>" + divContent + "</span>");
+		return;
+	}
+	var values = info["last"];
 	var trId = parseInt(div.find('a').text());
 	if ($.isEmptyObject(values) || trId == values.tr_id)
 		return;
@@ -246,7 +256,7 @@ function updateVisibleRows(scenBinStr) {
 			var parentRunTable = runTable.parents("div.bootstrap-table");
 			$.each(upd['rows'], function(k, info) {
 				var div = $("div#scenario_" + info['id']);
-				updateScenarioStatus(div.parents('tr'), info['last']);
+				updateScenarioStatus(div.parents('tr'), info);
 				var aItem = $(div).find("a");
 				aItem.editable("option", "source", JSON.stringify(tanks["na"]));
 				aItem.editable("setValue", info["tank_host"]["id"], true);

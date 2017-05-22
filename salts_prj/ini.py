@@ -44,6 +44,14 @@ def ini_files(dir_path):
 class IniDuplicateError(Exception):
     pass
 
+
+class IniCtrlWarning(Exception):
+    def __init__(self, msg, params):
+        self.args = (msg, params)
+        self.params = params
+        log.warning(msg.format(**params))
+
+
 class IniCtrl(object):
 
     SALTS_SECTION = 'salts'
@@ -67,7 +75,7 @@ class IniCtrl(object):
         if not config.has_section(IniCtrl.SALTS_SECTION):
             return 0
         if config.has_option(IniCtrl.SALTS_SECTION,
-                                 IniCtrl.SCENARIO_ID_OPTION):
+                             IniCtrl.SCENARIO_ID_OPTION):
             return int(config.get(IniCtrl.SALTS_SECTION,
                                   IniCtrl.SCENARIO_ID_OPTION))
         if config.has_option(IniCtrl.SALTS_SECTION, 'test_ini_id'):
@@ -173,20 +181,24 @@ class IniCtrl(object):
         config = ConfigParser()
         ini_path = os.path.join(self.dir_path, scenario_path)
         if not os.path.exists(ini_path):
-            log.warning("Config %s is not found." % ini_path)
+            log.warning("The {path} config not found.".format(path=ini_path))
             return None
 
         config.read(ini_path)
-        if 'tank' not in config.sections():
-           log.warning("Config %s doesn't contain 'tank' section." % ini_path)
-           return None
+        if "tank" not in config.sections():
+            log.warning("The {path} config doesn't contain 'tank' "
+                        "section.".format(path=ini_path))
+            return None
 
-        if 'plugin_phantom' in config.options('tank') and \
-            config.get('tank', 'plugin_phantom'):
-            return 'phantom'
-        if 'plugin_jmeter' in config.options('tank') and \
-            config.get('tank', 'plugin_jmeter'):
-            return 'jmeter'
+        opts = config.options("tank")
+        if "plugin_phantom" in opts and config.get("tank", "plugin_phantom"):
+            return "phantom"
+        if "plugin_jmeter" in opts and config.get("tank", "plugin_jmeter"):
+            return "jmeter"
+        msg = "The load generator not declared " \
+              "in the {scenario_path} config."
+        params = {"type": "no_load_gen", "scenario_path": scenario_path}
+        raise IniCtrlWarning(msg, params)
 
     def get_scenario_name(self, scenario_path):
         config = ConfigParser()
@@ -257,17 +269,18 @@ class IniCtrl(object):
                     if res:
                         if os.path.exists(os.path.join(self.dir_path,
                                                        res[0].scenario_path)):
-                            raise IniDuplicateError("Two ini files %s and %s "
-                                                    "have same test id." \
-                                                    % (spath,
-                                                       res[0].scenario_path))
+                            msg = "Two ini files {path1} and {path2} " \
+                                  "have same test id.".format(
+                                      path1=spath,
+                                      path2=res[0].scenario_path)
+                            raise IniDuplicateError(msg)
                         else:
                             group_id = res[0].group_id
                             res[0].delete()
                     t = Scenario(id=ini_scenario_id,
-                                scenario_path=spath,
-                                group_id=group_id,
-                                status='A')
+                                 scenario_path=spath,
+                                 group_id=group_id,
+                                 status="A")
                     t.save()
             else:
                 if db_scenario_id:

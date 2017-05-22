@@ -18,7 +18,7 @@ from django.db.models import Max
 from salts_prj.settings import log, LT_PATH
 from salts_prj.requesthelper import (request_get_value, generate_context,
                                      add_version)
-from salts_prj.ini import ini_manager
+from salts_prj.ini import ini_manager, IniCtrlWarning
 from tank_api_client import jsonstr2bin, bin2jsonstr
 from salts.tankmanager import remainedtime
 from salts_prj.celery import obtain_active_tanks, obtain_connection_time
@@ -214,13 +214,17 @@ class ScenarioRunView(View):
         if scenario_path in self._default_data:
             return self._default_data[scenario_path]
         self._default_data[scenario_path] = {}
-        rps_default_section = ini_manager.scenario_type(scenario_path)
-        if not rps_default_section:
-            return {}
-        if rps_default_section not in \
-                ini_manager.get_rps_sections(scenario_path):
-            log.warning("'%s' section is required." % rps_default_section)
-            return {}
+        try:
+            rps_default_section = ini_manager.scenario_type(scenario_path)
+            rps_sections = ini_manager.get_rps_sections(scenario_path)
+            if rps_default_section not in rps_sections:
+                msg = "The '{sec}' section is required " \
+                      "in the {path} config."
+                params = {"sec": rps_default_section,
+                          "scenario_path": scenario_path}
+                raise IniCtrlWarning(msg, params)
+        except IniCtrlWarning, exc:
+            return {"error": exc.params}
         rps_schedule = {"phantom": phantom_rps_schedule,
                         "jmeter": jmeter_rps_schedule}
         target_info = {"phantom": phantom_target_info,
@@ -377,7 +381,7 @@ class ScenarioRunView(View):
             values["test_name"] = ini_manager.get_scenario_name(s.scenario_path)
             values["default_data"] = self.get_default_data(s.scenario_path)
             trg_host, trg_port = ("", "")
-            if values["default_data"]:
+            if "error" not in values["default_data"]:
                 trg_host = values["default_data"].get("hostname", "")
                 trg_port = values["default_data"].get("port", "")
             sel_tank_host = self.select_tank_host(tanks, active_sh,
@@ -389,9 +393,9 @@ class ScenarioRunView(View):
             if shs and trs:
                 trs = TestResult.objects.filter(
                         scenario_path=s.scenario_path,
-                        dt_finish=trs[0]['max_finish'])
-                values['last'] = {'tr_id': trs[0].id,
-                                  'finish': shs[0]['max_finish']}
+                        dt_finish=trs[0]["max_finish"])
+                values["last"] = {"tr_id": trs[0].id,
+                                  "finish": shs[0]["max_finish"]}
             results.append(values)
         response_dict["rows"] = results
         response_dict["tanks"] = self.adapt_tanks_list(tanks, active_sh,

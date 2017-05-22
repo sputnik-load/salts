@@ -98,7 +98,12 @@ var Lang = function() {
 				info: "Последний тест {id} был завершён {date}.",
 				run: "Выполняется тест. ID сессии - {session}. " +
 					 "Запущен {date} пользователем {user}. " +
-					 "Осталось - {remained}."
+					 "Осталось - {remained}.",
+				error: {
+					"title": "Ошибка: ",
+					"no_load_gen": "генератор нагрузки не объявлен " +
+								   "в конфигурационном файле {scenario_path}."
+				}
 			},
 		},
 		results_page: {
@@ -258,7 +263,12 @@ var Lang = function() {
 				info: "The final test {id} was completed {date}.",
 				run: "The test is running. Session ID is {session}. " +
 					 "The test started {date} by {user}. Remained time is " +
-					 "{remained}."
+					 "{remained}.",
+				error: {
+					"title": "Error: ",
+					"no_load_gen": "the load generator not declared in " +
+								   "the {scenario_path} config."
+				}
 			}	
 		},
 		results_page: {
