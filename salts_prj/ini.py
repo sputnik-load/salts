@@ -52,7 +52,8 @@ class IniCtrlWarning(Exception):
                        "in the {scenario_path} config.",
         "section_need": "The {scenario_path} config doesn't "
                         "contain '{section}' section.",
-        "load_gen_not_suported": "The '{load_gen}' not supported."}
+        "load_gen_not_suported": "The '{load_gen}' not supported.",
+        "no_config_file": "The {scenario_path} config file does not exist."}
 
     def __init__(self, name, params):
         self.args = (name, params)
@@ -190,8 +191,8 @@ class IniCtrl(object):
         config = ConfigParser()
         ini_path = os.path.join(self.dir_path, scenario_path)
         if not os.path.exists(ini_path):
-            log.warning("The {path} config not found.".format(path=ini_path))
-            return None
+            params = {"scenario_path": scenario_path}
+            raise IniCtrlWarning("no_config_file", params)
 
         config.read(ini_path)
         if "tank" not in config.sections():
