@@ -67,8 +67,8 @@ var Lang = function() {
 							desc: "ступенчатая нагрузка от {a} до {b} rps",
 							a: "От",
 							b: "До",
-							step_rps: "Шаг",
-							step_dur: "Длительность 1-го шага"
+							step: "Шаг",
+							dur: "Длительность 1-го шага"
 						}
 					},
 					target_title: "Цель",
@@ -235,8 +235,8 @@ var Lang = function() {
 							desc: "step load from {a} to {b} rps",
 							a: "From",
 							b: "To",
-							step_rps: "Step",
-							step_dur: "Duration for one step"
+							step: "Step",
+							dur: "Duration for one step"
 						}
 					},
 					target_title: "Target",

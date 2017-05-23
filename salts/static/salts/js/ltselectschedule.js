@@ -107,8 +107,8 @@
 		this.$constParam = $(divWithTitle.replace("{paramlist}", htmlCode));
 		var htmlCode = appendRow("a", tr_load.step.a) +
 					   appendRow("b", tr_load.step.b) +
-					   appendRow("step_rps", tr_load.step.step_rps) +
-					   appendRow("step_dur", tr_load.step.step_dur);
+					   appendRow("step", tr_load.step.step) +
+					   appendRow("dur", tr_load.step.dur);
 		this.$stepParam = $(divWithTitle.replace("{paramlist}", htmlCode));
 	};
 
@@ -162,8 +162,6 @@
 				return;
 			if ("dur" in step.params)
 				step.params.dur = ms2hhmmss(step.params.dur);
-			if ("step_dur" in step.params)
-				step.params.step_dur = ms2hhmmss(step.params.step_dur);
 			for (var name in step.params) {
 				this.$tpl.find("div#param input")
 					.filter("[name=" + name + "]")
@@ -177,7 +175,7 @@
 			$.each(this.$tpl.find("div#param input"), function() {
 				var k = $(this).attr("name");
 				params[k] = $(this).val();
-				if (k != "dur" && k != "step_dur")
+				if (k != "step" && k != "dur")
 					try {
 						params[k] = parseInt(params[k], 10);
 					} catch(err) {
@@ -187,8 +185,6 @@
 			});
 			if ("dur" in params)
 				params.dur = hhmmss2ms(params.dur);
-			if ("step_dur" in params)
-				params.step_dur = hhmmss2ms(params.step_dur);
 			var changed = {
 				loadtype: $schedule.val(),
 				params: params
