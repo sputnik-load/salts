@@ -3,7 +3,6 @@
 import threading
 import time
 import os
-import shutil
 import json
 import re
 import pickle
@@ -11,7 +10,6 @@ from salts_prj.settings import LT_PATH
 from salts_prj.settings import log
 from tank_api_client import TankClient, TankClientError
 from tank_api_client.confighelper import CustomConfig
-from django.http import HttpResponse
 
 
 def remainedtime(shooting):
@@ -57,9 +55,12 @@ class TankManager(object):
     WAIT_FOR_RESULT_SAVED = 60  # seconds
 
     def __init__(self):
-        self.lock_dir_path = os.path.join(LT_PATH, 'lock')
-        if os.path.exists(self.lock_dir_path):
-            shutil.rmtree(self.lock_dir_path)
+        self.lock_dir_path = "/tmp/lock"
+        i = 0
+        base = self.lock_dir_path
+        while os.path.exists(self.lock_dir_path):
+            i += 1
+            self.lock_dir_path = "{path}-{index}".format(path=base, index=i)
         os.mkdir(self.lock_dir_path)
 
     def book(self, tank_id):
