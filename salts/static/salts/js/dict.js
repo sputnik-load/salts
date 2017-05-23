@@ -104,8 +104,25 @@ var Lang = function() {
 					"default": "неизвестная ошибка (имя ошибки {name})",
 					"no_load_gen": "генератор нагрузки не объявлен " +
 								   "в конфигурационном файле {scenario_path}",
-					"section_need": "в конфигурационном файле {scenario_path} " +
-								    "требуется секция '{section}'"
+					"section_need": "в конфигурационном файле " +
+									"{scenario_path} требуется " +
+									"секция '{section}'",
+					"load_gen_not_suported": "генератор '{load_gen}' " +
+											 "не поддерживается",
+					"incorrect_rps_schedule": "в конфигурационном файле " +
+											  "{scenario_path} задан " +
+											  "некорректный rps_schedule " +
+											  "для {load_gen}",
+					"undefined_target": "генератор '{load_gen}' не знает, " +
+										"куда стрелять. Проверьте адрес " +
+										"мишени в конфигурационном файле " +
+										"{scenario_path}",
+					"no_test_name": "имя теста не задано в опции 'test_name' " +
+									"секции 'sputnikreport'. " +
+									"Проверьте конфигурационный файл " +
+									"{scenario_path}",
+					"no_config_file": "конфигурационный файл " +
+									  "{scenario_path} не существует"
 				}
 			},
 		},
@@ -273,7 +290,21 @@ var Lang = function() {
 					"no_load_gen": "the load generator not declared in " +
 								   "the {scenario_path} config",
 					"section_need": "the '{section}' section is required " +
-								    "in the {scenario_path} config"
+								    "in the {scenario_path} config",
+					"load_gen_not_suported": "The '{load_gen}' not supported.",
+					"incorrect_rps_schedule": "Incorrect {load_gen} " +
+											  "rps_schedule in the " +
+											  "{scenario_path} config.",
+					"undefined_target": "The '{load_gen}' load generator " +
+										"does not know " +
+										"about target. Check the " +
+										"{scenario_path} config.",
+					"no_test_name": "The test name is not declared in the " +
+									"'test_name' option of the " +
+									"'sputnikreport' section. " +
+									"Check the {scenario_path} config.",
+					"no_config_file": "The {scenario_path} config file " +
+									  "does not exist."
 				}
 			}	
 		},
