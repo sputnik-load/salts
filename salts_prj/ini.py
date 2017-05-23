@@ -55,6 +55,11 @@ class IniCtrlWarning(Exception):
         "load_gen_not_suported": "The '{load_gen}' not supported.",
         "incorrect_rps_schedule": "Incorrect {load_gen} rps_schedule in the "
                                   "{scenario_path} config.",
+        "undefined_target": "The '{load_gen}' load generator does not know "
+                            "about target. Check the {scenario_path} config.",
+        "no_test_name": "The test name is not declared in the "
+                        "'test_name' option of the 'sputnikreport' section. "
+                        "Check the {scenario_path} config.",
         "no_config_file": "The {scenario_path} config file does not exist."}
 
     def __init__(self, name, params):

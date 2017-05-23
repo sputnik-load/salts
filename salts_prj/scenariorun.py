@@ -71,9 +71,13 @@ def phantom_rps_schedule(scenario_path):
             steps.append({"loadtype": name, "params": params})
         return steps
 
-    dd = {"test_name": ini_manager.get_option_value(scenario_path,
-                                                    "sputnikreport",
-                                                    "test_name")}
+    test_name = ini_manager.get_option_value(scenario_path,
+                                             "sputnikreport",
+                                             "test_name")
+    if not test_name:
+        params = {"scenario_path": scenario_path}
+        raise IniCtrlWarning("no_test_name", params)
+    dd = {"test_name": test_name}
     rps_line = ini_manager.get_option_value(scenario_path, "phantom",
                                             "rps_schedule")
     dd["steps"] = parse_phantom_schedule(rps_line)
@@ -81,55 +85,68 @@ def phantom_rps_schedule(scenario_path):
 
 
 def phantom_target_info(scenario_path):
-    def_values = {"hostname": "", "port": 8000}
+    addr = {"hostname": "", "port": 8000}
     target_info = ini_manager.get_option_value(scenario_path,
                                                "phantom", "address", "")
-    if not target_info:
-        return def_values
-    targ = target_info.split(":")
-    if len(targ) >= 2:
-        return {"hostname": targ[0], "port": targ[1]}
-    return {"hostname": targ[0], "port": def_values["port"]}
+    if target_info:
+        targ = target_info.split(":")
+        addr["hostname"] = targ[0]
+        if len(targ) >= 2:
+            addr["port"] = targ[1]
+    if not addr["hostname"]:
+        params = {"load_gen": "phantom", "scenario_path": scenario_path}
+        raise IniCtrlWarning("undefined_target", params)
+    return addr
 
 
 def jmeter_rps_schedule(scenario_path):
     def jmeter_duration(key):
         default_value = SCENARIO_DURATIONS_DEFAULT[key] / 1000
-        return 1000 * int(ini_manager.get_option_value(scenario_path,
-                                                       "jmeter", key,
-                                                       default_value))
-    rps = ini_manager.get_option_value(scenario_path, "jmeter", "rps1",
-                                       SCENARIO_RPS_DEFAULT)
-    return {"test_name": ini_manager.get_option_value(scenario_path,
-                                                      "sputnikreport",
-                                                      "test_name"),
-            "steps": [{"loadtype": "line",
-                       "params": {"a": 1, "b": rps,
-                                  "dur": jmeter_duration("rampup")}},
-                      {"loadtype": "const",
-                       "params": {"a": rps,
-                                  "dur": jmeter_duration("testlen")}},
-                      {"loadtype": "line",
-                       "params": {"a": rps, "b": 1,
-                                  "dur": jmeter_duration("rampdown")}}]}
+        value = ini_manager.get_option_value(scenario_path, "jmeter",
+                                             key, default_value)
+        return 1000 * int(value)
+    try:
+        value = ini_manager.get_option_value(scenario_path, "jmeter",
+                                             "rps1", SCENARIO_RPS_DEFAULT)
+        rps = int(value)
+        test_name = ini_manager.get_option_value(scenario_path, "sputnikreport",
+                                                 "test_name")
+        if not test_name:
+            params = {"scenario_path": scenario_path}
+            raise IniCtrlWarning("no_test_name", params)
+        return {"test_name": test_name,
+                "steps": [{"loadtype": "line",
+                           "params": {"a": 1, "b": rps,
+                                      "dur": jmeter_duration("rampup")}},
+                          {"loadtype": "const",
+                           "params": {"a": rps,
+                                      "dur": jmeter_duration("testlen")}},
+                          {"loadtype": "line",
+                           "params": {"a": rps, "b": 1,
+                                      "dur": jmeter_duration("rampdown")}}]}
+    except ValueError:
+        params = {"load_gen": "jmeter", "scenario_path": scenario_path}
+        raise IniCtrlWarning("incorrect_rps_schedule", params)
 
 
 def jmeter_target_info(scenario_path):
-    result = {"hostname": "", "port": 8000,
-              "s": ""}
+    addr = {"hostname": "", "port": 8000, "s": ""}
     target_info = ini_manager.get_option_value(scenario_path,
                                                "jmeter", "hostname", "")
     if target_info:
         targ = target_info.split(":")
-        result["hostname"] = targ[0]
+        addr["hostname"] = targ[0]
         if len(targ) == 1:
-            result["port"] = ini_manager.get_option_value(scenario_path,
-                                                          "jmeter", "port",
-                                                          result["port"])
-            result["s"] = "1"  # target и port д.б. сохранены в разных опциях
+            addr["port"] = ini_manager.get_option_value(scenario_path,
+                                                        "jmeter", "port",
+                                                        addr["port"])
+            addr["s"] = "1"  # target и port д.б. сохранены в разных опциях
         else:
-            result["port"] = targ[1]
-    return result
+            addr["port"] = targ[1]
+    if not addr["hostname"]:
+        params = {"load_gen": "jmeter", "scenario_path": scenario_path}
+        raise IniCtrlWarning("undefined_target", params)
+    return addr
 
 
 class ScenarioRunView(View):
