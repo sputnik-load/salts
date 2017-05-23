@@ -63,6 +63,9 @@ def phantom_rps_schedule(scenario_path):
             keys = {"step": ["a", "b", "step", "dur"],
                     "line": ["a", "b", "dur"],
                     "const": ["a", "dur"]}
+            if name not in keys:
+                params = {"load_gen": "phantom", "scenario_path": scenario_path}
+                raise IniCtrlWarning("incorrect_rps_schedule", params)
             params = dict(zip(keys[name], params.split(",")))
             params["dur"] = duration2ms(params["dur"])
             steps.append({"loadtype": name, "params": params})
@@ -215,17 +218,17 @@ class ScenarioRunView(View):
             return self._default_data[scenario_path]
         self._default_data[scenario_path] = {}
         try:
-            rps_default_section = ini_manager.scenario_type(scenario_path)
+            scenario_type = ini_manager.scenario_type(scenario_path)
             ini_manager.get_rps_sections(scenario_path)
+            rps_schedule = {"phantom": phantom_rps_schedule,
+                            "jmeter": jmeter_rps_schedule}
+            target_info = {"phantom": phantom_target_info,
+                           "jmeter": jmeter_target_info}
+            dd = rps_schedule[scenario_type](scenario_path)
+            dd.update(target_info[scenario_type](scenario_path))
         except IniCtrlWarning, exc:
             return {"error": {"name": exc.name, "params": exc.params}}
-        rps_schedule = {"phantom": phantom_rps_schedule,
-                        "jmeter": jmeter_rps_schedule}
-        target_info = {"phantom": phantom_target_info,
-                       "jmeter": jmeter_target_info}
-        dd = rps_schedule[rps_default_section](scenario_path)
-        dd["gen_type"] = rps_default_section
-        dd.update(target_info[rps_default_section](scenario_path))
+        dd["gen_type"] = scenario_type
         self._default_data[scenario_path] = dd
         return dd
 
