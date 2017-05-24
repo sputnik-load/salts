@@ -395,8 +395,6 @@ class ScenarioRunView(View):
             values = {}
             values["id"] = s.id
             values["test_name"] = ini_manager.get_scenario_name(s.scenario_path)
-            log.info("testing3265. get_test_status. "
-                     "scenario_path: {path}.".format(path=s.scenario_path))
             values["default_data"] = self.get_default_data(s.scenario_path)
             values["tank_host"] = {"id": "-1", "name": ""}
             if "error" not in values["default_data"]:
