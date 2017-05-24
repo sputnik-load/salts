@@ -60,6 +60,9 @@ class IniCtrlWarning(Exception):
         "no_test_name": "The test name is not declared in the "
                         "'test_name' option of the 'sputnikreport' section. "
                         "Check the {scenario_path} config.",
+        "inaccessible_target": "The {host}:{port} target is inaccessible from "
+                               "all tank hosts. Check the {scenario_path} "
+                               "config.",
         "no_config_file": "The {scenario_path} config file does not exist."}
 
     def __init__(self, name, params):
@@ -111,7 +114,6 @@ class IniCtrl(object):
             return
 
         section_line = "[%s]" % IniCtrl.SALTS_SECTION
-        default_line = "[DEFAULT]"
         config = ConfigParser()
         ini_path = os.path.join(self.dir_path, scenario_path)
         config.read(ini_path)
@@ -132,15 +134,16 @@ class IniCtrl(object):
                 pat = "^ *%s *=" % IniCtrl.SCENARIO_ID_OPTION
                 if re.match(pat, strip_line):
                     del(content[ix])
-                    content.insert(ix, "%s = %s\n" \
-                                   % (IniCtrl.SCENARIO_ID_OPTION, scenario_id))
+                    content.insert(ix, "{option} = {value}\n".format(
+                                            option=IniCtrl.SCENARIO_ID_OPTION,
+                                            value=scenario_id))
                     break
             if strip_line == section_line:
                 section_found = True
                 if not old_scenario_id:
-                    content.insert(ix + 1,
-                                   "%s = %s\n" \
-                                   % (IniCtrl.SCENARIO_ID_OPTION, scenario_id))
+                    content.insert(ix + 1, "{option} = {value}\n".format(
+                                            option=IniCtrl.SCENARIO_ID_OPTION,
+                                            value=scenario_id))
                     break
             ix += 1
         with open(ini_path, "w") as f:
@@ -243,10 +246,12 @@ class IniCtrl(object):
             return config.get(section, option)
         except (NoSectionError, NoOptionError):
             if default_value is None:
-                log.warning("Config %s: "
-                            "there is not '%s' option "
-                            "in the '%s' section." \
-                            % (ini_path, option, section))
+                log.warning("Config {path}: "
+                            "there is not '{option}' option "
+                            "in the '{section}' section.".format(
+                                path=ini_path,
+                                option=option,
+                                section=section))
             return default_value
 
     def get_rps_sections(self, scenario_path):

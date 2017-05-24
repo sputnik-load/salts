@@ -288,10 +288,8 @@ class ScenarioRunView(View):
         return [json.dumps(r)
                 for r in self._actual_tanks_info[request_user.id]]
 
-    def select_tank_host(self, tanks, active_shootings, trg_host, trg_port):
-        default_result = {"id": "-1", "name": ""}
-        if not (trg_host and trg_port):
-            return default_result
+    def select_tank_host(self, tanks, active_shootings, trg_host, trg_port,
+                         scenario_path):
         ct_fname = "%s_%s" % (trg_host.replace(".", "_"),
                               trg_port)
         ct_fpath = os.path.join(self._lock_dir_path,
@@ -303,7 +301,9 @@ class ScenarioRunView(View):
             sfx = ".%s" % ".".join(trg_host_parts[1:])
         extanks = {t["fields"]["host"]: t["pk"] for t in tanks}
         tank_set = set([t["fields"]["host"] for t in tanks
-                        if t["fields"]["host"].endswith(sfx) or t["fields"]["host"].endswith(".int.pv.km")])
+                        if t["fields"]["host"].endswith(
+                                sfx) or t["fields"]["host"].endswith(
+                                            ".int.pv.km")])
         if not tank_set:
             tank_set = set([t["fields"]["host"] for t in tanks])
         while True:
@@ -347,7 +347,9 @@ class ScenarioRunView(View):
                             break
         os.rename(ct_fpath_lock, ct_fpath)
         if not tank_host:
-            return default_result
+            params = {"host": trg_host, "port": trg_port,
+                      "scenario_path": scenario_path}
+            raise IniCtrlWarning("inaccessible_target", params)
         return {"id": extanks[tank_host], "name": tank_host}
 
     def get_test_status(self, request):
@@ -393,23 +395,29 @@ class ScenarioRunView(View):
             values = {}
             values["id"] = s.id
             values["test_name"] = ini_manager.get_scenario_name(s.scenario_path)
+            log.info("testing3265. get_test_status. "
+                     "scenario_path: {path}.".format(path=s.scenario_path))
             values["default_data"] = self.get_default_data(s.scenario_path)
-            trg_host, trg_port = ("", "")
+            values["tank_host"] = {"id": "-1", "name": ""}
             if "error" not in values["default_data"]:
-                trg_host = values["default_data"].get("hostname", "")
-                trg_port = values["default_data"].get("port", "")
-            sel_tank_host = self.select_tank_host(tanks, active_sh,
-                                                  trg_host, trg_port)
-            values["tank_host"] = sel_tank_host
-            values["last"] = {}
-            shs = sh_max.filter(scenario_id=s.id)
-            trs = tr_max.filter(scenario_path=s.scenario_path)
-            if shs and trs:
-                trs = TestResult.objects.filter(
-                        scenario_path=s.scenario_path,
-                        dt_finish=trs[0]["max_finish"])
-                values["last"] = {"tr_id": trs[0].id,
-                                  "finish": shs[0]["max_finish"]}
+                try:
+                    values["tank_host"] = self.select_tank_host(
+                                            tanks, active_sh,
+                                            values["default_data"]["hostname"],
+                                            values["default_data"]["port"],
+                                            s.scenario_path)
+                    values["last"] = {}
+                    shs = sh_max.filter(scenario_id=s.id)
+                    trs = tr_max.filter(scenario_path=s.scenario_path)
+                    if shs and trs:
+                        trs = TestResult.objects.filter(
+                                scenario_path=s.scenario_path,
+                                dt_finish=trs[0]["max_finish"])
+                        values["last"] = {"tr_id": trs[0].id,
+                                          "finish": shs[0]["max_finish"]}
+                except IniCtrlWarning, exc:
+                    values["default_data"]["error"] = {"name": exc.name,
+                                                       "params": exc.params}
             results.append(values)
         response_dict["rows"] = results
         response_dict["tanks"] = self.adapt_tanks_list(tanks, active_sh,
