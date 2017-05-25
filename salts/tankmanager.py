@@ -6,7 +6,7 @@ import os
 import json
 import re
 import pickle
-from salts_prj.settings import LT_PATH
+from salts_prj.settings import LT_PATH, UWSGI_USER, UWSGI_GROUP, LOCK_PATH
 from salts_prj.settings import log
 from tank_api_client import TankClient, TankClientError
 from tank_api_client.confighelper import CustomConfig
@@ -55,13 +55,14 @@ class TankManager(object):
     WAIT_FOR_RESULT_SAVED = 60  # seconds
 
     def __init__(self):
-        self.lock_dir_path = "/tmp/lock"
-        i = 0
-        base = self.lock_dir_path
-        while os.path.exists(self.lock_dir_path):
-            i += 1
-            self.lock_dir_path = "{path}-{index}".format(path=base, index=i)
-        os.mkdir(self.lock_dir_path)
+        self.lock_dir_path = LOCK_PATH
+        if not os.path.exists(self.lock_dir_path):
+            from grp import getgrnam
+            from pwd import getpwnam
+            os.mkdir(self.lock_dir_path)
+            pwnam = getpwnam(UWSGI_USER)
+            grnam = getgrnam(UWSGI_GROUP)
+            os.chown(self.lock_dir_path, pwnam.pw_uid, grnam.gr_gid)
 
     def book(self, tank_id):
         lock_path = os.path.join(self.lock_dir_path, '%s.lock' % tank_id)

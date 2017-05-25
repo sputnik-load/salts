@@ -100,6 +100,9 @@ LT_PATH = '/data/qa/ltbot/loadtest'
 LT_GITLAB = 'http://gitlab.srv.pv.km/loadtest/loadtest/blob/master/'
 LT_JIRA = 'https://task.ptnik.su/browse/'
 VERSION_FILE_NAME = 'version'
+UWSGI_USER = "uwsgi"
+UWSGI_GROUP = "uwsgi"
+LOCK_PATH = "/tmp/salts_lock"
 EXCLUDE_INI_FILES = ['common.ini', 'user.ini',
                      'graphite*.ini', 'run.sh.ini',
                      '99*.ini', '98*.ini', 'influx*.ini']
