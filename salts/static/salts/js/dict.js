@@ -125,6 +125,10 @@ var Lang = function() {
 										   "с нагрузочных станций. " +
 										   "Проверьте конфигурационный файл " +
 										   "{scenario_path}.",
+					"no_free_tank": "отсутствуют свободные нагрузочные " +
+									"станции, чтобы запусить тест " +
+									"для конфигурационного файла " +
+									"{scenario_path}.",
 					"no_config_file": "конфигурационный файл " +
 									  "{scenario_path} не существует."
 				}
@@ -311,6 +315,8 @@ var Lang = function() {
 										   "inaccessible from all tank " +
 										   "hosts. Check the " +
 										   "{scenario_path} config.",
+					"no_free_tank": "No free tank to run the test for " +
+									"the {scenario_path} config.",
 					"no_config_file": "the {scenario_path} config file " +
 									  "does not exist."
 				}
