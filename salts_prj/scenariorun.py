@@ -15,7 +15,7 @@ from django.core import serializers
 from salts.models import Scenario, Shooting, Tank, TestResult
 from django.contrib.auth.models import User, Group
 from django.db.models import Max
-from salts_prj.settings import log, LT_PATH
+from salts_prj.settings import log, LOCK_PATH
 from salts_prj.requesthelper import (request_get_value, generate_context,
                                      add_version)
 from salts_prj.ini import ini_manager, IniCtrlWarning
@@ -158,7 +158,7 @@ class ScenarioRunView(View):
         self._default_data = {}
         self._salts_group = Group.objects.get(name="Salts")
         self._actual_tanks_info = {}
-        self._lock_dir_path = os.path.join(LT_PATH, "lock")
+        self._lock_dir_path = LOCK_PATH
         if not os.path.exists(self._lock_dir_path):
             os.mkdir(self._lock_dir_path)
         self._active_tanks_path = os.path.join(self._lock_dir_path, "tanks")
@@ -331,6 +331,7 @@ class ScenarioRunView(View):
             with open(ct_fpath_lock, "wb") as f:
                 pickle.dump((current_id, ctimes), f)
         tank_host = ""
+        ctimes = None
         if s.st_size:
             with open(ct_fpath_lock, "rb") as f:
                 (current_id, ctimes) = pickle.load(f)
@@ -346,10 +347,13 @@ class ScenarioRunView(View):
                             tank_host = host_name
                             break
         os.rename(ct_fpath_lock, ct_fpath)
-        if not tank_host:
+        if not ctimes:
             params = {"host": trg_host, "port": trg_port,
                       "scenario_path": scenario_path}
             raise IniCtrlWarning("inaccessible_target", params)
+        if not tank_host:
+            params = {"scenario_path": scenario_path}
+            raise IniCtrlWarning("no_free_tank", params)
         return {"id": extanks[tank_host], "name": tank_host}
 
     def get_test_status(self, request):
