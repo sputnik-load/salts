@@ -25,9 +25,6 @@ from salts_prj.celery import obtain_active_tanks, obtain_connection_time
 
 
 SCENARIO_RPS_DEFAULT = 1
-SCENARIO_DURATIONS_DEFAULT = {"rampup": 5000,
-                              "testlen": 90000,
-                              "rampdown": 5000}
 
 
 def duration2ms(line):
@@ -101,9 +98,10 @@ def phantom_target_info(scenario_path):
 
 def jmeter_rps_schedule(scenario_path):
     def jmeter_duration(key):
-        default_value = SCENARIO_DURATIONS_DEFAULT[key] / 1000
-        value = ini_manager.get_option_value(scenario_path, "jmeter",
-                                             key, default_value)
+        value = ini_manager.get_option_value(scenario_path, "jmeter", key)
+        if not value:
+            params = {"scenario_path": scenario_path, "key": key}
+            raise IniCtrlWarning("undefined_duration", params)
         return 1000 * int(value)
     try:
         value = ini_manager.get_option_value(scenario_path, "jmeter",

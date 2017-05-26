@@ -126,9 +126,13 @@ var Lang = function() {
 										   "Проверьте конфигурационный файл " +
 										   "{scenario_path}.",
 					"no_free_tank": "отсутствуют свободные нагрузочные " +
-									"станции, чтобы запусить тест " +
+									"станции, чтобы запустить тест " +
 									"для конфигурационного файла " +
 									"{scenario_path}.",
+					"undefined_duration": "специфичная для jmeter опция " +
+										  "'{key}' не задана в " +
+										  "конфигурационном файле " +
+										  "{scenario_path}.",
 					"no_config_file": "конфигурационный файл " +
 									  "{scenario_path} не существует."
 				}
@@ -317,6 +321,10 @@ var Lang = function() {
 										   "{scenario_path} config.",
 					"no_free_tank": "No free tank to run the test for " +
 									"the {scenario_path} config.",
+					"undefined_duration": "the jmeter specific '{key}' " +
+										  "option for duration " +
+										  "not set in the {scenario_path} " +
+										  "config.",
 					"no_config_file": "the {scenario_path} config file " +
 									  "does not exist."
 				}

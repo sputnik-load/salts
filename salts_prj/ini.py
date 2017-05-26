@@ -65,6 +65,8 @@ class IniCtrlWarning(Exception):
                                "config.",
         "no_free_tank": "No free tank to run the test for "
                         "the {scenario_path} config.",
+        "undefined_duration": "the jmeter specific '{key}' option for duration "
+                              "not set in the {scenario_path} config.",
         "no_config_file": "The {scenario_path} config file does not exist."}
 
     def __init__(self, name, params):
