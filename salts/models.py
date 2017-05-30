@@ -222,25 +222,24 @@ class TestRun(models.Model):
         return "Id: %s (datetime: %s)." % (self.id, self.datetime)
 
 
-
-
-
-
 class Scenario(models.Model):
-    STATUS_ACTIVE = 'A'
-    STATUS_DELETE = 'D'
+    STATUS_ACTIVE = "A"
+    STATUS_DELETE = "D"
+    STATUS_SLEEP = "S"
     STATUS_CHOICES = (
-        (STATUS_ACTIVE, 'Active'),
-        (STATUS_DELETE, 'Deleled'),
+        (STATUS_ACTIVE, "Active"),
+        (STATUS_DELETE, "Deleled"),
+        (STATUS_SLEEP, "Sleep"),
     )
     scenario_path = models.CharField(u"Путь к сценарию", max_length=256,
                                      help_text=u"Путь к ini-файлу "
                                                u"в репозитории",
                                      null=False, blank=True)
-    status = models.CharField(u'Статус', max_length=1,
+    status = models.CharField(u"Статус", max_length=1,
                               choices=STATUS_CHOICES,
-                              default=STATUS_ACTIVE,
-                              help_text=u'Статус сценария - Aктивный или Удаленный.')
+                              default=STATUS_SLEEP,
+                              help_text=u"Статус сценария - "
+                                        u"Aктивный или Удаленный.")
     group = models.ForeignKey(Group, null=False, blank=False)
 
     def __unicode__(self):
