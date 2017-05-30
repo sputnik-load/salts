@@ -97,9 +97,9 @@ def phantom_target_info(scenario_path):
 
 
 def jmeter_rps_schedule(scenario_path):
-    def jmeter_duration(key):
-        value = ini_manager.get_option_value(scenario_path, "jmeter", key)
-        if not value:
+    def jmeter_duration(key, default_value=None):
+        value = ini_manager.get_option_value(scenario_path, "jmeter", key, default_value)
+        if value is None:
             params = {"scenario_path": scenario_path, "key": key}
             raise IniCtrlWarning("undefined_duration", params)
         return 1000 * int(value)
@@ -121,7 +121,7 @@ def jmeter_rps_schedule(scenario_path):
                                       "dur": jmeter_duration("testlen")}},
                           {"loadtype": "line",
                            "params": {"a": rps, "b": 1,
-                                      "dur": jmeter_duration("rampdown")}}]}
+                                      "dur": jmeter_duration("rampdown", 0)}}]}
     except ValueError:
         params = {"load_gen": "jmeter", "scenario_path": scenario_path}
         raise IniCtrlWarning("incorrect_rps_schedule", params)
@@ -131,6 +131,11 @@ def jmeter_target_info(scenario_path):
     addr = {"hostname": "", "port": 8000, "s": ""}
     target_info = ini_manager.get_option_value(scenario_path,
                                                "jmeter", "hostname", "")
+    # Another name of JMeter target option
+    if not target_info:
+        target_info = ini_manager.get_option_value(scenario_path,
+                                                   "jmeter", "host", "")
+
     if target_info:
         targ = target_info.split(":")
         addr["hostname"] = targ[0]
