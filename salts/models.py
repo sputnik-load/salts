@@ -229,7 +229,7 @@ class Scenario(models.Model):
     STATUS_CHOICES = (
         (STATUS_ACTIVE, "Active"),
         (STATUS_DELETE, "Deleled"),
-        (STATUS_SLEEP, "Sleep"),
+        (STATUS_SLEEP, "Sleeping"),
     )
     scenario_path = models.CharField(u"Путь к сценарию", max_length=256,
                                      help_text=u"Путь к ini-файлу "
