@@ -43,6 +43,38 @@ def stg_completed_to_bool(value):
     return value.lower() == 'true'
 
 
+def test_lock_dir_path(lock_dir_path):
+    if not os.path.exists(lock_dir_path):
+        msg = "The {path} lock dir path is not existed. " \
+              "Please create this dir. Note the user of it should be " \
+              "- '{user}' and the group - '{group}'.".format(
+                path=lock_dir_path, user=UWSGI_USER,
+                group=UWSGI_GROUP)
+        raise RuntimeError(msg)
+    from grp import getgrnam
+    from pwd import getpwnam
+    import stat
+    stat_info = os.stat(lock_dir_path)
+    pwnam = getpwnam(UWSGI_USER)
+    if stat_info.st_uid != pwnam.pw_uid:
+        msg = "The owner of the {path} lock dir is not " \
+              "'{user}'.".format(path=lock_dir_path,
+                                 user=UWSGI_USER)
+        raise RuntimeError(msg)
+    grnam = getgrnam(UWSGI_GROUP)
+    if stat_info.st_gid != grnam.gr_gid:
+        msg = "The group of the {path} lock dir is not " \
+              "'{group}'.".format(path=lock_dir_path,
+                                  group=UWSGI_GROUP)
+        raise RuntimeError(msg)
+    perm = oct(stat.S_IMODE(stat_info.st_mode))
+    lock_dir_perm = "0775"
+    if perm != lock_dir_perm:
+        msg = "The permissions of the {path} lock dir is not " \
+              "'{perm}'.".format(path=lock_dir_path, perm=lock_dir_perm)
+        raise RuntimeError(msg)
+
+
 class TankManagerException(Exception):
     pass
 
@@ -55,14 +87,8 @@ class TankManager(object):
     WAIT_FOR_RESULT_SAVED = 60  # seconds
 
     def __init__(self):
+        test_lock_dir_path(LOCK_PATH)
         self.lock_dir_path = LOCK_PATH
-        if not os.path.exists(self.lock_dir_path):
-            from grp import getgrnam
-            from pwd import getpwnam
-            os.mkdir(self.lock_dir_path)
-            pwnam = getpwnam(UWSGI_USER)
-            grnam = getgrnam(UWSGI_GROUP)
-            os.chown(self.lock_dir_path, pwnam.pw_uid, grnam.gr_gid)
 
     def book(self, tank_id):
         lock_path = os.path.join(self.lock_dir_path, '%s.lock' % tank_id)
