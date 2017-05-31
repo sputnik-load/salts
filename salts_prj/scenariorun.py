@@ -402,6 +402,10 @@ class ScenarioRunView(View):
             values = {}
             values["id"] = s.id
             values["test_name"] = ini_manager.get_scenario_name(s.scenario_path)
+            if not ini_manager.get_used_for_web(s.scenario_path):
+                log.warning("The {path} config is not used "
+                            "via web.".format(path=s.scenario_path))
+                continue
             values["default_data"] = self.get_default_data(s.scenario_path)
             values["tank_host"] = {"id": "-1", "name": ""}
             if "error" not in values["default_data"]:

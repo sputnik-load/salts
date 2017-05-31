@@ -237,6 +237,22 @@ class IniCtrl(object):
             log.warning("Config %s is not found." % ini_path)
         return test_name
 
+    def get_used_for_web(self, scenario_path):
+        config = ConfigParser()
+        ini_path = os.path.join(self.dir_path, scenario_path)
+        if not os.path.exists(ini_path):
+            log.warning("Config %s is not found." % ini_path)
+            return False
+        config.read(ini_path)
+        if "salts" not in config.sections():
+            return True
+        if "used_for_web" not in config.options("salts"):
+            return True
+        bool_values = {"true": True,
+                       "false": False}
+        str_value = config.get("salts", "used_for_web").lower()
+        return bool_values.get(str_value, True)
+
     def get_option_value(self, scenario_path, section, option,
                          default_value=None):
         config = ConfigParser()
