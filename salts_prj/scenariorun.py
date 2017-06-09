@@ -21,7 +21,7 @@ from salts_prj.requesthelper import (request_get_value, generate_context,
 from salts_prj.ini import ini_manager, IniCtrlWarning
 from tank_api_client import jsonstr2bin, bin2jsonstr
 from salts.tankmanager import remainedtime
-from salts_prj.celery import obtain_active_tanks, obtain_connection_time
+from salts_prj.celery import obtain_connection_time
 
 
 SCENARIO_RPS_DEFAULT = 1
@@ -208,7 +208,19 @@ class ScenarioRunView(View):
                 invalid.append(s.id)
         return shootings.exclude(id__in=invalid)
 
-    def get_active_tanks(self, http_host):
+    def get_active_tanks(self):
+        tanks = Tank.objects.all()
+        s = os.stat(self._active_tanks_path)
+        if s.st_size:
+            with open(self._active_tanks_path, "rb") as f:
+                active_id = pickle.load(f)
+                tanks = tanks.filter(id__in=active_id)
+        else:
+            tanks = []
+        jtanks = json.loads(serializers.serialize("json", tanks))
+        return jtanks
+
+    def get_active_tanks_2(self, http_host):
         while True:
             if not os.path.exists(self._tanks_lock_path):
                 os.rename(self._active_tanks_path,
@@ -397,7 +409,8 @@ class ScenarioRunView(View):
             scenarios = scenarios[offset:offset+limit]
 
         results = []
-        tanks = self.get_active_tanks(request.META["HTTP_HOST"])
+        # tanks = self.get_active_tanks(request.META["HTTP_HOST"])
+        tanks = self.get_active_tanks()
         for s in scenarios:
             values = {}
             values["id"] = s.id
