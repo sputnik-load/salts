@@ -14,6 +14,7 @@ from __future__ import absolute_import, unicode_literals
 import ConfigParser
 from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 
+HTTP_HOST = "salt-dev.dev.ix.km:80"
 CELERY_BROKER_URL = "amqp://salts:salts@salt-dev.dev.ix.km:5672/salts"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_RESULT_BACKEND = "db+postgresql://salts:salts@salt-dev.dev.ix.km/salts"
