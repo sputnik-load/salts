@@ -69,7 +69,7 @@ def phantom_rps_schedule(scenario_path):
         return steps
 
     test_name = ini_manager.get_option_value(scenario_path,
-                                             "sputnikreport",
+                                             "salts_report",
                                              "test_name")
     if not test_name:
         params = {"scenario_path": scenario_path}
@@ -107,7 +107,7 @@ def jmeter_rps_schedule(scenario_path):
         value = ini_manager.get_option_value(scenario_path, "jmeter",
                                              "rps1", SCENARIO_RPS_DEFAULT)
         rps = int(value)
-        test_name = ini_manager.get_option_value(scenario_path, "sputnikreport",
+        test_name = ini_manager.get_option_value(scenario_path, "salts_report",
                                                  "test_name")
         if not test_name:
             params = {"scenario_path": scenario_path}

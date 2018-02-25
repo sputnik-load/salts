@@ -176,7 +176,7 @@ function toScenarioFormat(aItem) {
 	var gen_type = aItem.attr("data-gen-type");
 	var data_value = JSON.parse(bin2jsonstr(aItem.attr("data-value")));
 	var scenario = {
-		sputnikreport: {
+		salts_report: {
 			test_name: data_value.test_name
 		}
 	};

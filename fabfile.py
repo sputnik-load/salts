@@ -7,7 +7,7 @@ from fabric.api import put, env, run, cd, sudo, lcd, local, settings, get, task
 #import logging
 #logging.basicConfig(level=logging.DEBUG)
 
-DEFAULT_HOSTS = ['salt-dev.dev.ix.km']
+DEFAULT_HOSTS = ['<SALTS_HOSTNAME>']
 
 def local_run(*args, **kwargs):
     return local(*args, shell="/bin/bash", capture=False, **kwargs)
@@ -116,7 +116,7 @@ def deploy(reload_=True):
 
     put('conf', remote_path=remote_dir)
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/uwsgi.ini.sample', '#PROJECT_ROOT#/conf/uwsgi.ini')
-    _my_replace_in_remote_file('#PROJECT_ROOT#/conf/uwsgi-krylov.ini.sample', '#PROJECT_ROOT#/conf/uwsgi-krylov.ini')
+    _my_replace_in_remote_file('#PROJECT_ROOT#/conf/uwsgi-test.ini.sample', '#PROJECT_ROOT#/conf/uwsgi-test.ini')
     _my_replace_in_remote_file('#PROJECT_ROOT#/conf/nginx.conf.sample', '#PROJECT_ROOT#/conf/nginx.conf')
 
     sudo('rm -rf /var/tmp/django_cache/*')
@@ -147,7 +147,7 @@ def install_req():
 
 def _setup_django():
     sudo(_my_replace('ln -fs #PROJECT_ROOT#/conf/uwsgi.ini /etc/uwsgi/#HOSTNAME#.ini'))
-    sudo(_my_replace('ln -fs #PROJECT_ROOT#/conf/uwsgi-krylov.ini /etc/uwsgi/uwsgi-krylov.ini'))
+    sudo(_my_replace('ln -fs #PROJECT_ROOT#/conf/uwsgi-test.ini /etc/uwsgi/uwsgi-test.ini'))
     sudo(_my_replace('ln -fs #PROJECT_ROOT#/conf/nginx.conf /etc/nginx/conf.d/#HOSTNAME#.conf'))
     # TODO: manage.py installstatic
     with cd(_my_replace("#PROJECT_ROOT#")):

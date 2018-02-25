@@ -118,7 +118,7 @@ var Lang = function() {
 										"мишени в конфигурационном файле " +
 										"{scenario_path}.",
 					"no_test_name": "имя теста не задано в опции 'test_name' " +
-									"секции 'sputnikreport'. " +
+									"секции 'salts_report'. " +
 									"Проверьте конфигурационный файл " +
 									"{scenario_path}.",
 					"inaccessible_target": "мишень {host}:{port} недоступна " +
@@ -313,7 +313,7 @@ var Lang = function() {
 										"{scenario_path} config.",
 					"no_test_name": "the test name is not declared in the " +
 									"'test_name' option of the " +
-									"'sputnikreport' section. " +
+									"'salts_report' section. " +
 									"Check the {scenario_path} config.",
 					"inaccessible_target": "the {host}:{port} target is " +
 										   "inaccessible from all tank " +

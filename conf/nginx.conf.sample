@@ -1,12 +1,12 @@
-upstream salt-dev-django {
+upstream salts-dev-django {
         server unix:///var/run/uwsgi/#HOSTNAME#.sock;
 }
-upstream salt-dev-django-krylov {
-        server unix:///var/run/uwsgi/salts-krylov.sock;
+upstream salts-dev-django-test {
+        server unix:///var/run/uwsgi/salts-test.sock;
 }
 
 server {
-	server_name salt-dev, salt-dev.dev.ix.km;
+	server_name salts-dev, #HOSTNAME#;
 	charset     utf-8;
 
 	client_max_body_size 75M;
@@ -24,14 +24,14 @@ server {
 		alias #PROJECT_ROOT#/static;
 	}
 
-	location /krylov {
-		uwsgi_pass salt-dev-django-krylov;
+	location /test {
+		uwsgi_pass salts-dev-django-test;
 		include uwsgi_params;
 	}
 
 	location / {
         add_header Access-Control-Allow-Origin "*";
-		uwsgi_pass salt-dev-django;
+		uwsgi_pass salts-dev-django;
 		include uwsgi_params;
 	}
 
@@ -52,7 +52,7 @@ server {
 
 server {
     listen 81;
-	server_name salt-dev, salt-dev.dev.ix.km;
+	server_name salts-dev, #HOSTNAME#;
 	charset     utf-8;
 
 	client_max_body_size 75M;
@@ -75,7 +75,7 @@ server {
 	}
 
 	location / {
-		uwsgi_pass salt-dev-django-krylov;
+		uwsgi_pass salts-dev-django-test;
 		include uwsgi_params;
 	}
 

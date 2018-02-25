@@ -140,7 +140,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='testresult',
             name='report_txt',
-            field=models.FileField(upload_to=b'results/%Y/%m/%d', null=True, verbose_name='\u0422\u0435\u043a\u0441\u0442\u043e\u0432\u044b\u0439 \u043e\u0442\u0447\u0435\u0442 SputnikReport', blank=True),
+            field=models.FileField(upload_to=b'results/%Y/%m/%d', null=True, verbose_name='\u0422\u0435\u043a\u0441\u0442\u043e\u0432\u044b\u0439 \u043e\u0442\u0447\u0435\u0442 SALTSReport', blank=True),
         ),
         migrations.AlterField(
             model_name='testresult',

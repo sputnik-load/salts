@@ -14,10 +14,11 @@ from __future__ import absolute_import, unicode_literals
 import ConfigParser
 from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 
-HTTP_HOST = "salt-dev.dev.ix.km:80"
-CELERY_BROKER_URL = "amqp://salts:salts@salt-dev.dev.ix.km:5672/salts"
+HOSTNAME = "<SALTS_HOSTNAME>"
+HTTP_HOST = "{}:80".format(HOSTNAME)
+CELERY_BROKER_URL = "amqp://salts:salts@{}:5672/salts".format(HOSTNAME)
 CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_RESULT_BACKEND = "db+postgresql://salts:salts@salt-dev.dev.ix.km/salts"
+CELERY_RESULT_BACKEND = "db+postgresql://salts:salts@{}/salts".format(HOSTNAME)
 CELERY_TASK_SERIALIZER = "json"
 CELERY_BROKER_VHOST="salts"
 
@@ -92,14 +93,14 @@ DATABASES = {
         'NAME': 'salts',
         'USER': 'salts',
         'PASSWORD': 'salts',
-        'HOST': 'salt-dev.dev.ix.km',    # Empty for localhost through domain sockets or           '127.0.0.1' for localhost through TCP.
+        'HOST': HOSTNAME,    # Empty for localhost through domain sockets or           '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
     }
 }
 
 LT_PATH = '/data/qa/ltbot/loadtest'
-LT_GITLAB = 'http://gitlab.srv.pv.km/loadtest/loadtest/blob/master/'
-LT_JIRA = 'https://task.ptnik.su/browse/'
+LT_GITLAB = 'http://<GITLAB_URL>/loadtest/loadtest/blob/master/'
+LT_JIRA = 'https://<JIRA_URL>/browse/'
 VERSION_FILE_NAME = 'version'
 UWSGI_USER = "uwsgi"
 UWSGI_GROUP = "uwsgi"

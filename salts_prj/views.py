@@ -351,7 +351,7 @@ def check_changes(full_path):
                 rps.save()
             tool_ent["rps"] = rps
         entity["tool"].append(tool_ent)
-        sec = "sputnikreport"
+        sec = "salts_report"
         ts_record.test_name = config.get(sec, "test_name")
         ts_record.ticket = config.get(sec, "ticket_url")
         ts_record.version = config.get(sec, "version")
@@ -384,7 +384,7 @@ def sync_config(file_path, *args, **kwargs):
     is_changed = False
     if "test_settings" in kwargs:
         ts_record = kwargs["test_settings"]
-        sp_sec = "sputnikreport"
+        sp_sec = "salts_report"
         config.set(sp_sec, "test_name", ts_record.test_name)
         log.info("INFO: %s" % ts_record.test_name)
         config.set(sp_sec, "ticket_url", ts_record.ticket)

@@ -14,10 +14,10 @@ def join_files(tmpdir, files, sub, test_name):
     for fname in files:
         if test_name:
             p = tmp.join(fname)
-            p.write("[sputnikreport]\ntest_name=%s\n" % test_name)
+            p.write("[salts_report]\ntest_name=%s\n" % test_name)
         else:
             p = tmp.join(fname)
-            p.write("[sputnikreport]\n")
+            p.write("[salts_report]\n")
 
 
 def check_files(found, base_dir, sub, fnames, expected):

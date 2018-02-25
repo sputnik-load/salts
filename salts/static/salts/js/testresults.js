@@ -51,7 +51,7 @@ function ticket_id_formatter(value) {
 	if (value === "") {
     	return "-";
 	}
-	return "<a href='https://task.ptnik.su/browse/" + value +
+	return "<a href='https://<JIRA_URL>/browse/" + value +
 		   "' target='_blank'>" + value + "</a>";
 }
 

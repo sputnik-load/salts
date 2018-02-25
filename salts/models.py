@@ -118,7 +118,7 @@ class TestResult(models.Model):
     ph_conf = models.FileField(u'Конфиг phantom', upload_to='results/%Y/%m/%d', null=True, blank=True)
     modified_jmx = models.FileField('modified.jmx', upload_to='results/%Y/%m/%d', null=True, blank=True)
     console_log = models.FileField(u'Лог консоли', upload_to='results/%Y/%m/%d', null=True, blank=True)
-    report_txt = models.FileField(u'Текстовый отчет SputnikReport', upload_to='results/%Y/%m/%d', null=True, blank=True)
+    report_txt = models.FileField(u'Текстовый отчет SALTSReport', upload_to='results/%Y/%m/%d', null=True, blank=True)
     jm_log_2 = models.FileField(u'Дополнительный лог jmeter (testResults.txt)', upload_to='results/%Y/%m/%d', null=True, blank=True)
     meta = JSONCharField(max_length=1024, null=True, blank=True, help_text=u'Служебная информация - не изменять.')
 

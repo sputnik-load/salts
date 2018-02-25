@@ -25,11 +25,11 @@ def ini_files(dir_path):
                                 (full_path, exc))
                 else:
                     try:
-                        test_name = config.get('sputnikreport', 'test_name')
+                        test_name = config.get('salts_report', 'test_name')
                     except (NoSectionError, NoOptionError):
                         log.info("Config %s is not scenario: "
                                  "there is not 'test_name' option "
-                                 "in the 'sputnikreport' section." %
+                                 "in the 'salts_report' section." %
                                  full_path)
                     else:
                         if test_name:
@@ -58,7 +58,7 @@ class IniCtrlWarning(Exception):
         "undefined_target": "The '{load_gen}' load generator does not know "
                             "about target. Check the {scenario_path} config.",
         "no_test_name": "The test name is not declared in the "
-                        "'test_name' option of the 'sputnikreport' section. "
+                        "'test_name' option of the 'salts_report' section. "
                         "Check the {scenario_path} config.",
         "inaccessible_target": "The {host}:{port} target is inaccessible from "
                                "all tank hosts. Check the {scenario_path} "
@@ -79,7 +79,7 @@ class IniCtrlWarning(Exception):
 class IniCtrl(object):
 
     SALTS_SECTION = 'salts'
-    REPORT_SECTION = 'sputnikreport'
+    REPORT_SECTION = 'salts_report'
     DEFAULT_GROUP = 'Salts'
     SCENARIO_ID_OPTION = 'scenario_id'
 
@@ -232,7 +232,7 @@ class IniCtrl(object):
             except (NoSectionError, NoOptionError):
                 log.warning("Config %s is not scenario: "
                             "there is not 'test_name' option "
-                            "in the 'sputnikreport' section." % ini_path)
+                            "in the 'salts_report' section." % ini_path)
         else:
             log.warning("Config %s is not found." % ini_path)
         return test_name

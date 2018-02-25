@@ -4,7 +4,7 @@ protocol = uwsgi
 
 # Настройки, связанные с Django
 # Корневая папка проекта (полный путь)
-chdir            = /data/qa/krylov/salts
+chdir            = /data/qa/test/salts
 pythonpath       = .
 # Django wsgi файл
 wsgi-file        = salts_prj/wsgi.py
@@ -17,7 +17,7 @@ master          = true
 # максимальное количество процессов
 processes       = 2
 # полный путь к файлу сокета
-socket          = /var/run/uwsgi/salts-krylov.sock
+socket          = /var/run/uwsgi/salts-test.sock
 # права доступа к файлу сокета
 chmod-socket    = 664
 # очищать окружение от служебных файлов uwsgi по завершению

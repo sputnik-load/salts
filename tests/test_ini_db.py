@@ -24,7 +24,7 @@ def join_files(tmpdir, files, sub):
     for item in files:
         if type(item) is str:
             p = tmp.join(item)
-            p.write("[sputnikreport]\n")
+            p.write("[salts_report]\n")
         if type(item) is dict:
             p = tmp.join(item["name"])
             p.write(item["content"])
@@ -98,7 +98,7 @@ class TestIniCtrl(object):
         base_dir = str(tmpdir.realpath())
         ini_ctrl = IniCtrl(base_dir, TestIniCtrl.exclude_names)
         files = [{"name": "scenario_wo_sect.ini", "content": "[test]"},
-                 {"name": "scenario_with_sect.ini", "content": "[sputnikreport]\nt=1\n"}
+                 {"name": "scenario_with_sect.ini", "content": "[salts_report]\nt=1\n"}
                 ]
         self._create_files(tmpdir, files)
         ini_ctrl.sync()
@@ -168,7 +168,7 @@ class TestIniCtrl(object):
         old_id = ini_ctrl.get_test_id("1.ini", from_db=False)
         assert old_id != 101
         with open(os.path.join(ini_ctrl.get_root(), "1.ini"), "w") as f1:
-            f1.write("[sputnikreport]\ntest_id=101\n")
+            f1.write("[salts_report]\ntest_id=101\n")
         assert ini_ctrl.get_test_id("1.ini", from_db=False) == 101
         ini_ctrl.sync()
         self._check_table_content(ini_ctrl, scenario_pathes)
